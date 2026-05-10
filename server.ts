@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
+import { GoogleGenAI } from "@google/genai";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -29,6 +30,10 @@ if (firebaseConfig) {
 }
 
 const db = (appAdmin && firebaseConfig) ? getFirestore(appAdmin, firebaseConfig.firestoreDatabaseId) : null;
+
+// Initialize Gemini - REMOVED from backend per skill guidelines
+// We will call Gemini API directly from the frontend using environment variables.
+// The API key is protected by not being hardcoded in the source code.
 
 async function startServer() {
   const app = express();
@@ -109,6 +114,9 @@ async function startServer() {
       res.status(400).json({ error: error.message });
     }
   });
+
+  // Gemini Proxy Routes - REMOVED per skill guidelines
+  // Always call Gemini API from the frontend.
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {
