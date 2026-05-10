@@ -80,8 +80,8 @@ export function Layout({ children, currentView, onNavigate, resumeData }: Layout
       <aside className="w-64 bg-[#0F172A] flex flex-col h-full z-20 shrink-0">
         <div className="p-6">
           <div className="flex flex-col gap-1 mb-8">
-            <h1 className="text-2xl font-bold text-white tracking-tight">CareerBoost</h1>
-            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-[0.15em] opacity-60">Your Career Development Platform</p>
+            <h1 className="text-2xl font-bold text-white tracking-tight">Mithra Careers</h1>
+            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-[0.15em] opacity-60">Elite Career Platform</p>
           </div>
 
           <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-250px)] custom-scrollbar pr-1">
@@ -148,7 +148,7 @@ export function Layout({ children, currentView, onNavigate, resumeData }: Layout
                     <p className="text-sm font-bold text-gray-900">{userData?.displayName || 'User'}</p>
                     <ChevronDown className="w-3 h-3 text-gray-400" />
                   </div>
-                  <p className="text-[10px] text-gray-500 font-mono tracking-tight lowercase">{userData?.email || 'demo@careerboost.com'}</p>
+                  <p className="text-[10px] text-gray-500 font-mono tracking-tight lowercase">{userData?.email || 'demo@mithracareers.com'}</p>
                   <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-0.5">{userData?.tier || 'BASIC'} TIER</p>
                </div>
             </div>

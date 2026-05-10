@@ -222,7 +222,7 @@ function AppContent({
           <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-100">
             <Rocket className="text-white w-8 h-8" />
           </div>
-          <h1 className="text-4xl font-semibold tracking-tight mb-4">CareerBoost Elite: Pivot Architect</h1>
+          <h1 className="text-4xl font-semibold tracking-tight mb-4">Mithra Careers</h1>
           <p className="text-gray-500 mb-8 leading-relaxed">
             Unlock your professional potential with AI-powered career tools. 
             Analyze resumes, practice interviews, and track your progress—all in one place.

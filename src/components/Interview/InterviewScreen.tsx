@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { InterviewData } from '../../types';
-import { GoogleGenAI } from '@google/genai';
 import { useAudioRecorder } from './hooks/useAudioRecorder';
 import { 
   Mic, MicOff, Terminal, Brain, User as UserIcon, Volume2, Loader2, Maximize, Minimize 
@@ -139,7 +138,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
         }
         setStatus('Connecting to AI agent...');
         
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        // Use proxy instead of direct SDK to protect API key
         const systemInstruction = `You are a world-class, adaptive interviewer conducting a ${interviewData.difficultyLevel} level interview for a ${interviewData.jobRole} position at ${interviewData.dreamCompany || 'a top-tier firm'}.
         
         ${interviewData.resumeText ? `CANDIDATE BACKGROUND (Extracted from Resume):
@@ -164,14 +163,38 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
         
         Start by introducing yourself and asking a highly specific opening question derived directly from a detail in the candidate's background (if provided), otherwise tailored to the ${interviewData.jobRole} role.`;
 
-        chatRef.current = ai.chats.create({
-            model: "gemini-3-flash-preview",
-            history: [],
-            config: { 
-                systemInstruction,
-                maxOutputTokens: 256 
+        // We will store history in a ref to send with each proxy call
+        const chatHistoryRef: { role: string; parts: { text: string }[] }[] = [];
+
+        chatRef.current = {
+            sendMessage: async ({ message }: { message: string }) => {
+                const response = await fetch('/api/gemini/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        payload: {
+                            message,
+                            history: [...chatHistoryRef],
+                            systemInstruction,
+                            config: { maxOutputTokens: 256 }
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Chat proxy failed');
+                }
+                
+                const data = await response.json();
+                
+                // Update local history
+                chatHistoryRef.push({ role: 'user', parts: [{ text: message }] });
+                chatHistoryRef.push({ role: 'model', parts: [{ text: data.text }] });
+                
+                return data;
             }
-        });
+        };
 
         if (SpeechRecognitionAPI) {
             recognitionRef.current = new SpeechRecognitionAPI();

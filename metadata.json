@@ -1,6 +1,6 @@
 {
-  "name": "CareerBoost Elite: Pivot Architect",
-  "description": "High-stakes career strategy platform with AI-driven market simulations, BRUTALLY HONEST gap analysis, and tailored longitudinal learning paths.",
+  "name": "Mithra Careers",
+  "description": "Elite career strategy platform with AI-driven market simulations, gap analysis, and tailored learning paths.",
   "requestFramePermissions": ["microphone", "camera"],
   "majorCapabilities": []
 }

@@ -1,11 +1,24 @@
-import { GoogleGenAI } from "@google/genai";
+// The client no longer uses the SDK directly to protect the API key
+// All calls are proxied through the backend /api/gemini/generateContent
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+async function callGeminiProxy(contents: any, config: any = {}) {
+  const response = await fetch('/api/gemini/generateContent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ payload: { contents, config } })
+  });
+  
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Gemini proxy call failed');
+  }
+  
+  return await response.json();
+}
 
 export async function parseResume(rawText: string) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Parse the following raw resume text into a structured JSON format. 
+  const result = await callGeminiProxy(
+    `Parse the following raw resume text into a structured JSON format. 
     Text: ${rawText}
     
     JSON Schema:
@@ -17,18 +30,15 @@ export async function parseResume(rawText: string) {
       "projects": [{ "title": "string", "description": "string", "link": "string" }],
       "education": [{ "degree": "string", "school": "string", "year": "string" }]
     }`,
-    config: {
-      responseMimeType: "application/json"
-    }
-  });
+    { responseMimeType: "application/json" }
+  );
 
-  return JSON.parse(response.text || '{}');
+  return JSON.parse(result.text || '{}');
 }
 
 export async function analyzeResume(parsedData: any) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Analyze this resume data and provide a professional score (0-100), specific feedback, market positioning, and an ATS parsability audit.
+  const result = await callGeminiProxy(
+    `Analyze this resume data and provide a professional score (0-100), specific feedback, market positioning, and an ATS parsability audit.
     Data: ${JSON.stringify(parsedData)}
     
     Return JSON:
@@ -49,18 +59,15 @@ export async function analyzeResume(parsedData: any) {
         { "label": "string", "status": "string", "desc": "string", "passed": boolean }
       ]
     }`,
-    config: {
-      responseMimeType: "application/json"
-    }
-  });
+    { responseMimeType: "application/json" }
+  );
 
-  return JSON.parse(response.text || '{}');
+  return JSON.parse(result.text || '{}');
 }
 
 export async function generateReferralMessage(targetCompany: string, role: string, resumeData: any) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Write a compelling 200-character LinkedIn referral request or cold outreach message for a '${role}' position at '${targetCompany}'. 
+  const result = await callGeminiProxy(
+    `Write a compelling 200-character LinkedIn referral request or cold outreach message for a '${role}' position at '${targetCompany}'. 
     Use the user's background: ${JSON.stringify(resumeData.experience?.[0] || {})}
     
     Return JSON:
@@ -69,18 +76,15 @@ export async function generateReferralMessage(targetCompany: string, role: strin
       "message": "string",
       "strategy": "string"
     }`,
-    config: {
-      responseMimeType: "application/json"
-    }
-  });
+    { responseMimeType: "application/json" }
+  );
 
-  return JSON.parse(response.text || '{}');
+  return JSON.parse(result.text || '{}');
 }
 
 export async function analyzeSkillGap(resumeData: any, targetRole: string) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `You are a high-stakes Career Strategist. Compare this user's resume against the standard requirements for a '${targetRole}' role.
+  const result = await callGeminiProxy(
+    `You are a high-stakes Career Strategist. Compare this user's resume against the standard requirements for a '${targetRole}' role.
     
     Resume Data: ${JSON.stringify(resumeData)}
     Target Role: ${targetRole}
@@ -102,18 +106,15 @@ export async function analyzeSkillGap(resumeData: any, targetRole: string) {
       "difficulty": "Easy|Moderate|Hard|Extreme",
       "timeline": "string (e.g., 3-5 years for degree + bar)"
     }`,
-    config: {
-      responseMimeType: "application/json"
-    }
-  });
+    { responseMimeType: "application/json" }
+  );
 
-  return JSON.parse(response.text || '{}');
+  return JSON.parse(result.text || '{}');
 }
 
 export async function generateLearningPlan(goal: string, missingSkills: string[]) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Create a detailed 4-week learning plan to acquire these skills: ${missingSkills.join(', ')} for the goal: ${goal}.
+  const result = await callGeminiProxy(
+    `Create a detailed 4-week learning plan to acquire these skills: ${missingSkills.join(', ')} for the goal: ${goal}.
     
     Return JSON:
     {
@@ -125,18 +126,15 @@ export async function generateLearningPlan(goal: string, missingSkills: string[]
         "resources": ["string"]
       }]
     }`,
-    config: {
-      responseMimeType: "application/json"
-    }
-  });
+    { responseMimeType: "application/json" }
+  );
 
-  return JSON.parse(response.text || '{}');
+  return JSON.parse(result.text || '{}');
 }
 
 export async function generateInterviewQuestions(role: string, level: string, resumeData?: any) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Generate 5 challenging interview questions for a ${level} ${role} position. ${resumeData ? `Tailor them to this resume: ${JSON.stringify(resumeData)}` : ''}
+  const result = await callGeminiProxy(
+    `Generate 5 challenging interview questions for a ${level} ${role} position. ${resumeData ? `Tailor them to this resume: ${JSON.stringify(resumeData)}` : ''}
     
     Return JSON:
     {
@@ -144,18 +142,15 @@ export async function generateInterviewQuestions(role: string, level: string, re
         { "id": "number", "text": "string", "category": "Technical|Behavioral", "hint": "string" }
       ]
     }`,
-    config: {
-      responseMimeType: "application/json"
-    }
-  });
+    { responseMimeType: "application/json" }
+  );
 
-  return JSON.parse(response.text || '{}');
+  return JSON.parse(result.text || '{}');
 }
 
 export async function analyzeInterviewResponse(question: string, responseText: string) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Analyze the following interview response.
+  const result = await callGeminiProxy(
+    `Analyze the following interview response.
     Question: ${question}
     Response: ${responseText}
     
@@ -167,18 +162,15 @@ export async function analyzeInterviewResponse(question: string, responseText: s
       "praise": "string",
       "critique": "string"
     }`,
-    config: {
-      responseMimeType: "application/json"
-    }
-  });
+    { responseMimeType: "application/json" }
+  );
 
-  return JSON.parse(response.text || '{}');
+  return JSON.parse(result.text || '{}');
 }
 
 export async function getCareerProjection(role: string, level: string, currentSkills: string[]) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Provide a high-stakes, realistic career projection for a ${level} ${role}. 
+  const result = await callGeminiProxy(
+    `Provide a high-stakes, realistic career projection for a ${level} ${role}. 
     The user currently has these skills: ${currentSkills.join(', ')}.
     
     CRITICAL: 
@@ -201,18 +193,15 @@ export async function getCareerProjection(role: string, level: string, currentSk
         { "years": 15, "position": "string", "marketSurvival": "string", "advice": "string" }
       ]
     }`,
-    config: {
-      responseMimeType: "application/json"
-    }
-  });
+    { responseMimeType: "application/json" }
+  );
 
-  return JSON.parse(response.text || '{}');
+  return JSON.parse(result.text || '{}');
 }
 
 export async function getDetailedLearningPath(goal: string, missingSkills: string[], durationMonths: number) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Create a ${durationMonths}-month intensive learning path for: ${goal}.
+  const result = await callGeminiProxy(
+    `Create a ${durationMonths}-month intensive learning path for: ${goal}.
     Missing Skills: ${missingSkills.join(', ')}
     
     Return JSON:
@@ -227,18 +216,15 @@ export async function getDetailedLearningPath(goal: string, missingSkills: strin
          "project": "A capstone project for this phase"
       }]
     }`,
-    config: {
-      responseMimeType: "application/json"
-    }
-  });
+    { responseMimeType: "application/json" }
+  );
 
-  return JSON.parse(response.text || '{}');
+  return JSON.parse(result.text || '{}');
 }
 
 export async function getRecommendedCourses(targetRole: string, missingSkills: string[]) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Recommend 6 high-quality, real-world courses (from Coursera, Udemy, edX, or YouTube) for someone targeting a '${targetRole}' role who lacks these skills: ${missingSkills.join(', ')}.
+  const result = await callGeminiProxy(
+    `Recommend 6 high-quality, real-world courses (from Coursera, Udemy, edX, or YouTube) for someone targeting a '${targetRole}' role who lacks these skills: ${missingSkills.join(', ')}.
     
     Return JSON:
     {
@@ -255,12 +241,10 @@ export async function getRecommendedCourses(targetRole: string, missingSkills: s
         }
       ]
     }`,
-    config: {
-      responseMimeType: "application/json"
-    }
-  });
+    { responseMimeType: "application/json" }
+  );
 
-  return JSON.parse(response.text || '{}');
+  return JSON.parse(result.text || '{}');
 }
 
 import { HARDCODED_COURSES } from '../constants/courseContent';
@@ -282,15 +266,9 @@ export async function getCourseContent(courseTitle: string, topic: string, phase
     master: `Generate a final mastery summary and a list of 5 "What's Next" recommendations for "${topic}" in "${courseTitle}".`
   };
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: prompts[phase],
-    config: {
-      responseMimeType: "application/json"
-    }
-  });
+  const result = await callGeminiProxy(prompts[phase], { responseMimeType: "application/json" });
 
-  return JSON.parse(response.text || '{}');
+  return JSON.parse(result.text || '{}');
 }
 
 export async function getMithraAdvice(question: string, context: any, history: {role: string, content: string}[]) {
@@ -316,18 +294,14 @@ export async function getMithraAdvice(question: string, context: any, history: {
     
     Current Question: ${question}`;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: systemPrompt
-  });
+  const result = await callGeminiProxy(systemPrompt);
 
-  return response.text;
+  return result.text;
 }
 
 export async function getPracticeQuestions(role: string, level: string) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Generate 10 diverse and challenging interview questions for a ${level} ${role} position. 
+  const result = await callGeminiProxy(
+    `Generate 10 diverse and challenging interview questions for a ${level} ${role} position. 
     Include a mix of Technical, Behavioral, and Situational questions. 
     For each question, provide a detailed "answerGuide" that explains both the recruiter's expectations and a sample high-quality response.
     
@@ -344,15 +318,14 @@ export async function getPracticeQuestions(role: string, level: string) {
         }
       ]
     }`,
-    config: { responseMimeType: "application/json" }
-  });
-  return JSON.parse(response.text || '{}');
+    { responseMimeType: "application/json" }
+  );
+  return JSON.parse(result.text || '{}');
 }
 
 export async function getInterviewTips(category: string) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Generate 15 essential interview tips for the category: ${category}. 
+  const result = await callGeminiProxy(
+    `Generate 15 essential interview tips for the category: ${category}. 
     Include Do's, Don'ts, Strategy, and Preparation.
     
     Return JSON:
@@ -361,15 +334,14 @@ export async function getInterviewTips(category: string) {
         { "id": number, "title": "string", "type": "Do's|Don'ts|Strategy|Preparation", "description": "string", "category": "string" }
       ]
     }`,
-    config: { responseMimeType: "application/json" }
-  });
-  return JSON.parse(response.text || '{}');
+    { responseMimeType: "application/json" }
+  );
+  return JSON.parse(result.text || '{}');
 }
 
 export async function getCodingExam(role: string, level: string, language: string) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Generate a challenging coding problem for a ${level} ${role} in ${language}.
+  const result = await callGeminiProxy(
+    `Generate a challenging coding problem for a ${level} ${role} in ${language}.
     
     Return JSON:
     {
@@ -382,15 +354,14 @@ export async function getCodingExam(role: string, level: string, language: strin
       "timeLimit": "string",
       "memoryLimit": "string"
     }`,
-    config: { responseMimeType: "application/json" }
-  });
-  return JSON.parse(response.text || '{}');
+    { responseMimeType: "application/json" }
+  );
+  return JSON.parse(result.text || '{}');
 }
 
 export async function evaluateCode(problem: any, code: string, language: string) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Evaluate this ${language} code for the following problem. 
+  const result = await callGeminiProxy(
+    `Evaluate this ${language} code for the following problem. 
     Problem: ${JSON.stringify(problem)}
     User Code: ${code}
     
@@ -402,15 +373,14 @@ export async function evaluateCode(problem: any, code: string, language: string)
       "efficiency": "string",
       "score": number
     }`,
-    config: { responseMimeType: "application/json" }
-  });
-  return JSON.parse(response.text || '{}');
+    { responseMimeType: "application/json" }
+  );
+  return JSON.parse(result.text || '{}');
 }
 
 export async function getSessionAnalysis(setup: any, history: any[], codingResult?: any) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Provide a comprehensive performance analysis for the following interview session.
+  const result = await callGeminiProxy(
+    `Provide a comprehensive performance analysis for the following interview session.
     Setup Data: ${JSON.stringify(setup)}
     Interview History: ${JSON.stringify(history)}
     Coding Result (if any): ${JSON.stringify(codingResult || {})}
@@ -466,15 +436,14 @@ export async function getSessionAnalysis(setup: any, history: any[], codingResul
         { "title": "...", "description": "...", "url": "...", "category": "registration" }
       ]` : ''}
     }`,
-    config: { responseMimeType: "application/json" }
-  });
-  return JSON.parse(response.text || '{}');
+    { responseMimeType: "application/json" }
+  );
+  return JSON.parse(result.text || '{}');
 }
 
 export async function getDetailedAnswerSuggestions(setup: any, history: any[]) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3-flash-preview",
-    contents: `Analyze the following interview transcript and provide improved answer suggestions.
+  const result = await callGeminiProxy(
+    `Analyze the following interview transcript and provide improved answer suggestions.
     Role: ${setup.role}
     History: ${JSON.stringify(history)}
     
@@ -491,7 +460,7 @@ export async function getDetailedAnswerSuggestions(setup: any, history: any[]) {
         }
       ]
     }`,
-    config: { responseMimeType: "application/json" }
-  });
-  return JSON.parse(response.text || '{}');
+    { responseMimeType: "application/json" }
+  );
+  return JSON.parse(result.text || '{}');
 }

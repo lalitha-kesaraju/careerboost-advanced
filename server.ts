@@ -31,9 +31,8 @@ if (firebaseConfig) {
 
 const db = (appAdmin && firebaseConfig) ? getFirestore(appAdmin, firebaseConfig.firestoreDatabaseId) : null;
 
-// Initialize Gemini - REMOVED from backend per skill guidelines
-// We will call Gemini API directly from the frontend using environment variables.
-// The API key is protected by not being hardcoded in the source code.
+// Initialize Gemini
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 async function startServer() {
   const app = express();
@@ -115,8 +114,50 @@ async function startServer() {
     }
   });
 
-  // Gemini Proxy Routes - REMOVED per skill guidelines
-  // Always call Gemini API from the frontend.
+  // Gemini Proxy Routes
+  app.post("/api/gemini/:action", async (req, res) => {
+    try {
+      const { action } = req.params;
+      const { payload } = req.body;
+
+      if (!process.env.GEMINI_API_KEY) {
+        throw new Error("GEMINI_API_KEY not configured on server");
+      }
+
+      let result;
+      switch (action) {
+        case "generateContent": {
+          const { contents, config } = payload;
+          result = await genAI.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents,
+            config
+          });
+          res.json({ text: result.text });
+          break;
+        }
+        case "chat": {
+          const { history, message, systemInstruction, config } = payload;
+          const chat = genAI.chats.create({ 
+            model: "gemini-3-flash-preview",
+            history,
+            config: {
+              ...config,
+              systemInstruction
+            }
+          });
+          result = await chat.sendMessage(message);
+          res.json({ text: result.text });
+          break;
+        }
+        default:
+          res.status(404).json({ error: "Action not found" });
+      }
+    } catch (error: any) {
+      console.error("Gemini Proxy Error:", error);
+      res.status(500).json({ error: error.message });
+    }
+  });
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

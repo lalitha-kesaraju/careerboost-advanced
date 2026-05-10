@@ -1,4 +1,4 @@
-# Security Specification: CareerBoost Basic
+# Security Specification: Mithra Careers
 
 ## Data Invariants
 1. A user can only access their own data subtree (`/users/{userId}/**`).
