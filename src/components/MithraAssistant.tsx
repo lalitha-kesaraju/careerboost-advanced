@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Sparkles, Send, X, Bot, User as UserIcon, MessageSquare, Maximize2, Minimize2, Loader2 } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAppContext } from '../AppSimple';
 import { db } from '../App';
 import { collection, query, getDocs, orderBy, limit } from 'firebase/firestore';
 import { getMithraAdvice } from '../services/gemini';
 import Markdown from 'react-markdown';
 
 export function MithraAssistant() {
-  const { user, userData } = useAuth();
+  const { user } = useAppContext();
   const [isOpen, setIsOpen] = useState(false);
   const [isMaximized, setIsMaximized] = useState(false);
   const [input, setInput] = useState('');

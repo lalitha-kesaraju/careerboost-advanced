@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuth } from '../App';
+import { useAppContext } from '../AppSimple';
 import { 
   FileText, 
   Mic2, 
@@ -21,7 +21,7 @@ interface DashboardProps {
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const { userData } = useAuth();
+  const { user } = useAppContext();
 
   const limits = {
     resumeAnalyses: 3,
@@ -31,11 +31,21 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     learningPlans: 1
   };
 
+  // Mock user data for demo
+  const userData = {
+    resumeAnalyses: 2,
+    mockInterviews: 1,
+    careerAdviceCount: 5,
+    skillGaps: 3,
+    jobApplicationsCount: 8,
+    learningPlans: 1
+  };
+
   const usageStats = [
     { 
       id: 'resume-upload', 
       label: 'Resume Analysis', 
-      used: userData?.usage.resumeAnalyses || 0, 
+      used: userData?.resumeAnalyses || 0, 
       total: limits.resumeAnalyses,
       color: 'bg-blue-500',
       icon: FileText
@@ -43,7 +53,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     { 
       id: 'mock-interview', 
       label: 'Mock Interviews', 
-      used: userData?.usage.mockInterviews || 0, 
+      used: userData?.mockInterviews || 0, 
       total: limits.mockInterviews,
       color: 'bg-purple-500',
       icon: Mic2
@@ -51,7 +61,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     { 
       id: 'assistant', 
       label: 'AI Coach', 
-      used: userData?.usage.careerAdviceCount || 0, 
+      used: userData?.careerAdviceCount || 0, 
       total: limits.careerAdviceCount,
       color: 'bg-emerald-500',
       icon: MessageSquare
@@ -59,7 +69,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     { 
       id: 'skill-gap-analysis', 
       label: 'Skill Gap Analysis', 
-      used: userData?.usage.skillGaps || 0, 
+      used: userData?.skillGaps || 0, 
       total: limits.skillGaps,
       color: 'bg-orange-500',
       icon: Target
@@ -70,7 +80,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     <div className="space-y-10">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Welcome back, {userData?.displayName.split(' ')[0]}</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-2">Welcome back, {user?.name || 'User'}</h1>
           <p className="text-gray-500 max-w-lg">
             Your career evolution is in progress. Here's an overview of your current status and usage.
           </p>

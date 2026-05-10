@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Upload, FileText, CheckCircle2, History, X, ArrowRight, ShieldCheck, Zap, BarChart3, Clock, TrendingUp } from 'lucide-react';
-import { useAuth } from '../App';
+import { useAppContext } from '../AppSimple';
 
 interface ResumeUploadSectionProps {
   onNext: (data: any) => void;
@@ -15,7 +15,7 @@ import mammoth from 'mammoth';
 pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
 export function ResumeUploadSection({ onNext }: ResumeUploadSectionProps) {
-  const { userData } = useAuth();
+  const { user } = useAppContext();
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);

@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { useAuth } from '../App';
+import { useAppContext } from '../AppSimple';
 import { db } from '../App';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { Mic2, Play, Square, Loader2, Sparkles, MessageCircle, ArrowRight, User as UserIcon, Bot } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function InterviewSection() {
-  const { user, userData, refreshUsage } = useAuth();
+  const { user } = useAppContext();
   const [isActive, setIsActive] = useState(false);
   const [transcript, setTranscript] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
