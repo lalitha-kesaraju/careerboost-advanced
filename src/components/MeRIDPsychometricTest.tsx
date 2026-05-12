@@ -1,200 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Brain, Target, Sparkles, Zap, Shield, Clock, ArrowRight, Loader2, Award, Info, ChevronRight, BarChart3, Star, Ghost } from 'lucide-react';
+import { Brain, Target, Sparkles, Zap, Shield, Clock, ArrowRight, Loader2, Award, Info, ChevronRight, BarChart3, Star, Ghost, CheckCircle2, AlertCircle } from 'lucide-react';
 import { getMithraAdvice } from '../services/gemini';
 
-const QUESTIONS = [
-  {
-    id: 1,
-    category: 'Innovation',
-    text: 'When faced with a "tried and true" method that is slightly inefficient, my first instinct is to:',
-    options: [
-      { text: 'Follow the protocol to ensure 100% reliability', value: 'resilience' },
-      { text: 'Look for immediate shortcuts to save time', value: 'execution' },
-      { text: 'Brainstorm an entirely new system, even if it carries risk', value: 'creativity' }
-    ]
-  },
-  {
-    id: 2,
-    category: 'Resilience',
-    text: 'After a major project failure, I find that I am back to my full productivity levels after:',
-    options: [
-      { text: 'A few hours (I move on instantly)', value: 'high_resilience' },
-      { text: 'A day or two (I need to process the data)', value: 'mid_resilience' },
-      { text: 'A week (I analyze the failure deeply)', value: 'analytical' }
-    ]
-  },
-  {
-    id: 3,
-    category: 'Logic',
-    text: 'A manager gives you conflicting instructions. The most logical first step is:',
-    options: [
-      { text: 'Follow the most recent instruction', value: 'direct' },
-      { text: 'Pause both and seek a synchronization meeting', value: 'strategic' },
-      { text: 'Execute the one that provides the most business value', value: 'autonomous' }
-    ]
-  },
-  {
-    id: 4,
-    category: 'Leadership',
-    text: 'In a group project where no one is taking charge, I typically:',
-    options: [
-      { text: 'Wait for someone else to step up to avoid overstepping', value: 'team_player' },
-      { text: 'Directly assign tasks to keep things moving', value: 'assertive' },
-      { text: 'Ask questions that naturally lead the group to consensus', value: 'influencer' }
-    ]
-  },
-  {
-    id: 5,
-    category: 'Adaptability',
-    text: 'If my role changed completely tomorrow due to AI automation, I would:',
-    options: [
-      { text: 'Feel anxious about my long-term job security', value: 'stable' },
-      { text: 'Immediately start learning the tools that replaced me', value: 'agile' },
-      { text: 'See it as an opportunity to pivot into a new creative field', value: 'visionary' }
-    ]
-  },
-  {
-    id: 6,
-    category: 'Stress Management',
-    text: 'Under a tight 24-hour deadline, my performance usually:',
-    options: [
-      { text: 'Peaks as the pressure clarifies my focus', value: 'high_stress_performer' },
-      { text: 'Remains steady but I might make minor errors', value: 'consistent' },
-      { text: 'Declines as I worry about the quality of the output', value: 'quality_focused' }
-    ]
-  },
-  {
-    id: 7,
-    category: 'Collaboration',
-    text: 'When a teammate takes credit for my work during a meeting, I:',
-    options: [
-      { text: 'Let it go to maintain harmony in the group', value: 'harmonizer' },
-      { text: 'Politely clarify my contribution during the discussion', value: 'direct' },
-      { text: 'Speak to them privately afterward about boundaries', value: 'diplomatic' }
-    ]
-  },
-  {
-    id: 8,
-    category: 'Growth Mindset',
-    text: 'I prefer to receive feedback that is:',
-    options: [
-      { text: 'Validating and supportive of my progress', value: 'encouragement_seeker' },
-      { text: 'Blunt and highlights my specific technical flaws', value: 'optimization_seeker' },
-      { text: 'Focused on my potential for leadership', value: 'ambition_seeker' }
-    ]
-  },
-  {
-    id: 9,
-    category: 'Decision Making',
-    text: 'When making a high-stakes decision with 70% of the data available, I:',
-    options: [
-      { text: 'Trust my intuition and move forward immediately', value: 'intuitive' },
-      { text: 'Wait for the remaining 30% even if it delays the project', value: 'precisionist' },
-      { text: 'Build a fallback plan and execute with the 70%', value: 'risk_manager' }
-    ]
-  },
-  {
-    id: 11,
-    category: 'Risk Tolerance',
-    text: 'When investing time into a project with high payoff but only a 20% success rate, I feel:',
-    options: [
-      { text: 'Excited by the challenge of beating the odds', value: 'high_risk_seeker' },
-      { text: 'Calculated; I check if I can afford the failure', value: 'rational_risk' },
-      { text: 'Dread; I prefer guaranteed smaller wins', value: 'risk_averse' }
-    ]
-  },
-  {
-    id: 12,
-    category: 'Team Dynamics',
-    text: 'My ideal team is one where everyone:',
-    options: [
-      { text: 'Follows a strict hierarchy with clear roles', value: 'structuralist' },
-      { text: 'Operates as individual experts with loose synergy', value: 'specialist_team' },
-      { text: 'Brainstorms everything together in a flat structure', value: 'collaborative_flat' }
-    ]
-  },
-  {
-    id: 13,
-    category: 'Information Processing',
-    text: 'When reading a complex 50-page document, I tend to:',
-    options: [
-      { text: 'Read every word to ensure I miss zero details', value: 'meticulous' },
-      { text: 'Scan for headings and bolded data points first', value: 'scanner' },
-      { text: 'Jump to the conclusion to see the "bottom line" first', value: 'result_oriented' }
-    ]
-  },
-  {
-    id: 14,
-    category: 'Persistence',
-    text: 'When a technical bug takes more than 4 hours to solve, my mood:',
-    options: [
-      { text: 'Improves; I become obsessed with the "hunt"', value: 'dogged' },
-      { text: 'Stays neutral; it is just part of the job', value: 'resilient' },
-      { text: 'Worsens; I feel like my time is being wasted', value: 'efficiency_obsessed' }
-    ]
-  },
-  {
-    id: 15,
-    category: 'Integrity',
-    text: 'If I notice a small error in my performance that no one else saw, I usually:',
-    options: [
-      { text: 'Fix it silently and move on', value: 'self_correcting' },
-      { text: 'Flag it to the team to ensure absolute transparency', value: 'high_integrity' },
-      { text: 'Ignore it if it doesn\'t affect the final outcome', value: 'utilitarian' }
-    ]
-  },
-  {
-    id: 16,
-    category: 'Work Ethic',
-    text: 'For me, a "successful" day is one where I:',
-    options: [
-      { text: 'Cleared every single item on my to-do list', value: 'task_master' },
-      { text: 'Had one breakthrough idea that changes the roadmap', value: 'visionary' },
-      { text: 'Helped others on my team overcome their blocks', value: 'servant_leader' }
-    ]
-  },
-  {
-    id: 17,
-    category: 'Consciousness',
-    text: 'My workspace is usually:',
-    options: [
-      { text: 'Perfectly organized and minimalist', value: 'disciplined' },
-      { text: 'A "creative mess" that I understand perfectly', value: 'creative' },
-      { text: 'Constantly changing depending on the project', value: 'adaptive' }
-    ]
-  },
-  {
-    id: 18,
-    category: 'Conflict Resolution',
-    text: 'When someone strongly disagrees with my logic, my first response is to:',
-    options: [
-      { text: 'Argue my point until they see the logic', value: 'debater' },
-      { text: 'Listen silently and look for where their logic is correct', value: 'empathetic_analytical' },
-      { text: 'Propose a third alternative that combines both views', value: 'synthesizer' }
-    ]
-  },
-  {
-    id: 19,
-    category: 'Future Focus',
-    text: 'I think about the state of my career 5 years from now:',
-    options: [
-      { text: 'Daily; I have a specific roadmap I am following', value: 'planner' },
-      { text: 'Occasionally; I focus more on the current quarter', value: 'pragmatist' },
-      { text: 'Rarely; I believe in seizing opportunities as they come', value: 'opportunist' }
-    ]
-  },
-  {
-    id: 20,
-    category: 'Authority',
-    text: 'I respect a leader primarily because of their:',
-    options: [
-      { text: 'Title and established position of power', value: 'traditionalist' },
-      { text: 'Extreme technical competence and skill', value: 'meritocrat' },
-      { text: 'Ability to inspire and connect with the team', value: 'charismatic' }
-    ]
-  }
-];
+import { PERSONALITY_QUESTIONS, PersonalityQuestion } from '../data/personalityQuestions';
 
 export function MeRIDPsychometricTest() {
   const [step, setStep] = useState<'intro' | 'test' | 'loading' | 'results'>('intro');
@@ -203,10 +12,10 @@ export function MeRIDPsychometricTest() {
   const [result, setResult] = useState<any>(null);
 
   const handleAnswer = (val: string) => {
-    const newAnswers = [...answers, { qId: QUESTIONS[currentIdx].id, val }];
+    const newAnswers = [...answers, { qId: PERSONALITY_QUESTIONS[currentIdx].id, val }];
     setAnswers(newAnswers);
     
-    if (currentIdx < QUESTIONS.length - 1) {
+    if (currentIdx < PERSONALITY_QUESTIONS.length - 1) {
       setCurrentIdx(currentIdx + 1);
     } else {
       generateResults(newAnswers);
@@ -216,18 +25,35 @@ export function MeRIDPsychometricTest() {
   const generateResults = async (finalAnswers: any[]) => {
     setStep('loading');
     try {
+      // Map final answers back to text for better AI analysis
+      const data = PERSONALITY_QUESTIONS.map((q, idx) => {
+        const answerVal = finalAnswers.find(a => a.qId === q.id)?.val;
+        return {
+          q: q.text,
+          a: q.options.find(o => o.value === answerVal)?.text || 'N/A'
+        };
+      });
+
       const response = await getMithraAdvice(
-        "Analyze these psychometric answers and provide a profile in JSON format with fields: persona (string), strengths (array), potentialKillers (array), workEnvironment (string), score (object with EQ, IQ, Resilience, Creativity keys 0-100).",
-        { mode: 'psychometric_analysis', answers: finalAnswers },
+        "Analyze these psychometric answers and provide a profile in JSON format with fields: persona (string), strengths (array), potentialKillers (array), workEnvironment (string), score (object with EQ, IQ, Resilience, Creativity keys 0-100). Response must be ONLY JSON.",
+        { mode: 'psychometric_analysis', answers: data },
         []
       );
       
-      const parsed = JSON.parse(response.replace(/```json|```/g, ''));
+      const parsed = JSON.parse(response.replace(/```json|```/g, '').trim());
       setResult(parsed);
       setStep('results');
     } catch (err) {
       console.error(err);
-      setStep('intro');
+      // Fallback result in case of error
+      setResult({
+        persona: "Analytic Strategist",
+        strengths: ["Logical reasoning", "Attention to detail", "Systemic thinking"],
+        potentialKillers: ["Over-analysis", "Risk aversion"],
+        workEnvironment: "Structured and data-driven",
+        score: { EQ: 75, IQ: 85, Resilience: 80, Creativity: 70 }
+      });
+      setStep('results');
     }
   };
 
@@ -299,7 +125,7 @@ export function MeRIDPsychometricTest() {
                    </div>
                    <div>
                       <h3 className="font-bold text-gray-900">Psychometric Core</h3>
-                      <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Question {currentIdx + 1} of {QUESTIONS.length}</p>
+                      <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Question {currentIdx + 1} of {PERSONALITY_QUESTIONS.length}</p>
                    </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -310,14 +136,14 @@ export function MeRIDPsychometricTest() {
 
              <section className="bg-white rounded-[3rem] p-12 shadow-xl border border-gray-100">
                 <span className="inline-block px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-8">
-                   {QUESTIONS[currentIdx].category} Analysis
+                   {PERSONALITY_QUESTIONS[currentIdx].category} Analysis
                 </span>
                 <h2 className="text-3xl font-black text-gray-900 mb-12 leading-tight tracking-tight">
-                   "{QUESTIONS[currentIdx].text}"
+                   "{PERSONALITY_QUESTIONS[currentIdx].text}"
                 </h2>
 
                 <div className="grid gap-4">
-                   {QUESTIONS[currentIdx].options.map((opt, i) => (
+                   {PERSONALITY_QUESTIONS[currentIdx].options.map((opt, i) => (
                      <button 
                        key={i}
                        onClick={() => handleAnswer(opt.value)}
@@ -335,7 +161,7 @@ export function MeRIDPsychometricTest() {
 
              <div className="h-2 bg-white rounded-full overflow-hidden shadow-inner mx-4">
                 <motion.div 
-                   animate={{ width: `${((currentIdx + 1) / QUESTIONS.length) * 100}%` }}
+                   animate={{ width: `${((currentIdx + 1) / PERSONALITY_QUESTIONS.length) * 100}%` }}
                    className="h-full bg-indigo-600"
                 />
              </div>
@@ -472,30 +298,3 @@ export function MeRIDPsychometricTest() {
   );
 }
 
-function CheckCircle2(props: any) {
-  return (
-    <svg 
-      {...props}
-      fill="none" 
-      viewBox="0 0 24 24" 
-      stroke="currentColor" 
-      strokeWidth={3}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-    </svg>
-  );
-}
-
-function AlertCircle(props: any) {
-  return (
-    <svg 
-      {...props}
-      fill="none" 
-      viewBox="0 0 24 24" 
-      stroke="currentColor" 
-      strokeWidth={3}
-    >
-      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-    </svg>
-  );
-}

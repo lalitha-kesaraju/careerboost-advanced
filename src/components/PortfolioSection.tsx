@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../AppSimple';
+import { useAuth } from '../App';
 import { db } from '../App';
 import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { FolderHeart, Plus, Trash2, Link as LinkIcon, Briefcase, GraduationCap, Code2, Loader2, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function PortfolioSection() {
-  const { user } = useAppContext();
+  const { user } = useAuth();
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);

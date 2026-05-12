@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAppContext } from '../AppSimple';
+import { useAuth } from '../App';
 import { db } from '../App';
 import { collection, query, getDocs, limit } from 'firebase/firestore';
 import { getMithraAdvice } from '../services/gemini';
@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
 
 export function MithraChat() {
-  const { user } = useAppContext();
+  const { user, userData, refreshUsage } = useAuth();
   const [messages, setMessages] = useState<{role: 'user' | 'mithra', content: string}[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);

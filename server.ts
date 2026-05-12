@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -7,49 +6,24 @@ import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
-import "dotenv/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Load firebase config for administrative actions
 let firebaseConfig: any;
-let serviceAccountKey: any;
-
-// Try to load from environment variables first (production)
-if (process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_CLIENT_EMAIL) {
-  firebaseConfig = {
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    firestoreDatabaseId: process.env.FIRESTORE_DATABASE_ID,
-  };
-  serviceAccountKey = {
-    type: "service_account",
-    project_id: process.env.FIREBASE_PROJECT_ID,
-    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-    client_email: process.env.FIREBASE_CLIENT_EMAIL,
-  };
-} else {
-  // Fall back to local file (development)
-  try {
-    firebaseConfig = JSON.parse(fs.readFileSync(path.join(__dirname, "firebase-applet-config.json"), "utf8"));
-  } catch (e) {
-    console.error("Firebase config not found. Backend features might be limited.");
-  }
+try {
+  firebaseConfig = JSON.parse(fs.readFileSync(path.join(__dirname, "firebase-applet-config.json"), "utf8"));
+} catch (e) {
+  console.error("Firebase config not found. Backend features might be limited.");
 }
 
 let appAdmin: admin.app.App | null = null;
 if (firebaseConfig) {
   try {
-    const adminConfig: any = {
+    appAdmin = admin.initializeApp({
       projectId: firebaseConfig.projectId,
-    };
-    
-    // Use service account key if available (production), otherwise auth will use default credentials
-    if (serviceAccountKey) {
-      adminConfig.credential = admin.credential.cert(serviceAccountKey);
-    }
-    
-    appAdmin = admin.initializeApp(adminConfig);
+    });
   } catch (e) {
     console.error("Failed to initialize Firebase Admin:", e);
   }
@@ -62,16 +36,7 @@ const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
 
 async function startServer() {
   const app = express();
-  const PORT = process.env.PORT || 3000;
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-
-  // CORS Configuration
-  app.use(cors({
-    origin: [frontendUrl, 'http://localhost:5173', 'http://localhost:3000'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-  }));
+  const PORT = 3000;
 
   app.use(express.json());
 

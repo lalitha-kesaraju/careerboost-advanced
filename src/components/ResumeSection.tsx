@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../AppSimple';
+import { useAuth, UserData } from '../App';
 import { db } from '../App';
 import { collection, addDoc, getDocs, query, orderBy, Timestamp, doc, setDoc } from 'firebase/firestore';
 import { analyzeResume } from '../services/gemini';
@@ -18,7 +18,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 
 export function ResumeSection() {
-  const { user } = useAppContext();
+  const { user, userData, refreshUsage } = useAuth();
   const [resumes, setResumes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);

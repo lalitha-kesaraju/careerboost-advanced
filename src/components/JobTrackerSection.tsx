@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useAppContext } from '../AppSimple';
+import { useAuth } from '../App';
 import { db } from '../App';
 import { collection, addDoc, getDocs, query, orderBy, Timestamp, deleteDoc, doc } from 'firebase/firestore';
 import { Briefcase, Plus, Trash2, MapPin, Building2, Calendar, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 export function JobTrackerSection() {
-  const { user } = useAppContext();
+  const { user } = useAuth();
   const [jobs, setJobs] = useState<any[]>([]);
   const [showAdd, setShowAdd] = useState(false);
   const [loading, setLoading] = useState(true);

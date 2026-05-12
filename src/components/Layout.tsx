@@ -38,34 +38,11 @@ interface LayoutProps {
   currentView: string;
   onNavigate: (view: any) => void;
   resumeData?: any;
-  onLogout?: () => void;
 }
 
-export function Layout({ children, currentView, onNavigate, resumeData, onLogout }: LayoutProps) {
+export function Layout({ children, currentView, onNavigate, resumeData }: LayoutProps) {
+  const { userData, logout } = useAuth();
   const [isVoiceOpen, setIsVoiceOpen] = React.useState(false);
-  let userData: any = null;
-  let logout: any = null;
-  
-  try {
-    // Try to get auth context if available
-    const auth = useAuth();
-    userData = auth?.userData;
-    logout = auth?.logout;
-  } catch (e) {
-    // If useAuth fails, we're using simplified auth
-    // Load user from localStorage for display
-    const savedUser = localStorage.getItem('currentUser');
-    if (savedUser) {
-      const user = JSON.parse(savedUser);
-      userData = {
-        displayName: user.name,
-        email: user.email,
-        tier: 'basic'
-      };
-    }
-  }
-
-  const handleLogout = onLogout || logout;
 
   const hasResume = !!resumeData;
   const hasTargetRole = !!resumeData?.targetRole;
@@ -142,7 +119,7 @@ export function Layout({ children, currentView, onNavigate, resumeData, onLogout
           </button>
           
           <button 
-            onClick={handleLogout}
+            onClick={logout}
             className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-red-500/10 hover:text-red-400 transition-all"
           >
             <LogOut className="w-4 h-4" />

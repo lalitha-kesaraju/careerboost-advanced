@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { useAppContext } from '../AppSimple';
+import { useAuth } from '../App';
+import { db } from '../App';
+import { collection, onSnapshot, query, setDoc, doc, Timestamp } from 'firebase/firestore';
 import { Trophy, Award, Star, Flame, Target, Rocket } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -14,31 +16,36 @@ export const ACHIEVEMENTS = [
 ];
 
 export function AchievementPanel() {
-  const { user } = useAppContext();
+  const { user, userData } = useAuth();
   const [unlocked, setUnlocked] = useState<Record<string, any>>({});
-
-  // Mock usage data for demo
-  const mockUsage = {
-    resumeAnalyses: 2,
-    skillGaps: 3,
-    careerAdviceCount: 5,
-    mockInterviews: 1
-  };
 
   useEffect(() => {
     if (!user) return;
-    // Check which achievements are unlocked based on mock usage
-    const unlockedAchievements: Record<string, any> = {};
-    ACHIEVEMENTS.forEach((achievement) => {
-      if (achievement.trigger(mockUsage)) {
-        unlockedAchievements[achievement.id] = {
-          unlocked: true,
-          unlockedAt: new Date()
-        };
-      }
+    const unsub = onSnapshot(collection(db, 'users', user.uid, 'achievements'), (snap) => {
+        const data: Record<string, any> = {};
+        snap.docs.forEach(d => data[d.id] = d.data());
+        setUnlocked(data);
     });
-    setUnlocked(unlockedAchievements);
+    return unsub;
   }, [user]);
+
+  // Check for new unlocks when usage changes
+  useEffect(() => {
+    if (!user || !userData) return;
+    
+    ACHIEVEMENTS.forEach(async (ach) => {
+        if (!unlocked[ach.id] && ach.trigger(userData.usage)) {
+            // Unlock!
+            await setDoc(doc(db, 'users', user.uid, 'achievements', ach.id), {
+                id: ach.id,
+                name: ach.name,
+                description: ach.description,
+                unlockedAt: Timestamp.now(),
+                icon: ach.icon
+            });
+        }
+    });
+  }, [userData?.usage, user, unlocked]);
 
   const getIcon = (type: string, active: boolean) => {
     const className = `w-8 h-8 ${active ? 'text-amber-500' : 'text-gray-200'}`;
