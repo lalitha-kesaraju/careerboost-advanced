@@ -1,0 +1,142 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and usage statistics.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "tier": { "type": "string", "enum": ["basic", "medium", "premium"] },
+        "usage": {
+          "type": "object",
+          "properties": {
+            "resumeAnalyses": { "type": "integer" },
+            "skillGaps": { "type": "integer" },
+            "careerAdviceCount": { "type": "integer" },
+            "mockInterviews": { "type": "integer" },
+            "jobApplicationsCount": { "type": "integer" },
+            "learningPlans": { "type": "integer" }
+          }
+        },
+        "lastResetDate": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "email", "tier", "usage"]
+    },
+    "Resume": {
+      "title": "Resume",
+      "description": "User uploaded or built resume data.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "content": { "type": "string" },
+        "parsedData": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "name", "content", "createdAt"]
+    },
+    "JobApplication": {
+      "title": "Job Application",
+      "description": "Tracked job application.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "company": { "type": "string" },
+        "role": { "type": "string" },
+        "status": { "type": "string", "enum": ["applied", "interviewing", "offered", "rejected", "wishlist"] },
+        "appliedDate": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "userId", "company", "role", "status", "appliedDate"]
+    },
+    "MockInterview": {
+      "title": "Mock Interview",
+      "description": "Record of a mock interview session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "role": { "type": "string" },
+        "feedback": { "type": "string" },
+        "transcript": { "type": "array", "items": { "type": "object" } },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "role", "feedback", "createdAt"]
+    },
+    "LearningPlan": {
+      "title": "Learning Plan",
+      "description": "Generated career learning plan.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "goal": { "type": "string" },
+        "plan": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "userId", "goal", "plan", "createdAt"]
+    },
+    "PortfolioProject": {
+      "title": "Portfolio Project",
+      "description": "A project showcased in the user's portfolio.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "skills": { "type": "array", "items": { "type": "string" } },
+        "link": { "type": "string" },
+        "type": { "type": "string", "enum": ["project", "experience", "education"] },
+        "order": { "type": "integer" }
+      },
+      "required": ["id", "title", "description", "type"]
+    },
+    "Achievement": {
+      "title": "Achievement",
+      "description": "A badge or milestone unlocked by the user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "unlockedAt": { "type": "string", "format": "date-time" },
+        "icon": { "type": "string" }
+      },
+      "required": ["id", "name", "description", "unlockedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Store user profile and limits."
+    },
+    "/users/{userId}/resumes/{resumeId}": {
+      "schema": "Resume",
+      "description": "Store user resumes."
+    },
+    "/users/{userId}/applications/{applicationId}": {
+      "schema": "JobApplication",
+      "description": "Store user job applications."
+    },
+    "/users/{userId}/interviews/{interviewId}": {
+      "schema": "MockInterview",
+      "description": "Store user interview sessions."
+    },
+    "/users/{userId}/learningPlans/{planId}": {
+      "schema": "LearningPlan",
+      "description": "Store user learning plans."
+    },
+    "/users/{userId}/portfolio/{projectId}": {
+      "schema": "PortfolioProject",
+      "description": "Store portfolio items."
+    },
+    "/users/{userId}/achievements/{achievementId}": {
+      "schema": "Achievement",
+      "description": "Store unlocked achievements."
+    }
+  }
+}

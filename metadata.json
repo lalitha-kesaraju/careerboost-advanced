@@ -1,0 +1,6 @@
+{
+  "name": "Mithra Careers",
+  "description": "Elite career strategy platform with AI-driven market simulations, gap analysis, and tailored learning paths.",
+  "requestFramePermissions": ["microphone", "camera"],
+  "majorCapabilities": []
+}

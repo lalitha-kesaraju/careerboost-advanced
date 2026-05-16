@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. Primitive Definitions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // 2. User Profiles
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && 
+        incoming().tier == 'basic' && 
+        incoming().usage.resumeAnalyses == 0 &&
+        incoming().keys().hasAll(['userId', 'email', 'tier', 'usage']);
+      
+      allow update: if isOwner(userId) && 
+        // Action: Update Profile Info
+        (incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email'])) ||
+        // Action: System Sync (Backend/Admin simulated if necessary, but here we strictly limit client updates)
+        // If we want the backend to be the ONLY one updating usage, we don't allow it here.
+        // Since we initialized admin app in server.ts, it bypasses these rules.
+        false;
+
+      // 3. Sub-collections
+      match /resumes/{resumeId} {
+        allow list, get, create, update, delete: if isOwner(userId);
+      }
+      
+      match /applications/{applicationId} {
+        allow list, get, create, update, delete: if isOwner(userId);
+      }
+      
+      match /interviews/{interviewId} {
+        allow list, get, create, update, delete: if isOwner(userId);
+      }
+      
+      match /learningPlans/{planId} {
+        allow list, get, create, update, delete: if isOwner(userId);
+      }
+      
+      match /portfolio/{projectId} {
+        allow list, get, create, update, delete: if isOwner(userId);
+      }
+      
+      match /achievements/{achievementId} {
+        allow list, get: if isOwner(userId);
+        allow create: if isOwner(userId); // Simplified for this tier, usually backend only
+      }
+    }
+  }
+}
