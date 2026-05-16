@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../App';
-import { db } from '../App';
+import { db } from '../firebase';
 import { collection, query, getDocs, limit } from 'firebase/firestore';
 import { getMithraAdvice } from '../services/gemini';
 import { Send, Sparkles, Loader2, Bot, User as UserIcon, BrainCircuit, History } from 'lucide-react';
@@ -69,11 +69,11 @@ export function MithraChat() {
     <div className="max-w-5xl mx-auto flex flex-col h-[75vh]">
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-indigo-600 rounded-2xl shadow-xl shadow-indigo-100">
+          <div className="p-3 bg-cyan-600 rounded-2xl shadow-xl shadow-cyan-100">
             <BrainCircuit className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 className="text-2xl font-bold tracking-tight">Mithra AI</h2>
+            <h2 className="text-2xl font-bold tracking-tight">Boost AI</h2>
             <p className="text-sm text-gray-500 italic serif opacity-70">Unified Intelligence Center</p>
           </div>
         </div>
@@ -87,8 +87,8 @@ export function MithraChat() {
         {messages.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-center py-20 px-10">
              <div className="relative mb-8">
-                <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-10 animate-pulse" />
-                <Bot className="w-20 h-20 text-indigo-600 relative z-10" />
+                <div className="absolute inset-0 bg-cyan-500 blur-3xl opacity-10 animate-pulse" />
+                <Bot className="w-20 h-20 text-cyan-600 relative z-10" />
              </div>
              <h3 className="font-bold text-2xl mb-3 tracking-tight">Behold, Integrated Wisdom</h3>
              <p className="text-gray-500 text-sm max-w-md leading-relaxed italic serif opacity-80">
@@ -99,7 +99,7 @@ export function MithraChat() {
                   <button 
                     key={q}
                     onClick={() => { setInput(q); }}
-                    className="p-4 bg-white border border-gray-100 rounded-2xl text-xs font-medium text-gray-500 hover:border-indigo-200 hover:text-indigo-600 transition-all text-left"
+                    className="p-4 bg-white border border-gray-100 rounded-2xl text-xs font-medium text-gray-500 hover:border-cyan-200 hover:text-cyan-600 transition-all text-left"
                   >
                     {q}
                   </button>
@@ -116,7 +116,7 @@ export function MithraChat() {
             className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
           >
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm transition-all ${
-              msg.role === 'user' ? 'bg-gray-100 text-gray-400' : 'bg-indigo-600 text-white'
+              msg.role === 'user' ? 'bg-gray-100 text-gray-400' : 'bg-cyan-600 text-white'
             }`}>
               {msg.role === 'user' ? <UserIcon className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
             </div>
@@ -124,7 +124,7 @@ export function MithraChat() {
               msg.role === 'user' ? 'bg-white text-gray-900 border border-gray-100 rounded-tr-none' : 'bg-[#1A1A1A] text-white rounded-tl-none'
             }`}>
                {msg.role === 'mithra' ? (
-                 <div className="prose prose-invert prose-sm prose-indigo max-w-none">
+                 <div className="prose prose-invert prose-sm prose-cyan max-w-none">
                     <Markdown>{msg.content}</Markdown>
                  </div>
                ) : (
@@ -136,13 +136,13 @@ export function MithraChat() {
         
         {loading && (
           <div className="flex gap-6">
-            <div className="w-12 h-12 rounded-2xl bg-indigo-600 flex items-center justify-center text-white shadow-lg animate-pulse">
+            <div className="w-12 h-12 rounded-2xl bg-cyan-600 flex items-center justify-center text-white shadow-lg animate-pulse">
               <Loader2 className="w-6 h-6 animate-spin" />
             </div>
             <div className="p-8 rounded-[2.5rem] bg-gray-900 border border-gray-800 rounded-tl-none flex items-center gap-2">
               <div className="flex gap-1">
                 {[0, 1, 2].map(i => (
-                  <div key={i} className="w-1.5 h-1.5 bg-indigo-50 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                  <div key={i} className="w-1.5 h-1.5 bg-cyan-50 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
                 ))}
               </div>
               <span className="text-xs font-mono text-gray-500 uppercase tracking-widest ml-2">Synaptic Processing</span>
@@ -152,8 +152,8 @@ export function MithraChat() {
       </div>
 
       <div className="relative group">
-        <div className="absolute inset-0 bg-indigo-500 blur-2xl opacity-5 group-focus-within:opacity-10 transition-opacity" />
-        <div className="relative p-2 bg-white rounded-[2rem] border border-gray-100 shadow-2xl flex gap-3 items-center focus-within:ring-4 focus-within:ring-indigo-500/5 transition-all">
+        <div className="absolute inset-0 bg-cyan-500 blur-2xl opacity-5 group-focus-within:opacity-10 transition-opacity" />
+        <div className="relative p-2 bg-white rounded-[2rem] border border-gray-100 shadow-2xl flex gap-3 items-center focus-within:ring-4 focus-within:ring-cyan-500/5 transition-all">
           <input 
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -164,7 +164,7 @@ export function MithraChat() {
           <button 
             onClick={handleSend}
             disabled={!input.trim() || loading}
-            className="bg-indigo-600 text-white p-4 rounded-2xl hover:bg-indigo-700 transition-all disabled:opacity-30 shadow-xl shadow-indigo-100"
+            className="bg-cyan-600 text-white p-4 rounded-2xl hover:bg-cyan-700 transition-all disabled:opacity-30 shadow-xl shadow-cyan-100"
           >
             <Send className="w-5 h-5" />
           </button>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App';
-import { db } from '../App';
+import { db } from '../firebase';
 import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { FolderHeart, Plus, Trash2, Link as LinkIcon, Briefcase, GraduationCap, Code2, Loader2, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -72,7 +72,7 @@ export function PortfolioSection() {
         </div>
         <button 
           onClick={() => setShowAdd(true)}
-          className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg hover:bg-indigo-700 transition-all"
+          className="flex items-center gap-2 bg-cyan-600 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg hover:bg-cyan-700 transition-all"
         >
           <Plus className="w-4 h-4" /> Add Item
         </button>
@@ -95,7 +95,7 @@ export function PortfolioSection() {
                         <input 
                             value={newItem.title} 
                             onChange={(e) => setNewItem({...newItem, title: e.target.value})}
-                            className="w-full p-4 bg-gray-50 rounded-2xl border border-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
+                            className="w-full p-4 bg-gray-50 rounded-2xl border border-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500/10"
                             placeholder="e.g. Lead Developer"
                         />
                     </div>
@@ -168,7 +168,7 @@ export function PortfolioSection() {
           >
             <div className="flex items-start justify-between mb-6">
                <div className={`p-3 rounded-2xl ${
-                 item.type === 'project' ? 'bg-indigo-50 text-indigo-600' : 
+                 item.type === 'project' ? 'bg-cyan-50 text-cyan-600' : 
                  item.type === 'experience' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'
                }`}>
                   {getIcon(item.type)}
@@ -200,7 +200,7 @@ export function PortfolioSection() {
                    href={item.link} 
                    target="_blank" 
                    rel="noopener noreferrer"
-                   className="inline-flex items-center gap-2 text-indigo-600 text-xs font-bold hover:underline"
+                   className="inline-flex items-center gap-2 text-cyan-600 text-xs font-bold hover:underline"
                  >
                    View Source/Demo <LinkIcon className="w-3 h-3" />
                  </a>

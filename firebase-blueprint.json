@@ -8,6 +8,9 @@
         "userId": { "type": "string" },
         "email": { "type": "string" },
         "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "targetRole": { "type": "string" },
+        "role": { "type": "string" },
         "tier": { "type": "string", "enum": ["basic", "medium", "premium"] },
         "usage": {
           "type": "object",

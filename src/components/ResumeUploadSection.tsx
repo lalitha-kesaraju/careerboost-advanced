@@ -10,12 +10,15 @@ interface ResumeUploadSectionProps {
 import { parseResume } from '../services/gemini';
 import * as pdfjs from 'pdfjs-dist';
 import mammoth from 'mammoth';
+import { doc, updateDoc, increment, setDoc, collection } from 'firebase/firestore';
+import { db } from '../firebase';
+import { handleFirestoreError, OperationType } from '../services/firestoreService';
 
 // Set up PDF.js worker from CDN for reliability
 pdfjs.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.worker.min.mjs';
 
 export function ResumeUploadSection({ onNext }: ResumeUploadSectionProps) {
-  const { userData } = useAuth();
+  const { user, userData } = useAuth();
   const [dragActive, setDragActive] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -23,11 +26,51 @@ export function ResumeUploadSection({ onNext }: ResumeUploadSectionProps) {
   const [rawText, setRawText] = useState('');
 
   const stats = [
-    { label: 'Total Resumes', value: '7', sub: 'Lifetime uploads', icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-200' },
-    { label: 'Successful', value: '7', sub: 'Parsed successfully', icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-200' },
-    { label: 'Failed', value: '0', sub: 'Upload errors', icon: X, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-200' },
-    { label: 'Sessions', value: '-', sub: 'Active sessions', icon: Clock, color: 'text-purple-600', bg: 'bg-purple-50', border: 'border-purple-200' },
-    { label: 'Success Rate', value: '100%', sub: 'Upload success', icon: TrendingUp, color: 'text-orange-600', bg: 'bg-orange-50', border: 'border-orange-200' },
+    { 
+      label: 'Total Resumes', 
+      value: userData?.usage?.resumeAnalyses.toString() || '0', 
+      sub: 'Lifetime uploads', 
+      icon: FileText, 
+      color: 'text-blue-600', 
+      bg: 'bg-blue-50', 
+      border: 'border-blue-200' 
+    },
+    { 
+      label: 'Successful', 
+      value: userData?.usage?.resumeAnalyses.toString() || '0', 
+      sub: 'Parsed successfully', 
+      icon: CheckCircle2, 
+      color: 'text-emerald-600', 
+      bg: 'bg-emerald-50', 
+      border: 'border-emerald-200' 
+    },
+    { 
+      label: 'Failed', 
+      value: '0', 
+      sub: 'Upload errors', 
+      icon: X, 
+      color: 'text-red-600', 
+      bg: 'bg-red-50', 
+      border: 'border-red-200' 
+    },
+    { 
+      label: 'Sessions', 
+      value: (userData?.usage?.resumeAnalyses || 0) > 0 ? '1' : '-', 
+      sub: 'Active sessions', 
+      icon: Clock, 
+      color: 'text-purple-600', 
+      bg: 'bg-purple-50', 
+      border: 'border-purple-200' 
+    },
+    { 
+      label: 'Success Rate', 
+      value: (userData?.usage?.resumeAnalyses || 0) > 0 ? '100%' : '0%', 
+      sub: 'Upload success', 
+      icon: TrendingUp, 
+      color: 'text-orange-600', 
+      bg: 'bg-orange-50', 
+      border: 'border-orange-200' 
+    },
   ];
 
   const handleDrag = (e: React.DragEvent) => {
@@ -66,11 +109,14 @@ export function ResumeUploadSection({ onNext }: ResumeUploadSectionProps) {
   };
 
   const handleUpload = async () => {
+    setIsUploading(true);
     let text = rawText;
     
     if (!useRawText) {
-      if (!file) return;
-      setIsUploading(true);
+      if (!file) {
+        setIsUploading(false);
+        return;
+      }
       try {
         if (file.type === 'application/pdf') {
           text = await extractTextFromPDF(file);
@@ -88,19 +134,61 @@ export function ResumeUploadSection({ onNext }: ResumeUploadSectionProps) {
       }
     }
 
-    if (!text || text.trim().length < 50) {
-      alert("Please provide more resume content for analysis.");
+    console.log("Extracted text length:", text?.trim().length || 0);
+    
+    if (!text || text.trim().length < 30) {
+      const currentLength = text?.trim().length || 0;
+      alert(`The extracted text from your file is too short (${currentLength} characters). 
+      
+Please ensure you are uploading a valid resume (PDF, Word, or Text). If the file is an image or contains mostly binary data, our system cannot read it. 
+
+You can also try using the "Paste Text" tab to manually provide your resume content.`);
+      setIsUploading(false);
+      return;
+    }
+
+    // Check for binary garbage (heuristic)
+    const nonPrintableRatio = (text.match(/[^\x20-\x7E\s]/g) || []).length / text.length;
+    if (nonPrintableRatio > 0.3) {
+      alert("The uploaded file appears to be binary or encrypted. Please upload a standard text-based PDF or Word document, or use the 'Paste Text' option.");
       setIsUploading(false);
       return;
     }
 
     try {
-      setIsUploading(true);
       const parsedData = await parseResume(text);
+      
+      if (!parsedData || Object.keys(parsedData).length === 0) {
+        throw new Error("AI returned empty data. The resume might be unreadable or too complex.");
+      }
+
+      // Increment usage in Firestore and save resume doc (non-blocking)
+      if (user) {
+        const userRef = doc(db, 'users', user.uid);
+        const resumeRef = doc(collection(db, 'users', user.uid, 'resumes'));
+        
+        // We run this in the background so it doesn't block the UI transition
+        Promise.all([
+          updateDoc(userRef, {
+            'usage.resumeAnalyses': increment(1)
+          }),
+          setDoc(resumeRef, {
+            ...parsedData,
+            uploadedAt: new Date(),
+            fileName: file?.name || 'Manual Paste'
+          })
+        ]).catch(error => {
+          console.error("Failed to save resume session to history:", error);
+          // We don't alert here to avoid interrupts if the analysis itself worked
+        });
+      }
+      
+      // Move to next step immediately after AI succeeds
       onNext(parsedData);
     } catch (err) {
       console.error("AI Parsing Error:", err);
-      alert("Failed to parse resume with AI. Please check your connection.");
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      alert(`Critical Analysis Error: ${errorMessage}\n\nPlease ensure your Gemini API key is valid and you have an active internet connection.`);
     } finally {
       setIsUploading(false);
     }
@@ -118,12 +206,12 @@ export function ResumeUploadSection({ onNext }: ResumeUploadSectionProps) {
              <div key={i} className={`p-6 bg-white rounded-2xl border-l-4 ${stat.border} shadow-sm hover:shadow-md transition-shadow`}>
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">{stat.label}</span>
+                    <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{stat.label}</span>
                     <span className="text-3xl font-black text-gray-900 mt-1">{stat.value}</span>
                   </div>
                   <stat.icon className={`w-5 h-5 ${stat.color} opacity-40`} />
                 </div>
-                <p className="text-[10px] text-gray-400 font-medium">{stat.sub}</p>
+                <p className="text-[10px] text-gray-600 font-medium">{stat.sub}</p>
              </div>
            ))}
         </div>
@@ -133,14 +221,14 @@ export function ResumeUploadSection({ onNext }: ResumeUploadSectionProps) {
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-2">
            <div className="flex flex-col items-center">
-             <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200 z-10">
-               <CheckCircle2 className="w-6 h-6" />
+             <div className="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-white shadow-lg shadow-cyan-100 z-10">
+               <span className="font-bold">1</span>
              </div>
-             <span className="text-xs font-bold text-emerald-600 mt-2 uppercase tracking-widest">Upload</span>
+             <span className="text-xs font-bold text-cyan-600 mt-2 uppercase tracking-widest">Upload</span>
            </div>
-           <div className="flex-1 h-1 bg-emerald-500 mx-4 -mt-6" />
+           <div className="flex-1 h-1 bg-gray-200 mx-4 -mt-6" />
            <div className="flex flex-col items-center">
-             <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-100 z-10 cursor-not-allowed">
+             <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 z-10 cursor-not-allowed">
                <span className="font-bold">2</span>
              </div>
              <span className="text-xs font-bold text-gray-400 mt-2 uppercase tracking-widest">Review</span>
@@ -158,19 +246,19 @@ export function ResumeUploadSection({ onNext }: ResumeUploadSectionProps) {
       <div className="max-w-3xl mx-auto pt-10">
         <div className="text-center mb-10">
           <h2 className="text-4xl font-black text-gray-900 mb-4 tracking-tight">Start Your Analysis</h2>
-          <p className="text-gray-500 italic serif text-lg opacity-80">Upload your resume to get deep AI insights into your career path.</p>
+          <p className="text-gray-600 italic serif text-lg opacity-80">Upload your resume to get deep AI insights into your career path.</p>
         </div>
 
         <div className="flex gap-4 mb-8">
           <button 
             onClick={() => setUseRawText(false)}
-            className={`flex-1 py-4 rounded-xl font-bold text-sm transition-all ${!useRawText ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-white text-gray-400 border border-gray-100'}`}
+            className={`flex-1 py-4 rounded-xl font-bold text-sm transition-all ${!useRawText ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-100' : 'bg-white text-gray-600 border border-gray-100'}`}
           >
             File Upload
           </button>
           <button 
             onClick={() => setUseRawText(true)}
-            className={`flex-1 py-4 rounded-xl font-bold text-sm transition-all ${useRawText ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'bg-white text-gray-400 border border-gray-100'}`}
+            className={`flex-1 py-4 rounded-xl font-bold text-sm transition-all ${useRawText ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-100' : 'bg-white text-gray-600 border border-gray-100'}`}
           >
             Paste Text
           </button>
@@ -196,7 +284,7 @@ export function ResumeUploadSection({ onNext }: ResumeUploadSectionProps) {
               <h4 className="text-xl font-bold text-gray-900 mb-1">
                 {file ? file.name : 'Choose a file or drag it here'}
               </h4>
-              <p className="text-sm text-gray-400 font-medium">PDf, DocX or TXT (Max. 10MB)</p>
+              <p className="text-sm text-gray-600 font-medium">PDf, DocX or TXT (Max. 10MB)</p>
             </div>
 
             <input 
@@ -222,7 +310,17 @@ export function ResumeUploadSection({ onNext }: ResumeUploadSectionProps) {
             className="mt-10"
           >
             <button 
-              onClick={handleUpload}
+              onClick={() => {
+                if (useRawText && (!rawText || rawText.trim().length < 30)) {
+                  alert("Please paste at least 30 characters of your resume content.");
+                  return;
+                }
+                if (!useRawText && !file) {
+                  alert("Please select a file to upload.");
+                  return;
+                }
+                handleUpload();
+              }}
               disabled={isUploading}
               className="w-full bg-[#1A1A1A] text-white py-5 px-8 rounded-2xl font-bold flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl disabled:opacity-50"
             >

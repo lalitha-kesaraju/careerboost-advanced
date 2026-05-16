@@ -1,1 +1,0 @@
-abort_key: 'escape'  # keycode for aborting experiment. *default:* 'escape', originally, 'f12'

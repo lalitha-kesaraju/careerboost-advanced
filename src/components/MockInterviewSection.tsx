@@ -1,5 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useAuth } from '../App';
+import { recordActivity } from '../services/statsService';
+import { doc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { db } from '../firebase';
+import { handleFirestoreError, OperationType } from '../services/firestoreService';
 import { 
   Mic, Briefcase, Trophy, Sparkles, Brain, 
   BarChart3, Target, Star, Flame, History, Users, Bell, RefreshCw, WifiOff,
@@ -22,6 +27,8 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<{ role: 'ai' | 'user', content: string }[]>([]);
+
+  const { user, refreshUsage } = useAuth();
 
   const handleStartSetup = (data: InterviewData) => {
     setInterviewData(data);
@@ -53,6 +60,31 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
     try {
       const analysis = await getSessionAnalysis(interviewData, mockHistory);
       setAnalysisReport(analysis);
+
+      // Persist to Firestore
+      if (user) {
+        const interviewId = `int_${Date.now()}`;
+        const interviewRef = doc(db, 'users', user.uid, 'interviews', interviewId);
+        
+        await setDoc(interviewRef, {
+          id: interviewId,
+          userId: user.uid,
+          role: interviewData.jobRole,
+          feedback: analysis,
+          transcript: mockHistory,
+          createdAt: new Date().toISOString()
+        });
+
+        // Increment usage
+        const userRef = doc(db, 'users', user.uid);
+        await updateDoc(userRef, {
+          'usage.mockInterviews': increment(1)
+        });
+        
+        recordActivity(user.uid, 'interview', 'Interview Calibrated', `Performance analysis generated for: ${interviewData.jobRole}`);
+        
+        refreshUsage();
+      }
     } catch (err) {
       console.error(err);
       setError("Failed to generate performance analysis. Please try again.");

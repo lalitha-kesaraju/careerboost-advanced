@@ -6,9 +6,39 @@ import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
+import "dotenv/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Initialize Gemini lazily
+let genAI: GoogleGenAI | null = null;
+function getGenAI() {
+  if (!genAI) {
+    const apiKey = process.env.GEMINI_API_KEY?.trim();
+    if (!apiKey) {
+      console.error("GEMINI_API_KEY is missing from process.env");
+      throw new Error("GEMINI_API_KEY not configured on server");
+    }
+    
+    // Log key metadata (safe)
+    console.log(`Initializing Gemini with key: ${apiKey.substring(0, 4)}... (length: ${apiKey.length})`);
+    
+    if (apiKey.length < 10 || apiKey.includes("REPLACE_ME")) {
+      throw new Error("GEMINI_API_KEY appears to be a placeholder or invalid. Please check Settings > Secrets.");
+    }
+
+    genAI = new GoogleGenAI({ 
+      apiKey,
+      httpOptions: {
+        headers: {
+          'User-Agent': 'aistudio-build',
+        }
+      }
+    });
+  }
+  return genAI;
+}
 
 // Load firebase config for administrative actions
 let firebaseConfig: any;
@@ -31,8 +61,7 @@ if (firebaseConfig) {
 
 const db = (appAdmin && firebaseConfig) ? getFirestore(appAdmin, firebaseConfig.firestoreDatabaseId) : null;
 
-// Initialize Gemini
-const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || "" });
+const DEFAULT_MODEL = "gemini-flash-latest";
 
 async function startServer() {
   const app = express();
@@ -114,45 +143,22 @@ async function startServer() {
     }
   });
 
-  // Gemini Proxy Routes
-  app.post("/api/gemini/:action", async (req, res) => {
+  // Gemini proxy routes
+  app.post("/api/gemini/generate", async (req, res) => {
     try {
-      const { action } = req.params;
-      const { payload } = req.body;
-
-      if (!process.env.GEMINI_API_KEY) {
-        throw new Error("GEMINI_API_KEY not configured on server");
-      }
-
-      let result;
-      switch (action) {
-        case "generateContent": {
-          const { contents, config } = payload;
-          result = await genAI.models.generateContent({
-            model: "gemini-3-flash-preview",
-            contents,
-            config
-          });
-          res.json({ text: result.text });
-          break;
+      const { contents, config, systemInstruction } = req.body;
+      const genAIClient = getGenAI();
+      
+      const response = await genAIClient.models.generateContent({
+        model: config?.model || DEFAULT_MODEL,
+        contents,
+        config: {
+          ...config,
+          systemInstruction
         }
-        case "chat": {
-          const { history, message, systemInstruction, config } = payload;
-          const chat = genAI.chats.create({ 
-            model: "gemini-3-flash-preview",
-            history,
-            config: {
-              ...config,
-              systemInstruction
-            }
-          });
-          result = await chat.sendMessage(message);
-          res.json({ text: result.text });
-          break;
-        }
-        default:
-          res.status(404).json({ error: "Action not found" });
-      }
+      });
+      
+      res.json({ text: response.text });
     } catch (error: any) {
       console.error("Gemini Proxy Error:", error);
       res.status(500).json({ error: error.message });

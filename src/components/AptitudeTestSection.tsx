@@ -13,37 +13,52 @@ import {
   Timer, 
   Lightbulb, 
   ArrowRight,
-  TrendingUp,
-  Award,
   Sparkles,
-  PieChart
+  PieChart,
+  Loader2
 } from 'lucide-react';
 
-import { APTITUDE_DATA, AptitudeQuestion } from '../data/aptitudeQuestions';
+import { generateAptitudeQuestions, AptitudeQuestion } from '../services/questionService';
 
 export function AptitudeTestSection() {
-  const [view, setView] = useState<'lobby' | 'test' | 'results'>('lobby');
+  const [view, setView] = useState<'lobby' | 'test' | 'results' | 'loading'>('lobby');
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState<Record<number, number>>({});
+  const [answers, setAnswers] = useState<Record<string, number>>({});
   const [timer, setTimer] = useState(0);
   const [activeDifficulty, setActiveDifficulty] = useState<'easy' | 'medium' | 'hard'>('medium');
   const [filteredQuestions, setFilteredQuestions] = useState<AptitudeQuestion[]>([]);
 
-  useEffect(() => {
-    if (view === 'test') {
-      const diff = activeDifficulty.toLowerCase() as 'easy' | 'medium' | 'hard';
-      const pool = APTITUDE_DATA.filter(q => q.difficulty === diff);
-      const shuffled = [...pool].sort(() => Math.random() - 0.5).slice(0, 20);
-      setFilteredQuestions(shuffled);
+  const startTest = async () => {
+    setView('loading');
+    try {
+      const questions = await generateAptitudeQuestions(10, activeDifficulty);
+      setFilteredQuestions(questions);
       setCurrentIdx(0);
       setAnswers({});
       setTimer(0);
+      setView('test');
+    } catch (error) {
+      console.error("Test start failed", error);
+      setView('lobby');
     }
-  }, [view, activeDifficulty]);
+  };
+
+  useEffect(() => {
+    let interval: any;
+    if (view === 'test') {
+      interval = setInterval(() => {
+        setTimer(t => t + 1);
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [view]);
 
   const handleAnswer = (optionIdx: number) => {
     const q = filteredQuestions[currentIdx];
     if (!q) return;
+
     setAnswers(prev => ({ ...prev, [q.id]: optionIdx }));
     
     if (currentIdx < filteredQuestions.length - 1) {
@@ -77,21 +92,22 @@ export function AptitudeTestSection() {
             className="space-y-10"
           >
             <div className="bg-gray-900 text-white p-12 rounded-[3.5rem] relative overflow-hidden">
-               <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-transparent to-purple-500/10" />
+               <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 via-transparent to-purple-500/10" />
                <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-12">
                   <div className="max-w-xl space-y-6">
-                     <span className="px-4 py-1.5 bg-indigo-500 rounded-full text-[10px] font-black uppercase tracking-widest">Mastery Level 1</span>
-                     <h1 className="text-6xl font-black tracking-tighter leading-none">Aptitude <span className="text-indigo-400">Elite</span></h1>
+                     <span className="px-4 py-1.5 bg-cyan-500 rounded-full text-[10px] font-black uppercase tracking-widest">AI Generated • Real-time</span>
+                     <h1 className="text-6xl font-black tracking-tighter leading-none">Aptitude <span className="text-cyan-400">Elite</span></h1>
                      <p className="text-gray-400 text-lg italic serif leading-relaxed">
-                        100 Questions. 3 Difficulty Tiers. One goal: Absolute cognitive domination for technical and leadership roles.
+                        Dynamic cognitive diagnostics powered by Gemini AI. No two tests are identical. 
+                        Sharpen your technical and leadership logic with bespoke challenges.
                      </p>
                      <div className="flex gap-4 pt-4">
                         <div className="px-6 py-3 bg-white/5 rounded-2xl border border-white/10 flex items-center gap-3">
-                           <BarChart3 className="w-5 h-5 text-indigo-400" />
-                           <span className="text-xs font-bold">100+ Challenges</span>
+                           <Zap className="w-5 h-5 text-cyan-400" />
+                           <span className="text-xs font-bold">Infinite Depth</span>
                         </div>
                         <div className="px-6 py-3 bg-white/5 rounded-2xl border border-white/10 flex items-center gap-3">
-                           <Timer className="w-5 h-5 text-indigo-400" />
+                           <Timer className="w-5 h-5 text-cyan-400" />
                            <span className="text-xs font-bold">Timed Experience</span>
                         </div>
                      </div>
@@ -103,40 +119,40 @@ export function AptitudeTestSection() {
                            {['easy', 'medium', 'hard'].map((d: any) => (
                              <button 
                                key={d}
-                               onClick={() => setActiveDifficulty(d)}
-                               className={`w-full p-4 rounded-xl font-bold text-xs flex justify-between items-center transition-all ${
-                                 activeDifficulty === d ? 'bg-indigo-600 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                               onClick={() => setActiveDifficulty(d as any)}
+                               className={`w-full p-4 rounded-xl font-bold text-xs flex justify-between items-center transition-all capitalize ${
+                                 activeDifficulty === d ? 'bg-cyan-600 text-white shadow-lg' : 'bg-white/5 text-gray-400 hover:bg-white/10'
                                }`}
                              >
-                               <span className="capitalize">{d}</span> Level
+                               {d} Level
                                {activeDifficulty === d && <CheckCircle2 className="w-4 h-4" />}
                              </button>
                            ))}
                         </div>
                      </div>
                      <button 
-                       onClick={() => setView('test')}
+                       onClick={startTest}
                        className="w-full py-5 bg-white text-gray-900 rounded-2xl font-black text-sm hover:bg-gray-100 transition-all flex items-center justify-center gap-2"
                      >
-                        Start Diagnostic <ArrowRight className="w-4 h-4" />
+                        Generate & Start <ArrowRight className="w-4 h-4" />
                      </button>
                   </div>
                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-               <div className="p-8 bg-white border border-gray-100 rounded-[2.5rem] space-y-4">
-                  <PieChart className="w-8 h-8 text-indigo-600" />
+               <div className="p-8 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm space-y-4">
+                  <PieChart className="w-8 h-8 text-cyan-600" />
                   <h4 className="text-xl font-black">Quantitative</h4>
                   <p className="text-gray-500 text-xs leading-relaxed italic serif">Focus on data interpretation, ratios, and algebraic logic for business systems.</p>
                </div>
-               <div className="p-8 bg-white border border-gray-100 rounded-[2.5rem] space-y-4">
-                  <Brain className="w-8 h-8 text-indigo-600" />
+               <div className="p-8 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm space-y-4">
+                  <Brain className="w-8 h-8 text-cyan-600" />
                   <h4 className="text-xl font-black">Logical Reasoning</h4>
                   <p className="text-gray-500 text-xs leading-relaxed italic serif">Master pattern recognition and syllogistic structures favored by top-tier firms.</p>
                </div>
-               <div className="p-8 bg-white border border-gray-100 rounded-[2.5rem] space-y-4">
-                  <Sparkles className="w-8 h-8 text-indigo-600" />
+               <div className="p-8 bg-white border border-gray-100 rounded-[2.5rem] shadow-sm space-y-4">
+                  <Sparkles className="w-8 h-8 text-cyan-600" />
                   <h4 className="text-xl font-black">Verbal Proficiency</h4>
                   <p className="text-gray-500 text-xs leading-relaxed italic serif">Enhance communication precision, semantic analysis, and situational judgment.</p>
                </div>
@@ -144,7 +160,23 @@ export function AptitudeTestSection() {
           </motion.div>
         )}
 
-        {view === 'test' && (
+        {view === 'loading' && (
+          <motion.div 
+            key="loading"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="flex flex-col items-center justify-center py-32 space-y-6"
+          >
+            <Loader2 className="w-12 h-12 text-cyan-600 animate-spin" />
+            <div className="text-center">
+              <h2 className="text-2xl font-black text-gray-900">Generating Assessment</h2>
+              <p className="text-gray-500 italic serif">Gemini is curating a custom set of {activeDifficulty} challenges for you...</p>
+            </div>
+          </motion.div>
+        )}
+
+        {view === 'test' && filteredQuestions.length > 0 && (
           <motion.div 
             key="test"
             initial={{ opacity: 0, x: 20 }}
@@ -154,25 +186,25 @@ export function AptitudeTestSection() {
           >
             <div className="flex justify-between items-center bg-white p-6 rounded-[2rem] border border-gray-100 shadow-sm">
                <div className="flex items-center gap-6">
-                  <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center text-white font-black">
+                  <div className="w-12 h-12 bg-cyan-600 rounded-xl flex items-center justify-center text-white font-black">
                     {currentIdx + 1}
                   </div>
                   <div>
                     <h3 className="font-black text-gray-900">{filteredQuestions[currentIdx].category}</h3>
-                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{activeDifficulty} Tier Progress</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest capitalize">{activeDifficulty} Tier Progress</p>
                   </div>
                </div>
                <div className="flex items-center gap-8">
                   <div className="text-right">
                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Time Elapsed</p>
-                     <p className="font-mono text-indigo-600 font-bold">
+                     <p className="font-mono text-cyan-600 font-bold">
                         {Math.floor(timer / 60)}:{(timer % 60).toString().padStart(2, '0')}
                      </p>
                   </div>
                   <div className="w-32 h-2 bg-gray-100 rounded-full overflow-hidden">
                      <motion.div 
                        animate={{ width: `${((currentIdx + 1) / filteredQuestions.length) * 100}%` }}
-                       className="h-full bg-indigo-600"
+                       className="h-full bg-cyan-600"
                      />
                   </div>
                </div>
@@ -188,7 +220,7 @@ export function AptitudeTestSection() {
                     <button 
                       key={i}
                       onClick={() => handleAnswer(i)}
-                      className="group p-8 bg-gray-50 border border-gray-100 rounded-3xl text-left hover:bg-indigo-600 hover:text-white transition-all transform active:scale-[0.98] relative overflow-hidden"
+                      className="group p-8 bg-gray-50 border border-gray-100 rounded-3xl text-left hover:bg-cyan-600 hover:text-white transition-all transform active:scale-[0.98] relative overflow-hidden"
                     >
                        <span className="relative z-10 text-lg font-black">{opt}</span>
                        <div className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-white/20 rounded-xl scale-0 group-hover:scale-100 transition-transform">
@@ -208,10 +240,10 @@ export function AptitudeTestSection() {
             animate={{ opacity: 1, scale: 1 }}
             className="space-y-10"
           >
-            <div className="bg-gray-900 rounded-[3.5rem] p-16 text-center text-white relative overflow-hidden">
+            <div className="bg-gray-900 rounded-[3.5rem] p-16 text-center text-white relative overflow-hidden shadow-2xl">
                <Sparkles className="absolute top-[-40px] left-[-40px] w-64 h-64 text-white/5" />
                <div className="relative z-10 space-y-8">
-                  <div className="w-24 h-24 bg-indigo-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl shadow-indigo-500/20">
+                  <div className="w-24 h-24 bg-cyan-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl shadow-cyan-500/20">
                      <Trophy className="w-12 h-12" />
                   </div>
                   <h2 className="text-5xl font-black tracking-tight mt-6">Diagnostic Verified</h2>
@@ -219,15 +251,15 @@ export function AptitudeTestSection() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto py-10">
                      <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Cognitive Score</p>
-                        <p className="text-4xl font-black text-indigo-400">{calculateScore().percentage}%</p>
+                        <p className="text-4xl font-black text-cyan-400">{calculateScore().percentage}%</p>
                      </div>
                      <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Correct Hits</p>
-                        <p className="text-4xl font-black text-indigo-400">{calculateScore().correct} / {calculateScore().total}</p>
+                        <p className="text-4xl font-black text-cyan-400">{calculateScore().correct} / {calculateScore().total}</p>
                      </div>
                      <div className="p-8 bg-white/5 rounded-3xl border border-white/5">
                         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Time per Question</p>
-                        <p className="text-4xl font-black text-indigo-400">
+                        <p className="text-4xl font-black text-cyan-400">
                            {Math.round(timer / filteredQuestions.length)}s
                         </p>
                      </div>
@@ -240,9 +272,9 @@ export function AptitudeTestSection() {
                          setCurrentIdx(0);
                          setTimer(0);
                        }}
-                       className="px-12 py-4 bg-indigo-600 rounded-2xl font-black text-sm hover:bg-indigo-500 transition-all flex items-center justify-center gap-2"
+                       className="px-12 py-4 bg-cyan-600 rounded-2xl font-black text-sm hover:bg-cyan-500 transition-all flex items-center justify-center gap-2"
                      >
-                        Next Tier <ChevronRight className="w-4 h-4" />
+                        New Diagnostic <ChevronRight className="w-4 h-4" />
                      </button>
                      <button className="px-12 py-4 bg-white/10 rounded-2xl font-black text-sm hover:bg-white/20 transition-all border border-white/5">
                         Download Analytics
@@ -251,14 +283,14 @@ export function AptitudeTestSection() {
                </div>
             </div>
 
-            <section className="bg-white rounded-[3.5rem] p-12 border border-gray-100 shadow-xl">
+            <section className="bg-white rounded-[3.5rem] p-12 border border-gray-100 shadow-sm">
                <h3 className="text-2xl font-black text-gray-900 mb-10 flex items-center gap-3">
                   <Lightbulb className="w-6 h-6 text-amber-500" />
                   Performance Insights
                </h3>
                <div className="space-y-6">
                   {filteredQuestions.map(q => (
-                    <div key={q.id} className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 flex gap-8 items-start hover:border-indigo-100 transition-all">
+                    <div key={q.id} className="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 flex gap-8 items-start hover:border-cyan-100 transition-all">
                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
                          answers[q.id] === q.correct ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
                        }`}>
@@ -268,15 +300,15 @@ export function AptitudeTestSection() {
                           <p className="font-bold text-gray-900 leading-relaxed text-lg">"{q.text}"</p>
                           <div className="flex gap-4 items-center">
                              <div className="px-4 py-2 bg-white rounded-xl border border-gray-200 text-[10px] font-black uppercase text-gray-400">
-                                Category: <span className="text-indigo-600">{q.category}</span>
+                                Category: <span className="text-cyan-600">{q.category}</span>
                              </div>
-                             <div className="px-4 py-2 bg-white rounded-xl border border-gray-200 text-[10px] font-black uppercase text-gray-400">
+                             <div className="px-4 py-2 bg-white rounded-xl border border-gray-200 text-[10px] font-black uppercase text-gray-400 capitalize">
                                 Difficulty: <span className="text-amber-600">{q.difficulty}</span>
                              </div>
                           </div>
-                          <div className="p-6 bg-indigo-50 rounded-2xl border border-indigo-100/50">
-                             <p className="text-xs font-black text-indigo-900 uppercase tracking-widest mb-2">Mithra Explanation</p>
-                             <p className="text-sm text-indigo-700 italic serif leading-relaxed">{q.explanation}</p>
+                          <div className="p-6 bg-cyan-50 rounded-2xl border border-cyan-100/50">
+                             <p className="text-xs font-black text-cyan-900 uppercase tracking-widest mb-2">Boost Explanation</p>
+                             <p className="text-sm text-cyan-700 italic serif leading-relaxed">{q.explanation}</p>
                           </div>
                        </div>
                     </div>

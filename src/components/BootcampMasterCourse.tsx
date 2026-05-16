@@ -3,11 +3,18 @@ import { BootcampOverview } from './BootcampOverview';
 import { DSA4PhaseLearning } from './DSA4PhaseLearning';
 
 interface BootcampProps {
-  type: 'dsa' | 'prompt-engineering' | 'system-design' | 'full-stack' | 'mobile';
+  type: 'dsa' | 'prompt-engineering' | 'system-design' | 'full-stack' | 'mobile' | 'languages';
   onBack: () => void;
 }
 
 const BOOTCAMP_DATA = {
+  'languages': {
+    title: 'Modern Language Mastery',
+    steps: [
+      'Python for Automation', 'Advanced JavaScript (ES6+)', 'Go: Concurrent Systems', 
+      'Rust for Safety', 'TypeScript Orchestration', 'C++ Performance'
+    ]
+  },
   'dsa': {
     title: 'DSA Master Curriculum',
     steps: [

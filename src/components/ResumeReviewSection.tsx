@@ -450,7 +450,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                    <CheckSquare className="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
                 </div>
                 <div className="space-y-1">
-                   <p className="text-sm font-black text-gray-900">Yes, I confirm that all information above is parsed correctly and I'm ready to proceed with the analysis</p>
+                   <p className="text-sm font-black text-gray-900"> Yes, I confirm that all information above is parsed correctly and I'm ready to proceed with the analysis</p>
                 </div>
              </label>
 
@@ -459,7 +459,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                   onClick={onPrev}
                   className="px-8 py-5 bg-white border border-gray-100 rounded-2xl text-gray-400 font-black uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-all"
                 >
-                  Upload Different Resume
+                  Upload New Resume
                 </button>
                 <button 
                   onClick={handleNext}

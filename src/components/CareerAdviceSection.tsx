@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Compass, TrendingUp, AlertCircle, CheckCircle2, ChevronRight, BarChart3, Filter, ShieldCheck, Zap, Ship, Rocket, Landmark, MessageSquare, Copy, Link as LinkIcon, Loader2, ArrowLeft } from 'lucide-react';
+import { Compass, TrendingUp, AlertCircle, CheckCircle2, ChevronRight, BarChart3, Filter, ShieldCheck, Zap, Ship, Rocket, Landmark, MessageSquare, Copy, Link as LinkIcon, Loader2, ArrowLeft, Crown } from 'lucide-react';
 import { getCareerProjection, generateReferralMessage } from '../services/gemini';
+import { useAuth } from '../App';
+import { doc, updateDoc, increment } from 'firebase/firestore';
+import { db } from '../firebase';
 
 interface CareerAdviceSectionProps {
   data: any;
@@ -21,6 +24,8 @@ export function CareerAdviceSection({ data, onNavigate, onDataUpdate }: CareerAd
   const careerAdvice = data?.careerAdvice;
   const targetRole = data?.targetRole;
   const skills = data?.skills || [];
+  const { user, userData, refreshUsage } = useAuth();
+  const [isLimited, setIsLimited] = useState(false);
 
   const handleGenerateReferral = async () => {
     if (!targetCompany) return;
@@ -45,6 +50,19 @@ export function CareerAdviceSection({ data, onNavigate, onDataUpdate }: CareerAd
 
   useEffect(() => {
     const fetchAdvice = async () => {
+      // Check limits first
+      if (userData) {
+        const tier = userData.tier || 'basic';
+        const usage = userData.usage?.careerAdviceCount || 0;
+        
+        if (tier === 'basic' && usage >= 1) setIsLimited(true);
+        else if (tier === 'medium' && usage >= 4) setIsLimited(true);
+        else setIsLimited(false);
+
+        if (tier === 'basic' && usage >= 1 && !careerAdvice) return;
+        if (tier === 'medium' && usage >= 4 && !careerAdvice) return;
+      }
+
       // Check if we already have valid cached advice for this role
       if (careerAdvice && careerAdvice.targetRole === targetRole && careerAdvice.skillsSnapshot === JSON.stringify(skills)) {
         setProjection(careerAdvice.data);
@@ -65,6 +83,16 @@ export function CareerAdviceSection({ data, onNavigate, onDataUpdate }: CareerAd
           skills
         );
         setProjection(result);
+        
+        // Save usage if successful
+        if (user) {
+          const userRef = doc(db, 'users', user.uid);
+          await updateDoc(userRef, {
+            'usage.careerAdviceCount': increment(1)
+          });
+          refreshUsage();
+        }
+
         if (onDataUpdate) {
           onDataUpdate({ 
             careerAdvice: {
@@ -81,7 +109,27 @@ export function CareerAdviceSection({ data, onNavigate, onDataUpdate }: CareerAd
       }
     };
     fetchAdvice();
-  }, [targetRole, JSON.stringify(skills)]);
+  }, [targetRole, JSON.stringify(skills), userData?.tier]);
+
+  if (isLimited && !careerAdvice) {
+    return (
+      <div className="h-[60vh] flex flex-col items-center justify-center text-center p-10 bg-white rounded-[3rem] border border-indigo-100 shadow-2xl">
+         <div className="w-20 h-20 bg-amber-100 text-amber-600 rounded-[2rem] flex items-center justify-center mb-6">
+            <Crown className="w-10 h-10" />
+         </div>
+         <h2 className="text-3xl font-black text-gray-900 mb-4">Advice Limit Reached</h2>
+         <p className="text-gray-500 italic serif text-lg max-w-md mb-8">
+            The <span className="text-indigo-600 font-bold uppercase tracking-tight">{userData?.tier}</span> plan includes {userData?.tier === 'basic' ? '1' : '4'} career strategy session. Upgrade to Premium for unlimted elite guidance.
+         </p>
+         <button 
+           onClick={() => onNavigate('settings')}
+           className="px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black text-lg shadow-xl shadow-indigo-100 hover:bg-indigo-700 transition-all flex items-center gap-3"
+         >
+            <Zap className="w-6 h-6" /> Upgrade Now
+         </button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

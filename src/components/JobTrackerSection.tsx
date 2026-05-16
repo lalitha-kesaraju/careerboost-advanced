@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App';
-import { db } from '../App';
+import { db } from '../firebase';
 import { collection, addDoc, getDocs, query, orderBy, Timestamp, deleteDoc, doc } from 'firebase/firestore';
 import { Briefcase, Plus, Trash2, MapPin, Building2, Calendar, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -102,7 +102,7 @@ export function JobTrackerSection() {
                  </select>
                </div>
                <div className="flex gap-2">
-                 <button onClick={handleAdd} className="flex-1 bg-indigo-600 text-white p-3 rounded-xl font-bold text-sm">Save</button>
+                 <button onClick={handleAdd} className="flex-1 bg-cyan-600 text-white p-3 rounded-xl font-bold text-sm">Save</button>
                  <button onClick={() => setShowAdd(false)} className="px-4 text-gray-400 text-sm">Cancel</button>
                </div>
             </div>
@@ -113,7 +113,7 @@ export function JobTrackerSection() {
       <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm overflow-hidden">
         <div className="bg-gray-50/50 p-4 px-8 border-b border-gray-100 flex items-center justify-between">
            <div className="flex gap-4">
-              <button className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-indigo-600">
+              <button className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-cyan-600">
                 <Filter className="w-3 h-3" /> Filter
               </button>
            </div>
@@ -144,7 +144,7 @@ export function JobTrackerSection() {
                   <div className="text-right flex items-center gap-6">
                      <div className={`px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${
                        job.status === 'offered' ? 'bg-emerald-100 text-emerald-700' : 
-                       job.status === 'interviewing' ? 'bg-indigo-100 text-indigo-700' :
+                       job.status === 'interviewing' ? 'bg-cyan-100 text-cyan-700' :
                        job.status === 'rejected' ? 'bg-red-100 text-red-700' :
                        'bg-gray-100 text-gray-600'
                      }`}>

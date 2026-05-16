@@ -4,11 +4,11 @@
  */
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, User, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+import { onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 import { Layout } from './components/Layout';
+import { handleFirestoreError, OperationType } from './services/firestoreService';
 import { Dashboard } from './components/Dashboard';
 import { ResumeUploadSection } from './components/ResumeUploadSection';
 import { ResumeReviewSection } from './components/ResumeReviewSection';
@@ -22,13 +22,22 @@ import { MithraChat } from './components/MithraChat';
 import { MeRIDPsychometricTest } from './components/MeRIDPsychometricTest';
 import { AptitudeTestSection } from './components/AptitudeTestSection';
 import { MockInterviewSection } from './components/MockInterviewSection';
+import { JobTrackerSection } from './components/JobTrackerSection';
+import { PortfolioSection } from './components/PortfolioSection';
+import { SettingsSection } from './components/SettingsSection';
+import { BigFiveTest } from './components/BigFiveTest';
+import { AuthPage } from './components/AuthPage';
+import { AdminDashboard } from './components/Admin/AdminDashboard';
+import { ProgressSection } from './components/ProgressSection';
+import { IdeSection } from './components/IdeSection';
+import { CoachSection } from './components/CoachSection';
+import { fetchUserStats, DashboardStats, recordActivity } from './services/statsService';
 import { motion, AnimatePresence } from 'motion/react';
 import { LogIn, Rocket } from 'lucide-react';
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+import { auth, db } from './firebase';
+
+import { DEMO_USERS } from './data/mockUsers';
 
 // Types
 export interface UserUsage {
@@ -44,8 +53,12 @@ export interface UserData {
   userId: string;
   email: string;
   displayName: string;
+  photoURL?: string;
+  targetRole?: string;
   tier: 'basic' | 'medium' | 'premium';
+  role?: string;
   usage: UserUsage;
+  personalityTraits?: Record<string, number>;
 }
 
 // Contexts
@@ -53,10 +66,12 @@ interface AuthContextType {
   user: User | null;
   userData: UserData | null;
   loading: boolean;
-  login: () => Promise<void>;
+  login: (email: string, pass: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUsage: () => Promise<void>;
+  refreshStats: () => Promise<void>;
   authError: string | null;
+  stats: DashboardStats | null;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -67,21 +82,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (u) => {
+    let unsubscribeSnapshot: (() => void) | null = null;
+
+    const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
+      // Clean up previous snapshot listener
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+        unsubscribeSnapshot = null;
+      }
+
       setUser(u);
       if (u) {
+        // Fetch stats
+        const s = await fetchUserStats(u.uid);
+        setStats(s);
+
+        // Record Login Activity
+        recordActivity(u.uid, 'login', 'System Initialization', `Session started for identity: ${u.email}`);
+
         // Fetch or create user record
         const userRef = doc(db, 'users', u.uid);
-        const userSnap = await getDoc(userRef);
+        let userSnap;
+        try {
+          userSnap = await getDoc(userRef);
+        } catch (error) {
+          handleFirestoreError(error, OperationType.GET, `users/${u.uid}`);
+          return;
+        }
         
         if (!userSnap.exists()) {
+          const demoUser = DEMO_USERS.find(du => du.email.toLowerCase() === (u.email || '').toLowerCase());
+          const isAdminEmail = u.email === 'admin@careerboost.ai' || u.email === 'kesarajulalitha@gmail.com';
           const newData: UserData = {
             userId: u.uid,
             email: u.email || '',
-            displayName: u.displayName || 'User',
-            tier: 'basic',
+            displayName: u.displayName || (u.email ? u.email.split('@')[0] : 'User'),
+            tier: (demoUser?.tier.toLowerCase() as any) || 'premium',
+            role: isAdminEmail ? 'Platform Admin' : (demoUser?.role || 'User'),
             usage: {
               resumeAnalyses: 0,
               skillGaps: 0,
@@ -91,14 +131,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               learningPlans: 0
             }
           };
-          await setDoc(userRef, newData);
+          try {
+            await setDoc(userRef, newData);
+          } catch (error) {
+            handleFirestoreError(error, OperationType.WRITE, `users/${u.uid}`);
+          }
           setUserData(newData);
         } else {
-          setUserData(userSnap.data() as UserData);
+          const data = userSnap.data() as UserData;
+          const isAdminEmail = u.email === 'admin@careerboost.ai' || u.email === 'kesarajulalitha@gmail.com';
+          if (isAdminEmail && data.role !== 'Platform Admin') {
+            data.role = 'Platform Admin';
+            // Optionally update firestore too
+            updateDoc(userRef, { role: 'Platform Admin' }).catch(console.error);
+          }
+          setUserData(data);
           // Set up listener for real-time usage updates
-          onSnapshot(userRef, (doc) => {
+          unsubscribeSnapshot = onSnapshot(userRef, (doc) => {
             if (doc.exists()) {
-              setUserData(doc.data() as UserData);
+              const d = doc.data() as UserData;
+              if (isAdminEmail) d.role = 'Platform Admin';
+              setUserData(d);
+            }
+          }, (error) => {
+            // Only log errors if we still have a user
+            if (auth.currentUser) {
+              handleFirestoreError(error, OperationType.GET, `users/${u.uid}`);
             }
           });
         }
@@ -107,26 +165,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       setLoading(false);
     });
-    return unsubscribe;
+
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeSnapshot) unsubscribeSnapshot();
+    };
   }, []);
 
-  const login = async () => {
+  const login = async (email: string, pass: string) => {
     setAuthError(null);
     setIsLoggingIn(true);
-    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
+      // First try to sign in
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (signInError: any) {
+        // If user doesn't exist, try creating account (simplified for this "afterwards Supabase" request)
+        if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential') {
+          await createUserWithEmailAndPassword(auth, email, pass);
+        } else {
+          throw signInError;
+        }
+      }
     } catch (error: any) {
       console.error("Login error:", error);
-      if (error.code === 'auth/popup-blocked') {
-        setAuthError("Sign-in popup was blocked. Please enable popups or try 'Open in New Tab'.");
-      } else if (error.code === 'auth/cancelled-popup-request') {
-        setAuthError("Sign-in request was cancelled. Please try again.");
-      } else if (error.code === 'auth/popup-closed-by-user') {
-        setAuthError("Sign-in window closed before completion. Please try again.");
+      if (error.code === 'auth/invalid-email') {
+        setAuthError("Please provide a valid email address.");
+      } else if (error.code === 'auth/weak-password') {
+        setAuthError("Password should be at least 6 characters.");
+      } else if (error.code === 'auth/wrong-password') {
+        setAuthError("Incorrect password. Please try again.");
       } else {
-        setAuthError("Failed to sign in. Please try opening the app in a new tab.");
+        setAuthError(error.message || "Failed to authenticate.");
       }
+      throw error;
     } finally {
       setIsLoggingIn(false);
     }
@@ -134,6 +206,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
+  };
+
+  const refreshStats = async () => {
+    if (user) {
+      const s = await fetchUserStats(user.uid);
+      setStats(s);
+    }
   };
 
   const refreshUsage = async () => {
@@ -147,7 +226,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userData, loading: loading || isLoggingIn, login, logout, refreshUsage, authError }}>
+    <AuthContext.Provider value={{ user, userData, loading: loading || isLoggingIn, login, logout, refreshUsage, refreshStats, authError, stats }}>
       {children}
     </AuthContext.Provider>
   );
@@ -196,7 +275,7 @@ function AppContent({
   resumeStep: any,
   setResumeStep: any
 }) {
-  const { user, loading, login, authError } = useAuth();
+  const { user, userData, loading, login, authError } = useAuth();
   const [selectedBootcamp, setSelectedBootcamp] = useState<'dsa' | 'prompt-engineering' | 'system-design'>('dsa');
 
   if (loading) {
@@ -205,64 +284,18 @@ function AppContent({
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full"
+          className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full"
         />
       </div>
     );
   }
 
   if (!user) {
-    return (
-      <div className="h-screen w-full flex flex-col items-center justify-center p-6 text-center">
-        <motion.div
-           initial={{ opacity: 0, y: 20 }}
-           animate={{ opacity: 1, y: 0 }}
-           className="max-w-md"
-        >
-          <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-indigo-100">
-            <Rocket className="text-white w-8 h-8" />
-          </div>
-          <h1 className="text-4xl font-semibold tracking-tight mb-4">Mithra Careers</h1>
-          <p className="text-gray-500 mb-8 leading-relaxed">
-            Unlock your professional potential with AI-powered career tools. 
-            Analyze resumes, practice interviews, and track your progress—all in one place.
-          </p>
-          <button
-            onClick={login}
-            disabled={loading}
-            className="w-full bg-[#1A1A1A] text-white py-4 px-6 rounded-xl font-medium flex items-center justify-center gap-3 hover:bg-black transition-colors disabled:opacity-50"
-            id="login-button"
-          >
-            {loading ? (
-              <motion.div 
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-                className="w-5 h-5 border-2 border-white border-t-transparent rounded-full"
-              />
-            ) : (
-              <>
-                <LogIn className="w-5 h-5" />
-                Get Started with Google
-              </>
-            )}
-          </button>
+    return <AuthPage />;
+  }
 
-          {authError && (
-            <motion.div 
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm italic serif"
-            >
-              {authError}
-            </motion.div>
-          )}
-
-          <p className="text-xs text-gray-400 mt-6 font-mono uppercase tracking-widest text-center">
-            Free Tier • secure • AI-Powered
-          </p>
-        </motion.div>
-      </div>
-    );
+  if (userData?.role === 'Platform Admin') {
+    return <AdminDashboard />;
   }
 
   return (
@@ -276,6 +309,8 @@ function AppContent({
           transition={{ duration: 0.2 }}
         >
           {currentView === 'dashboard' && <Dashboard onNavigate={setCurrentView} />}
+          {currentView === 'progress' && <ProgressSection />}
+          {currentView === 'coach' && <CoachSection onNavigate={setCurrentView} />}
           
           {(currentView === 'upload' || currentView === 'resume-upload' || currentView === 'resume-analysis') && (
             <>
@@ -289,7 +324,10 @@ function AppContent({
               {resumeStep === 2 && (
                 <ResumeReviewSection 
                   initialData={resumeData} 
-                  onPrev={() => setResumeStep(1)}
+                  onPrev={() => {
+                    setResumeStep(1);
+                    setCurrentView('upload');
+                  }}
                   onNext={(data) => {
                     setResumeData(data);
                     setResumeStep(3);
@@ -300,7 +338,10 @@ function AppContent({
               {(resumeStep === 3 || currentView === 'resume-analysis') && (
                 <ResumeAnalysisSection 
                   data={resumeData} 
-                  onReset={() => setResumeStep(1)} 
+                  onReset={() => {
+                    setResumeStep(1);
+                    setCurrentView('upload');
+                  }} 
                   onNavigate={setCurrentView}
                   onDataUpdate={(newData) => setResumeData(prev => ({...(prev || {}), ...newData}))}
                 />
@@ -364,10 +405,10 @@ function AppContent({
             />
           )}
 
-          {currentView === 'assistant' && <MithraChat />}
+          {currentView === 'assistant' && <CoachSection onNavigate={setCurrentView} initialTab="chat" />}
 
           {(currentView === 'personality' || currentView === 'psychometric-test' || currentView === 'personality-analysis' || currentView === 'merid') && (
-            <MeRIDPsychometricTest />
+            <BigFiveTest onClose={() => setCurrentView('dashboard')} />
           )}
 
           {(currentView === 'aptitude' || currentView === 'aptitude-v5') && <AptitudeTestSection />}
@@ -376,15 +417,20 @@ function AppContent({
             <MockInterviewSection resumeData={resumeData} />
           )}
 
+          {currentView === 'job-tracker' && <JobTrackerSection />}
+          {currentView === 'code-ide' && <IdeSection />}
+          {currentView === 'builder' && <PortfolioSection />}
+          {currentView === 'settings' && <SettingsSection />}
+
           {/* Placeholders for other tabs */}
-          {['assistant', 'coach', 'builder', 'analysis', 'code', 'dsa', 'studies', 'exam', 'tracker', 'code-ide', 'psychometric-test', 'higher-studies', 'examination', 'job-tracker'].includes(currentView) && !['upload', 'resume-upload', 'resume-analysis', 'skills', 'skill-gap-analysis', 'learning', 'learning-plan', 'advice', 'career-advice', 'courses', 'bootcamp', 'aptitude', 'aptitude-v5', 'interviews', 'mock-interview', 'dsa-course'].includes(currentView) && (
+          {['assistant', 'coach', 'analysis', 'code', 'dsa', 'studies', 'exam', 'tracker', 'code-ide', 'higher-studies', 'examination'].includes(currentView) && !['upload', 'resume-upload', 'resume-analysis', 'skills', 'skill-gap-analysis', 'learning', 'learning-plan', 'advice', 'career-advice', 'courses', 'bootcamp', 'aptitude', 'aptitude-v5', 'interviews', 'mock-interview', 'dsa-course', 'job-tracker', 'builder'].includes(currentView) && (
             <div className="h-[60vh] flex flex-col items-center justify-center text-center p-10 bg-white rounded-[3rem] border border-gray-100 shadow-sm">
-                <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center text-indigo-600 mb-6">
+                <div className="w-20 h-20 bg-cyan-50 rounded-3xl flex items-center justify-center text-cyan-600 mb-6">
                    <Rocket className="w-10 h-10" />
                 </div>
                 <h2 className="text-3xl font-black mb-4">Under Development</h2>
                 <p className="text-gray-500 max-w-md italic serif text-lg">
-                  The <span className="text-indigo-600 font-bold">"{currentView}"</span> experience is currently being optimized by our AI engineers. Check back soon for the full launch!
+                  The <span className="text-cyan-600 font-bold">"{currentView}"</span> experience is currently being optimized by our AI engineers. Check back soon for the full launch!
                 </p>
                 <button 
                   onClick={() => setCurrentView('dashboard')}

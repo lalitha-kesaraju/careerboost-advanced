@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, Send, X, Bot, User as UserIcon, MessageSquare, Maximize2, Minimize2, Loader2 } from 'lucide-react';
+import { Sparkles, Send, X, Bot, User as UserIcon, MessageSquare, Maximize2, Minimize2, Loader2, Target } from 'lucide-react';
 import { useAuth } from '../App';
-import { db } from '../App';
+import { db } from '../firebase';
 import { collection, query, getDocs, orderBy, limit } from 'firebase/firestore';
 import { getMithraAdvice } from '../services/gemini';
 import Markdown from 'react-markdown';
@@ -74,29 +74,29 @@ export function MithraAssistant() {
             }`}
           >
             {/* Header */}
-            <div className="p-6 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-indigo-600 rounded-2xl">
-                  <Sparkles className="w-5 h-5 text-white" />
+            <div className="p-8 bg-zinc-50/50 border-b border-zinc-100 flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-2.5 bg-cyan-600 rounded-2xl shadow-lg shadow-cyan-100">
+                  <Sparkles className="w-5.5 h-5.5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-gray-900 leading-tight">Mithra AI</h3>
-                  <div className="flex items-center gap-1.5">
-                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                    <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">Active Insight</span>
+                  <h3 className="font-bold text-zinc-900 leading-none mb-1.5 font-display text-lg">Boost AI</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full group-hover:animate-ping" />
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Logic: Active</span>
                   </div>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <button 
                   onClick={() => setIsMaximized(!isMaximized)}
-                  className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-400"
+                  className="p-2.5 hover:bg-white hover:shadow-sm rounded-xl transition-all text-zinc-400"
                 >
                   {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
                 </button>
                 <button 
                   onClick={() => setIsOpen(false)}
-                  className="p-2 hover:bg-gray-100 rounded-xl transition-colors text-gray-400"
+                  className="p-2.5 hover:bg-rose-50 hover:text-rose-500 rounded-xl transition-all text-zinc-400"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -106,31 +106,54 @@ export function MithraAssistant() {
             {/* Chat Body */}
             <div 
               ref={scrollRef}
-              className="flex-1 overflow-y-auto p-6 space-y-6 scroll-smooth"
+              className="flex-1 overflow-y-auto p-8 space-y-8 scroll-smooth custom-scrollbar"
             >
               {messages.length === 0 && (
-                <div className="py-12 text-center opacity-50">
-                  <Bot className="w-12 h-12 mx-auto mb-4 text-indigo-200" />
-                  <p className="text-sm italic serif truncate max-w-[200px] mx-auto text-gray-500">
-                    "How can I accelerate your professional trajectory today?"
-                  </p>
+                <div className="py-12 text-center">
+                  <div className="opacity-30 mb-8">
+                    <Bot className="w-14 h-14 mx-auto mb-6 text-zinc-300" />
+                    <p className="text-sm font-bold uppercase tracking-widest text-zinc-400 max-w-[240px] mx-auto leading-relaxed">
+                      Calibration complete. Waiting for user input...
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col gap-3 max-w-[280px] mx-auto">
+                    <button 
+                      onClick={() => {
+                        const prompt = "Please provide a complete summary of my career status and progress.";
+                        setInput(prompt);
+                        // We can't directly call handleSend because it uses state, but clicking it will work
+                      }}
+                      className="p-4 bg-zinc-50 border border-zinc-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-cyan-50 hover:text-cyan-600 hover:border-cyan-100 transition-all flex items-center justify-center gap-2 group"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
+                      Summarize my Career
+                    </button>
+                    <button 
+                      onClick={() => setInput("What are my biggest skill gaps right now?")}
+                      className="p-4 bg-zinc-50 border border-zinc-100 rounded-2xl text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-cyan-50 hover:text-cyan-600 hover:border-cyan-100 transition-all flex items-center justify-center gap-2 group"
+                    >
+                      <Target className="w-3.5 h-3.5" />
+                      Check Skill Gaps
+                    </button>
+                  </div>
                 </div>
               )}
               {messages.map((m, i) => (
                 <motion.div 
                   key={i}
-                  initial={{ opacity: 0, x: m.role === 'user' ? 10 : -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className={`flex gap-4 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}
                 >
-                  <div className={`p-2 rounded-xl h-fit ${m.role === 'user' ? 'bg-gray-100' : 'bg-indigo-50'}`}>
-                    {m.role === 'user' ? <UserIcon className="w-4 h-4 text-gray-400" /> : <Sparkles className="w-4 h-4 text-indigo-600" />}
+                  <div className={`p-2.5 rounded-2xl h-fit border shadow-sm ${m.role === 'user' ? 'bg-white border-zinc-100' : 'bg-cyan-600 border-cyan-500'}`}>
+                    {m.role === 'user' ? <UserIcon className="w-4.5 h-4.5 text-zinc-400" /> : <Sparkles className="w-4.5 h-4.5 text-white" />}
                   </div>
-                  <div className={`p-4 rounded-2xl text-sm max-w-[85%] ${
-                    m.role === 'user' ? 'bg-gray-100/50 text-gray-700' : 'bg-white border border-gray-100 shadow-sm text-gray-800'
+                  <div className={`p-5 rounded-[1.75rem] text-[13px] leading-relaxed max-w-[85%] font-medium ${
+                    m.role === 'user' ? 'bg-zinc-50 text-zinc-600' : 'bg-white border border-zinc-200 text-zinc-800 shadow-sm'
                   }`}>
                     {m.role === 'mithra' ? (
-                      <div className="prose prose-sm prose-indigo whitespace-pre-wrap">
+                      <div className="prose prose-sm prose-cyan whitespace-pre-wrap">
                         <Markdown>{m.content}</Markdown>
                       </div>
                     ) : (
@@ -140,15 +163,15 @@ export function MithraAssistant() {
                 </motion.div>
               ))}
               {isLoading && (
-                <div className="flex gap-3">
-                  <div className="p-2 rounded-xl bg-indigo-50">
-                    <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
+                <div className="flex gap-4">
+                  <div className="p-2.5 rounded-2xl bg-cyan-600 border border-cyan-500 h-fit">
+                    <Loader2 className="w-4.5 h-4.5 text-white animate-spin" />
                   </div>
-                  <div className="p-4 bg-white border border-gray-100 shadow-sm rounded-2xl">
-                    <div className="flex gap-1">
-                      <div className="w-1.5 h-1.5 bg-indigo-200 rounded-full animate-bounce" />
-                      <div className="w-1.5 h-1.5 bg-indigo-300 rounded-full animate-bounce [animation-delay:0.2s]" />
-                      <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.4s]" />
+                  <div className="p-5 bg-white border border-zinc-200 rounded-[1.75rem] shadow-sm">
+                    <div className="flex gap-1.5">
+                      <div className="w-1.5 h-1.5 bg-cyan-600 rounded-full animate-bounce" />
+                      <div className="w-1.5 h-1.5 bg-cyan-600 rounded-full animate-bounce [animation-delay:0.2s]" />
+                      <div className="w-1.5 h-1.5 bg-cyan-600 rounded-full animate-bounce [animation-delay:0.4s]" />
                     </div>
                   </div>
                 </div>
@@ -156,25 +179,25 @@ export function MithraAssistant() {
             </div>
 
             {/* Input */}
-            <div className="p-6 border-t border-gray-100 bg-gray-50/30">
+            <div className="p-8 border-t border-zinc-100 bg-white">
               <div className="relative flex items-center">
                 <input 
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
-                  placeholder="Ask Mithra anything..."
-                  className="w-full pl-6 pr-14 py-4 bg-white border border-gray-100 rounded-2xl shadow-sm focus:outline-none focus:ring-4 focus:ring-indigo-500/5 transition-all text-sm"
+                  placeholder="Universal Command Input..."
+                  className="w-full pl-6 pr-16 py-5 bg-zinc-50 border border-zinc-200 rounded-3xl focus:outline-none focus:border-cyan-600 focus:bg-white transition-all text-sm font-medium placeholder:text-zinc-300"
                 />
                 <button 
                   onClick={handleSend}
                   disabled={!input.trim() || isLoading}
-                  className="absolute right-3 p-2 bg-indigo-600 text-white rounded-xl shadow-lg hover:bg-indigo-700 transition-all disabled:opacity-30 disabled:shadow-none"
+                  className="absolute right-3 p-3 bg-cyan-600 text-white rounded-2xl shadow-xl hover:bg-cyan-700 transition-all disabled:opacity-30 disabled:scale-95"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-4.5 h-4.5" />
                 </button>
               </div>
-              <p className="mt-3 text-[9px] text-center font-mono uppercase text-gray-300 tracking-widest">
-                Mithra Intelligence • Gemini powered
+              <p className="mt-4 text-[9px] text-center font-bold uppercase text-zinc-300 tracking-[0.3em]">
+                Boost AI • Career OS
               </p>
             </div>
           </motion.div>
@@ -186,11 +209,11 @@ export function MithraAssistant() {
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
         className={`p-5 rounded-full shadow-2xl transition-all duration-500 group flex items-center gap-3 ${
-          isOpen ? 'bg-gray-900 text-white' : 'bg-indigo-600 text-white'
+          isOpen ? 'bg-gray-900 text-white' : 'bg-cyan-600 text-white'
         }`}
       >
         <Sparkles className={`w-6 h-6 transition-transform duration-500 ${isOpen ? 'rotate-180' : 'group-hover:rotate-12'}`} />
-        {!isOpen && <span className="font-bold text-sm pr-1">Mithra AI</span>}
+        {!isOpen && <span className="font-bold text-sm pr-1">Boost AI</span>}
       </motion.button>
     </div>
   );

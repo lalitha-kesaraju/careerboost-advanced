@@ -22,12 +22,28 @@ import {
 } from 'lucide-react';
 
 interface BootcampOverviewProps {
-  type: 'dsa' | 'prompt-engineering' | 'system-design' | 'full-stack' | 'mobile';
+  type: 'dsa' | 'prompt-engineering' | 'system-design' | 'full-stack' | 'mobile' | 'languages';
   onStart: (stepIndex: number) => void;
   progress?: any;
 }
 
 const BOOTCAMP_METADATA = {
+  'languages': {
+    title: "Modern Language Mastery",
+    description: "Master the syntax and paradigms of the industry's most powerful languages. From Python automation to Rust performance.",
+    hours: "100+",
+    problems: "240 Challenges",
+    level: "PL-101: MULTI-PARADIGM POLYGLOT",
+    badge: "Syntax Series",
+    steps: [
+      { id: 1, title: 'Python for Automation', duration: '12h', difficulty: 'Easy', topics: ['Scripting', 'OS Module', 'BS4'], icon: <Zap className="w-5 h-5" /> },
+      { id: 2, title: 'Advanced JavaScript (ES6+)', duration: '15h', difficulty: 'Medium', topics: ['Closures', 'Promises', 'Event Loop'], icon: <Settings2 className="w-5 h-5" /> },
+      { id: 3, title: 'Go: Concurrent Systems', duration: '18h', difficulty: 'Medium', topics: ['Goroutines', 'Channels', 'Interfaces'], icon: <Target className="w-5 h-5" /> },
+      { id: 4, title: 'Rust for Safety', duration: '20h', difficulty: 'Hard', topics: ['Ownership', 'Borrowing', 'Lifetimes'], icon: <Award className="w-5 h-5" /> },
+      { id: 5, title: 'TypeScript Orchestration', duration: '10h', difficulty: 'Medium', topics: ['Generics', 'Utility Types', 'Zod'], icon: <Code2 className="w-5 h-5" /> },
+      { id: 6, title: 'C++ Performance', duration: '25h', difficulty: 'Hard', topics: ['Pointers', 'STL', 'Templates'], icon: <Trophy className="w-5 h-5" /> }
+    ]
+  },
   'dsa': {
     title: "Algorithmic Architecture",
     description: "A comprehensive 13-step journey through the foundational pillars of computer science, designed for career-pivot mastery.",
@@ -53,7 +69,7 @@ const BOOTCAMP_METADATA = {
   },
   'prompt-engineering': {
     title: "AI Orchestration Elite",
-    description: "Master the art of high-fidelity prompting. From zero-shot foundations to multi-agent deployment architectures with Mithra.",
+    description: "Master the art of high-fidelity prompting. From zero-shot foundations to multi-agent deployment architectures with Boost AI.",
     hours: "45+",
     problems: "150 Tasks",
     level: "AI-301: PROMPT ARCHITECTURE",
@@ -116,10 +132,10 @@ export function BootcampOverview({ type, onStart, progress }: BootcampOverviewPr
   return (
     <div className="space-y-12">
       <div className="flex flex-col md:flex-row justify-between items-start gap-8 bg-gray-900 text-white p-12 rounded-[3.5rem] relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 via-transparent to-purple-500/10 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/20 via-transparent to-teal-500/10 pointer-events-none" />
         <div className="relative z-10 max-w-2xl space-y-6">
           <div className="flex items-center gap-3">
-            <span className="px-4 py-1.5 bg-indigo-500 rounded-full text-[10px] font-black uppercase tracking-widest">{meta.badge}</span>
+            <span className="px-4 py-1.5 bg-cyan-500 rounded-full text-[10px] font-black uppercase tracking-widest">{meta.badge}</span>
             <span className="text-gray-400 text-[10px] font-mono">{meta.level}</span>
           </div>
           <h1 className="text-5xl font-black tracking-tight leading-[1.1]">{meta.title}</h1>
@@ -128,15 +144,15 @@ export function BootcampOverview({ type, onStart, progress }: BootcampOverviewPr
           </p>
           <div className="flex flex-wrap gap-6 pt-4">
              <div className="flex items-center gap-2">
-                <Clock className="w-5 h-5 text-indigo-400" />
+                <Clock className="w-5 h-5 text-cyan-400" />
                 <span className="font-bold">{meta.hours} Hours</span>
              </div>
              <div className="flex items-center gap-2">
-                <Code2 className="w-5 h-5 text-indigo-400" />
+                <Code2 className="w-5 h-5 text-cyan-400" />
                 <span className="font-bold">{meta.problems}</span>
              </div>
              <div className="flex items-center gap-2">
-                <Award className="w-5 h-5 text-indigo-400" />
+                <Award className="w-5 h-5 text-cyan-400" />
                 <span className="font-bold">Verified Certificate</span>
              </div>
           </div>
@@ -146,19 +162,19 @@ export function BootcampOverview({ type, onStart, progress }: BootcampOverviewPr
               <div className="space-y-2">
                  <div className="flex justify-between items-end">
                     <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest">Mastery Level</span>
-                    <span className="text-2xl font-black text-indigo-400">0%</span>
+                    <span className="text-2xl font-black text-cyan-400">0%</span>
                  </div>
                  <div className="h-3 bg-white/5 rounded-full overflow-hidden">
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: '0%' }}
-                      className="h-full bg-indigo-500"
+                      className="h-full bg-cyan-500"
                     />
                  </div>
               </div>
               <button 
                 onClick={() => onStart(0)}
-                className="w-full py-5 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-500/20 flex items-center justify-center gap-3"
+                className="w-full py-5 bg-cyan-600 text-white rounded-2xl font-black hover:bg-cyan-700 transition-all shadow-xl shadow-cyan-500/20 flex items-center justify-center gap-3"
               >
                  Begin Experience <ChevronRight className="w-5 h-5" />
               </button>
@@ -174,15 +190,15 @@ export function BootcampOverview({ type, onStart, progress }: BootcampOverviewPr
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: idx * 0.05 }}
             onClick={() => onStart(idx)}
-            className="group bg-white border border-gray-100 rounded-[2.5rem] p-8 hover:shadow-2xl hover:shadow-indigo-100/30 transition-all cursor-pointer relative overflow-hidden"
+            className="group bg-white border border-gray-100 rounded-[2.5rem] p-8 hover:shadow-2xl hover:shadow-cyan-100/30 transition-all cursor-pointer relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 p-8 opacity-5 grayscale group-hover:grayscale-0 group-hover:opacity-10 transition-all text-indigo-600">
+            <div className="absolute top-0 right-0 p-8 opacity-5 grayscale group-hover:grayscale-0 group-hover:opacity-10 transition-all text-cyan-600">
                {step.icon}
             </div>
             
             <div className="relative z-10 space-y-6">
                <div className="flex justify-between items-center">
-                  <span className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-xs font-black text-gray-400 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                  <span className="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-xs font-black text-gray-400 group-hover:bg-cyan-600 group-hover:text-white transition-all">
                     {step.id < 10 ? `0${step.id}` : step.id}
                   </span>
                   <div className="flex items-center gap-2">
@@ -196,7 +212,7 @@ export function BootcampOverview({ type, onStart, progress }: BootcampOverviewPr
                </div>
 
                <div>
-                  <h3 className="text-xl font-black text-gray-900 mb-1 group-hover:text-indigo-600 transition-colors">{step.title}</h3>
+                  <h3 className="text-xl font-black text-gray-900 mb-1 group-hover:text-cyan-600 transition-colors">{step.title}</h3>
                   <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">{step.duration} • Curriculum Core</p>
                </div>
 
@@ -209,7 +225,7 @@ export function BootcampOverview({ type, onStart, progress }: BootcampOverviewPr
                </div>
 
                <div className="pt-4 border-t border-gray-50 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-indigo-600 opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
+                  <div className="flex items-center gap-2 text-cyan-600 opacity-0 group-hover:opacity-100 transition-all transform translate-x-[-10px] group-hover:translate-x-0">
                      <span className="text-[10px] font-black uppercase tracking-widest">Unlocking 4 Phases</span>
                      <ChevronRight className="w-3 h-3" />
                   </div>

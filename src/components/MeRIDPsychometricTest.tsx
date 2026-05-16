@@ -2,20 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Brain, Target, Sparkles, Zap, Shield, Clock, ArrowRight, Loader2, Award, Info, ChevronRight, BarChart3, Star, Ghost, CheckCircle2, AlertCircle } from 'lucide-react';
 import { getMithraAdvice } from '../services/gemini';
-
-import { PERSONALITY_QUESTIONS, PersonalityQuestion } from '../data/personalityQuestions';
+import { generatePersonalityQuestions, PersonalityQuestion } from '../services/questionService';
 
 export function MeRIDPsychometricTest() {
-  const [step, setStep] = useState<'intro' | 'test' | 'loading' | 'results'>('intro');
+  const [step, setStep] = useState<'intro' | 'test' | 'loading' | 'results' | 'fetching'>('intro');
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState<any[]>([]);
   const [result, setResult] = useState<any>(null);
+  const [questions, setQuestions] = useState<PersonalityQuestion[]>([]);
+
+  const startTest = async () => {
+    setStep('fetching');
+    try {
+      const qSet = await generatePersonalityQuestions(10);
+      setQuestions(qSet);
+      setAnswers([]);
+      setCurrentIdx(0);
+      setStep('test');
+    } catch (error) {
+      console.error("Failed to fetch questions", error);
+      setStep('intro');
+    }
+  };
 
   const handleAnswer = (val: string) => {
-    const newAnswers = [...answers, { qId: PERSONALITY_QUESTIONS[currentIdx].id, val }];
+    const q = questions[currentIdx];
+    const newAnswers = [...answers, { qId: q.id, val }];
     setAnswers(newAnswers);
     
-    if (currentIdx < PERSONALITY_QUESTIONS.length - 1) {
+    if (currentIdx < questions.length - 1) {
       setCurrentIdx(currentIdx + 1);
     } else {
       generateResults(newAnswers);
@@ -25,8 +40,7 @@ export function MeRIDPsychometricTest() {
   const generateResults = async (finalAnswers: any[]) => {
     setStep('loading');
     try {
-      // Map final answers back to text for better AI analysis
-      const data = PERSONALITY_QUESTIONS.map((q, idx) => {
+      const data = questions.map((q, idx) => {
         const answerVal = finalAnswers.find(a => a.qId === q.id)?.val;
         return {
           q: q.text,
@@ -45,7 +59,6 @@ export function MeRIDPsychometricTest() {
       setStep('results');
     } catch (err) {
       console.error(err);
-      // Fallback result in case of error
       setResult({
         persona: "Analytic Strategist",
         strengths: ["Logical reasoning", "Attention to detail", "Systemic thinking"],
@@ -78,39 +91,54 @@ export function MeRIDPsychometricTest() {
              <div className="space-y-4">
                 <div className="flex items-center justify-center gap-2">
                    <Shield className="w-4 h-4 text-indigo-600" />
-                   <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Scientific Assessment</span>
+                   <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">AI Core • Real-time</span>
                 </div>
                 <h1 className="text-5xl font-black text-gray-900 tracking-tighter">MeRID Diagnostics</h1>
                 <p className="text-xl text-gray-500 italic serif max-w-lg mx-auto leading-relaxed">
-                   Mental Readiness & Intelligence Diagnostics. Discover your hidden cognitive patterns and high-performance profile.
+                   Mental Readiness & Intelligence Diagnostics. Discover your hidden cognitive patterns with dynamic AI assessments.
                 </p>
              </div>
 
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
                 {[
-                  { icon: Zap, label: 'Fast Paced', desc: 'Average 4 mins' },
-                  { icon: Target, label: 'Accurate', desc: 'Deep AI Parsing' },
-                  { icon: Sparkles, label: 'Actionable', desc: 'Growth Strategy' }
+                   { icon: Zap, label: 'Dynamic', desc: 'Unique Questions' },
+                   { icon: Target, label: 'Accurate', desc: 'Gemini Analysis' },
+                   { icon: Sparkles, label: 'Actionable', desc: 'Bespoke Strategy' }
                 ].map((item, i) => (
-                  <div key={i} className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
-                     <item.icon className="w-5 h-5 text-indigo-600 mb-3" />
-                     <p className="font-bold text-gray-900 text-sm">{item.label}</p>
-                     <p className="text-xs text-gray-400 mt-1">{item.desc}</p>
-                  </div>
+                   <div key={i} className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
+                      <item.icon className="w-5 h-5 text-indigo-600 mb-3" />
+                      <p className="font-bold text-gray-900 text-sm">{item.label}</p>
+                      <p className="text-xs text-gray-400 mt-1">{item.desc}</p>
+                   </div>
                 ))}
              </div>
 
              <button 
-               onClick={() => setStep('test')}
+               onClick={startTest}
                className="w-full py-6 bg-indigo-600 text-white rounded-[2rem] font-black text-xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-4 shadow-xl shadow-indigo-100"
              >
-                Begin Assessment
+                Generate Assessment
                 <ArrowRight className="w-6 h-6" />
              </button>
           </motion.div>
         )}
 
-        {step === 'test' && (
+        {step === 'fetching' && (
+          <motion.div 
+            key="fetching"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="py-32 text-center space-y-8"
+          >
+             <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mx-auto" />
+             <div>
+                <h2 className="text-2xl font-black text-gray-900">Assembling Questions</h2>
+                <p className="text-gray-500 italic serif">Mithra is curating your personalized psychometric journey...</p>
+             </div>
+          </motion.div>
+        )}
+
+        {step === 'test' && questions.length > 0 && (
           <motion.div 
             key="test"
             initial={{ opacity: 0, x: 20 }}
@@ -125,7 +153,7 @@ export function MeRIDPsychometricTest() {
                    </div>
                    <div>
                       <h3 className="font-bold text-gray-900">Psychometric Core</h3>
-                      <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Question {currentIdx + 1} of {PERSONALITY_QUESTIONS.length}</p>
+                      <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">Question {currentIdx + 1} of {questions.length}</p>
                    </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -136,14 +164,14 @@ export function MeRIDPsychometricTest() {
 
              <section className="bg-white rounded-[3rem] p-12 shadow-xl border border-gray-100">
                 <span className="inline-block px-4 py-1.5 bg-indigo-50 text-indigo-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] mb-8">
-                   {PERSONALITY_QUESTIONS[currentIdx].category} Analysis
+                   {questions[currentIdx].category} Analysis
                 </span>
                 <h2 className="text-3xl font-black text-gray-900 mb-12 leading-tight tracking-tight">
-                   "{PERSONALITY_QUESTIONS[currentIdx].text}"
+                   "{questions[currentIdx].text}"
                 </h2>
 
                 <div className="grid gap-4">
-                   {PERSONALITY_QUESTIONS[currentIdx].options.map((opt, i) => (
+                   {questions[currentIdx].options.map((opt, i) => (
                      <button 
                        key={i}
                        onClick={() => handleAnswer(opt.value)}
@@ -161,7 +189,7 @@ export function MeRIDPsychometricTest() {
 
              <div className="h-2 bg-white rounded-full overflow-hidden shadow-inner mx-4">
                 <motion.div 
-                   animate={{ width: `${((currentIdx + 1) / PERSONALITY_QUESTIONS.length) * 100}%` }}
+                   animate={{ width: `${((currentIdx + 1) / questions.length) * 100}%` }}
                    className="h-full bg-indigo-600"
                 />
              </div>

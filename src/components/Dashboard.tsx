@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App';
+import { db } from '../firebase';
+import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
 import { 
   FileText, 
   Mic2, 
@@ -11,225 +13,243 @@ import {
   TrendingUp,
   Clock,
   CheckCircle2,
-  FolderHeart
+  FolderHeart,
+  Activity,
+  Award,
+  CircleOff,
+  Flame,
+  BarChart3,
+  Bot,
+  Sparkles
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { AchievementPanel } from './AchievementPanel';
+import { ActivityFeed } from './ActivityFeed';
 
 interface DashboardProps {
   onNavigate: (view: any) => void;
 }
 
 export function Dashboard({ onNavigate }: DashboardProps) {
-  const { userData } = useAuth();
+  const { user, userData, stats } = useAuth();
+  const [recentApps, setRecentApps] = useState<any[]>([]);
 
-  const limits = {
-    resumeAnalyses: 3,
-    skillGaps: 5,
-    careerAdviceCount: 10,
-    mockInterviews: 5,
-    learningPlans: 1
-  };
+  useEffect(() => {
+    if (!user) return;
+    const q = query(
+      collection(db, 'users', user.uid, 'applications'),
+      orderBy('appliedDate', 'desc'),
+      limit(3)
+    );
+    const unsub = onSnapshot(q, (snap) => {
+      setRecentApps(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      console.error("Dashboard onSnapshot error:", error);
+    });
+    return unsub;
+  }, [user]);
 
-  const usageStats = [
+  const activityStats = [
     { 
-      id: 'resume-upload', 
-      label: 'Resume Analysis', 
-      used: userData?.usage.resumeAnalyses || 0, 
-      total: limits.resumeAnalyses,
-      color: 'bg-blue-500',
+      label: 'TOTAL RESUMES', 
+      value: stats?.totalResumes || 0, 
+      color: 'bg-cyan-600',
       icon: FileText
     },
     { 
-      id: 'mock-interview', 
-      label: 'Mock Interviews', 
-      used: userData?.usage.mockInterviews || 0, 
-      total: limits.mockInterviews,
-      color: 'bg-purple-500',
-      icon: Mic2
-    },
-    { 
-      id: 'assistant', 
-      label: 'AI Coach', 
-      used: userData?.usage.careerAdviceCount || 0, 
-      total: limits.careerAdviceCount,
+      label: 'SUCCESSFUL', 
+      value: stats?.successful || 0, 
       color: 'bg-emerald-500',
-      icon: MessageSquare
+      icon: Award
     },
     { 
-      id: 'skill-gap-analysis', 
-      label: 'Skill Gap Analysis', 
-      used: userData?.usage.skillGaps || 0, 
-      total: limits.skillGaps,
-      color: 'bg-orange-500',
-      icon: Target
+      label: 'FAILED', 
+      value: stats?.failed || 0, 
+      color: 'bg-rose-500',
+      icon: CircleOff
+    },
+    { 
+      label: 'SESSIONS', 
+      value: stats?.sessions || 0, 
+      color: 'bg-amber-500',
+      icon: Activity
+    },
+    { 
+      label: 'SUCCESS RATE', 
+      value: stats?.totalResumes ? `${Math.min(100, Math.round(((stats?.successful || 0) / (stats?.totalResumes || 1)) * 100))}%` : '0%', 
+      color: 'bg-purple-600',
+      icon: Flame
     },
   ];
 
   return (
-    <div className="space-y-10">
+    <div className="max-w-7xl mx-auto space-y-12">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Welcome back, {userData?.displayName.split(' ')[0]}</h1>
-          <p className="text-gray-500 max-w-lg">
-            Your career evolution is in progress. Here's an overview of your current status and usage.
-          </p>
+        <div className="space-y-1.5">
+          <h1 className="text-4xl font-bold tracking-tight text-zinc-900 font-display">Welcome, {userData?.displayName?.split(' ')?.[0] || 'User'}</h1>
+          <div className="flex items-center gap-4">
+            {userData?.targetRole ? (
+              <div className="flex items-center gap-2 text-cyan-600">
+                 <Target className="w-4 h-4" />
+                 <p className="text-sm font-black uppercase tracking-widest">{userData.targetRole} Trajectory</p>
+              </div>
+            ) : (
+              <p className="text-zinc-600 max-w-lg font-medium leading-relaxed">
+                Your career trajectory is currently being mapped and optimized.
+              </p>
+            )}
+            <button 
+              onClick={() => onNavigate('settings')}
+              className="text-[10px] font-black uppercase tracking-tighter text-rose-400 hover:text-rose-600 transition-colors"
+            >
+              [ Reset History ]
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2 px-4 py-2 bg-white rounded-xl shadow-sm border border-gray-100 italic serif text-gray-500 text-sm">
-          <Clock className="w-4 h-4" />
-          Next reset in 12 days
+        <div className="flex items-center gap-2 px-5 py-3.5 bg-white rounded-2xl shadow-sm border border-zinc-200 font-bold text-zinc-600 text-[11px] uppercase tracking-widest">
+          <Clock className="w-4 h-4 text-cyan-600" />
+          Next Reset: 12 Days
         </div>
       </header>
 
-      {/* Hero Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-         {usageStats.map((stat, idx) => {
-           const percent = (stat.used / stat.total) * 100;
-           const Icon = stat.icon;
-           return (
-             <motion.div 
-               key={stat.id}
-               initial={{ opacity: 0, scale: 0.95 }}
-               animate={{ opacity: 1, scale: 1 }}
-               transition={{ delay: idx * 0.05 }}
-               className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all group cursor-pointer"
-               onClick={() => onNavigate(stat.id)}
-             >
-               <div className="flex items-center justify-between mb-6">
-                 <div className={`p-3 rounded-2xl ${stat.color} text-white shadow-lg shadow-${stat.color.split('-')[1]}-100`}>
-                   <Icon className="w-5 h-5" />
-                 </div>
-                 <div className="text-gray-300 group-hover:text-gray-900 transition-colors">
-                   <ChevronRight className="w-5 h-5" />
-                 </div>
-               </div>
-               
-               <div className="space-y-4">
-                 <div>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{stat.label}</p>
-                    <div className="flex items-baseline gap-2">
-                       <span className="text-2xl font-bold">{stat.used}</span>
-                       <span className="text-gray-400 text-sm">/ {stat.total}</span>
-                    </div>
-                 </div>
-                 
-                 <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                   <motion.div 
-                     initial={{ width: 0 }}
-                     animate={{ width: `${percent}%` }}
-                     className={`h-full ${stat.color}`}
-                   />
-                 </div>
-               </div>
-             </motion.div>
-           )
-         })}
-      </div>
+      {/* Grid Stats */}
+      <section className="grid grid-cols-2 lg:grid-cols-5 gap-6">
+        {activityStats.map((stat, idx) => {
+          const Icon = stat.icon;
+          return (
+            <motion.div 
+              key={stat.label}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: idx * 0.05 }}
+              className="glass-card p-7 rounded-[2.5rem] hover:border-cyan-200 transition-all group hover:scale-[1.02]"
+            >
+              <div className="space-y-6">
+                <div className={`w-11 h-11 rounded-2xl ${stat.color} text-white flex items-center justify-center shadow-xl shadow-cyan-100 group-hover:scale-110 transition-transform`}>
+                  <Icon className="w-5.5 h-5.5" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest leading-none mb-2.5">{stat.label}</p>
+                  <p className="text-3xl font-bold text-zinc-900 tracking-tighter">{stat.value}</p>
+                </div>
+              </div>
+            </motion.div>
+          )
+        })}
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Main Feed */}
-        <div className="lg:col-span-2 space-y-8">
-          <section>
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold">Recent Applications</h3>
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+        <div className="lg:col-span-8 space-y-10">
+          <section className="space-y-6">
+            <div className="flex items-center justify-between px-2">
+              <h3 className="text-lg font-bold text-zinc-900 font-display">Active Applications</h3>
               <button 
-                onClick={() => onNavigate('tracker')} 
-                className="text-indigo-600 text-sm font-semibold flex items-center gap-1 hover:underline"
+                onClick={() => onNavigate('job-tracker')} 
+                className="text-cyan-600 text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 hover:underline group"
               >
-                View all <ArrowRight className="w-4 h-4" />
+                Tracker Console <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
             </div>
             
-            <div className="bg-white rounded-3xl border border-gray-100 shadow-sm divide-y divide-gray-50 overflow-hidden">
-              {[
-                { company: 'Google', role: 'Software Engineer', status: 'Applied', date: '2 days ago' },
-                { company: 'Stripe', role: 'Product Manager', status: 'Interviewing', date: '5 days ago' },
-                { company: 'Airbnb', role: 'Frontend Lead', status: 'Draft', date: '8 days ago' },
-              ].map((app, i) => (
-                <div key={i} className="p-5 flex items-center justify-between hover:bg-gray-50 transition-colors group">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center font-bold text-gray-400 group-hover:bg-white group-hover:shadow-sm transition-all">
-                      {app.company[0]}
+            <div className="bg-white rounded-[2.5rem] border border-zinc-200 shadow-sm overflow-hidden divide-y divide-zinc-50">
+              {recentApps.length > 0 ? recentApps.map((app, i) => (
+                <div key={app.id || i} className="group flex items-center justify-between p-6 hover:bg-zinc-50 transition-all cursor-default">
+                  <div className="flex items-center gap-6">
+                    <div className="w-14 h-14 rounded-2xl bg-zinc-50 flex items-center justify-center font-bold text-zinc-600 border border-zinc-100 group-hover:bg-white group-hover:shadow-md transition-all text-xl">
+                      {app.company ? app.company[0] : 'J'}
                     </div>
                     <div>
-                      <p className="font-bold text-gray-900">{app.company}</p>
-                      <p className="text-sm text-gray-500 font-mono tracking-tight">{app.role}</p>
+                      <p className="font-bold text-zinc-900 text-base">{app.company}</p>
+                      <p className="text-xs text-zinc-600 font-semibold uppercase tracking-wider">{app.jobTitle || app.role}</p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-1 ${
-                      app.status === 'Interviewing' ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-100 text-gray-600'
+                  <div className="flex items-center gap-10 text-right">
+                    <span className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl transition-colors ${
+                      app.status === 'offered' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 
+                      app.status === 'interviewing' ? 'bg-cyan-50 text-cyan-600 border border-cyan-100' : 
+                      'bg-zinc-100 text-zinc-700'
                     }`}>
                       {app.status}
-                    </div>
-                    <p className="text-[10px] text-gray-400 font-mono uppercase italic">{app.date}</p>
+                    </span>
+                    <span className="text-[11px] text-zinc-600 font-bold font-mono hidden sm:block">
+                      {app.appliedDate?.toDate ? app.appliedDate.toDate().toLocaleDateString() : 'SEC_OVR'}
+                    </span>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="p-24 text-center space-y-4">
+                  <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mx-auto">
+                    <Briefcase className="w-8 h-8 text-zinc-200" />
+                  </div>
+                  <p className="text-zinc-600 font-bold uppercase tracking-widest text-xs">Tracking Null State</p>
+                </div>
+              )}
             </div>
           </section>
 
           <section>
-            <div className="bg-indigo-900 rounded-3xl p-10 text-white relative overflow-hidden">
-               <div className="relative z-10">
-                 <h2 className="text-3xl font-bold mb-4 tracking-tight">Ready for a mock interview?</h2>
-                 <p className="text-indigo-200 mb-8 max-w-md leading-relaxed">
-                   Practice your storytelling and problem-solving with our AI interviewer. Get instant feedback and improve your success rate by 40%.
+            <div className="bg-cyan-600 rounded-[3rem] p-14 text-white relative flex flex-col md:flex-row items-center justify-between gap-12 overflow-hidden shadow-2xl shadow-cyan-200">
+               <div className="absolute top-0 right-0 w-1/2 h-full bg-white/[0.05] -skew-x-12 translate-x-1/2" />
+               <div className="relative z-10 space-y-8">
+                 <h2 className="text-4xl lg:text-5xl font-bold font-display tracking-tight leading-[0.95]">
+                   Calibrate your<br/>Market Success.
+                 </h2>
+                 <p className="text-cyan-100 font-medium max-w-sm leading-relaxed text-lg">
+                   Launch high-fidelity AI simulations to optimize your interview success probability.
                  </p>
                  <button 
-                  onClick={() => onNavigate('interviews')}
-                  className="bg-white text-indigo-900 font-bold px-8 py-4 rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all text-sm uppercase tracking-wider"
+                  onClick={() => onNavigate('mock-interview')}
+                  className="px-10 py-5 bg-white text-cyan-600 font-bold text-sm rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-cyan-900/20 uppercase tracking-widest"
                  >
-                   Start Practice Session
+                   Start Calibration
                  </button>
                </div>
-               {/* Decorative background element */}
-               <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
-               <TrendingUp className="absolute bottom-8 right-8 w-24 h-24 text-indigo-800 opacity-20" />
+               <div className="relative z-10 w-48 h-48 bg-white/10 rounded-[3rem] flex items-center justify-center p-10 backdrop-blur-xl border border-white/10">
+                  <Mic2 className="w-full h-full text-white" />
+               </div>
             </div>
           </section>
         </div>
 
-        {/* Sidebar widgets */}
-        <div className="space-y-8">
-           <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm space-y-6">
-              <h3 className="font-bold flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-indigo-500" />
-                Quick Actions
-              </h3>
-              <div className="grid gap-3">
-                <button 
-                  onClick={() => onNavigate('upload')}
-                  className="w-full p-4 rounded-2xl border border-gray-100 text-left hover:bg-gray-50 transition-colors flex items-center justify-between group"
-                >
-                  <span className="text-sm font-medium">Build New Resume</span>
-                  <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
-                </button>
-                <button 
-                  onClick={() => onNavigate('builder')}
-                  className="w-full p-4 rounded-2xl border border-gray-100 text-left hover:bg-gray-50 transition-colors flex items-center justify-between group"
-                >
-                  <span className="text-sm font-medium">Resume Builder</span>
-                  <FolderHeart className="w-4 h-4 text-gray-300 group-hover:text-indigo-600 transition-all" />
-                </button>
-                <button 
-                  onClick={() => onNavigate('skills')}
-                  className="w-full p-4 rounded-2xl border border-gray-100 text-left hover:bg-gray-50 transition-colors flex items-center justify-between group"
-                >
-                  <span className="text-sm font-medium">Check Skills Gap</span>
-                  <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-indigo-600 group-hover:translate-x-1 transition-all" />
-                </button>
+        <div className="lg:col-span-4 space-y-10">
+           <section className="space-y-6">
+              <h3 className="text-sm font-bold text-zinc-900 border-b border-zinc-100 pb-5 px-1 uppercase tracking-widest">Global Commands</h3>
+              <div className="grid gap-3.5">
+                {[
+                  { label: 'Build New Resume', id: 'resume-upload', icon: FileText },
+                  { label: 'Analysis Engine', id: 'resume-analysis', icon: BarChart3 },
+                  { label: 'System Skill Gap', id: 'skill-gap-analysis', icon: Target }
+                ].map(action => (
+                  <button 
+                    key={action.id}
+                    onClick={() => onNavigate(action.id)}
+                    className="w-full p-5 bg-white border border-zinc-200 rounded-[2rem] text-left hover:border-cyan-600 hover:shadow-xl hover:shadow-cyan-100 transition-all flex items-center justify-between group"
+                  >
+                    <div className="flex items-center gap-4">
+                       <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center group-hover:bg-cyan-50 transition-colors">
+                          <action.icon className="w-4.5 h-4.5 text-zinc-600 group-hover:text-cyan-600 transition-colors" />
+                       </div>
+                       <span className="text-sm font-bold text-zinc-700 group-hover:text-zinc-900 tracking-tight">{action.label}</span>
+                    </div>
+                    <ArrowRight className="w-4.5 h-4.5 text-zinc-300 group-hover:text-cyan-600 transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-1" />
+                  </button>
+                ))}
               </div>
-           </div>
+           </section>
+
+           <ActivityFeed />
 
            <AchievementPanel />
 
-           <div className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-3xl p-8 text-white shadow-xl shadow-orange-100">
-              <h3 className="font-bold mb-4 flex items-center gap-2">
-                🚀 Pro Tip
-              </h3>
-              <p className="text-xs leading-relaxed opacity-90 italic serif">
-                "Keep your resume updated with new projects. Even small contributions add weight to your professional footprint."
+           <div className="p-10 bg-cyan-50 border border-cyan-100 rounded-[2.5rem] space-y-5 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 transition-transform duration-700">
+                 <Bot className="w-24 h-24 text-cyan-500" />
+              </div>
+              <div className="w-10 h-10 bg-white shadow-sm border border-cyan-100 text-cyan-500 rounded-xl flex items-center justify-center font-black relative z-10">
+                 <Sparkles className="w-5 h-5" />
+              </div>
+              <p className="text-base font-bold text-cyan-900 leading-[1.4] relative z-10">
+                "Precision matters. AI-optimized resumes see a 3.4x higher response rate in high-tier technical deployments."
               </p>
            </div>
         </div>

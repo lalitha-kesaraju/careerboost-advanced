@@ -2,6 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'motion/react';
 import { CheckCircle2, TrendingUp, Target, Award, ArrowLeft, Download, Share2, Loader2, BarChart3, ListChecks, ShieldCheck } from 'lucide-react';
 import { analyzeResume } from '../services/gemini';
+import { useAuth } from '../App';
+import { recordActivity } from '../services/statsService';
+import { collection, doc, setDoc, updateDoc, increment, serverTimestamp } from 'firebase/firestore';
+import { db } from '../firebase';
+import { handleFirestoreError, OperationType } from '../services/firestoreService';
 
 interface ResumeAnalysisSectionProps {
   data: any;
@@ -34,12 +39,40 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
   ];
 
   const filteredRoles = ROLES.filter(r => r.toLowerCase().includes(searchTerm.toLowerCase()));
+  const { user, refreshUsage } = useAuth();
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     const runAnalysis = async () => {
       try {
         const result = await analyzeResume(data);
         setAnalysis(result);
+        
+        // Save to Firestore if not already saved and user is logged in
+        if (user && !isSaved) {
+          const resumeId = `resume_${Date.now()}`;
+          const resumeRef = doc(db, 'users', user.uid, 'resumes', resumeId);
+          
+          await setDoc(resumeRef, {
+            id: resumeId,
+            userId: user.uid,
+            name: data.fileName || 'New Resume',
+            content: data.rawContent || '',
+            parsedData: result,
+            createdAt: new Date().toISOString()
+          });
+
+          // Increment usage
+          const userRef = doc(db, 'users', user.uid);
+          await updateDoc(userRef, {
+            'usage.resumeAnalyses': increment(1)
+          });
+          
+          recordActivity(user.uid, 'resume', 'Resume Analyzed', `High-precision audit completed for: ${data.fileName || 'Untitled Deployment'}`);
+          
+          setIsSaved(true);
+          refreshUsage();
+        }
       } catch (err) {
         console.error("Analysis Error:", err);
       } finally {
@@ -47,7 +80,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
       }
     };
     runAnalysis();
-  }, [data]);
+  }, [data, user]);
 
   if (loading) {
     return (
@@ -55,9 +88,9 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
          <motion.div 
            animate={{ rotate: 360 }}
            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-           className="mb-6 p-4 bg-indigo-50 rounded-full"
+           className="mb-6 p-4 bg-cyan-50 rounded-full"
          >
-           <Loader2 className="w-12 h-12 text-indigo-600" />
+           <Loader2 className="w-12 h-12 text-cyan-600" />
          </motion.div>
          <h2 className="text-3xl font-black mb-2">Quantifying Professional Value...</h2>
          <p className="text-gray-500 italic serif opacity-60">Our AI is running cross-market comparisons</p>
@@ -69,6 +102,35 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
 
   return (
     <div className="space-y-10 pb-20">
+      {/* Progress Bar */}
+      <div className="max-w-4xl mx-auto mb-12">
+        <div className="flex items-center justify-between mb-2">
+           <div className="flex flex-col items-center">
+             <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200 z-10 cursor-pointer" onClick={onReset}>
+               <CheckCircle2 className="w-6 h-6" />
+             </div>
+             <span className="text-xs font-bold text-emerald-600 mt-2 uppercase tracking-widest">Upload</span>
+           </div>
+           <div className="flex-1 h-1 bg-emerald-500 mx-4 -mt-6" />
+           <div className="flex flex-col items-center">
+             <div className="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-200 z-10 cursor-pointer" onClick={() => {
+               // We don't have a direct "back to review" but we can go back to step 1
+               onReset();
+             }}>
+               <CheckCircle2 className="w-6 h-6" />
+             </div>
+             <span className="text-xs font-bold text-emerald-600 mt-2 uppercase tracking-widest">Review</span>
+           </div>
+           <div className="flex-1 h-1 bg-emerald-500 mx-4 -mt-6" />
+           <div className="flex flex-col items-center">
+             <div className="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-white shadow-lg shadow-cyan-100 z-10">
+               <span className="font-bold">3</span>
+             </div>
+             <span className="text-xs font-bold text-cyan-600 mt-2 uppercase tracking-widest">Analysis</span>
+           </div>
+        </div>
+      </div>
+
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center gap-6">
         <div>
@@ -78,14 +140,14 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
         <div className="flex items-center gap-4">
            <button 
              onClick={() => setShowRoleSelector(true)}
-             className="px-6 py-3 bg-indigo-50 text-indigo-600 rounded-xl font-bold border border-indigo-100 hover:bg-indigo-100 transition-all flex items-center gap-2"
+             className="px-6 py-3 bg-cyan-50 text-cyan-600 rounded-xl font-bold border border-cyan-100 hover:bg-cyan-100 transition-all flex items-center gap-2"
            >
               <Target className="w-4 h-4" />
               Set Target Role
            </button>
            <button onClick={onReset} className="flex items-center gap-2 px-6 py-3 text-gray-400 hover:text-gray-900 font-bold transition-all">
              <ArrowLeft className="w-4 h-4" />
-             Re-upload
+             Upload New Resume
            </button>
         </div>
       </div>
@@ -117,7 +179,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search over 50+ roles..."
-                  className="w-full pl-16 pr-6 py-5 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 transition-all"
+                  className="w-full pl-16 pr-6 py-5 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-cyan-500/5 focus:border-cyan-500 transition-all"
                 />
               </div>
 
@@ -130,9 +192,9 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
                       onNavigate('skill-gap-analysis'); 
                       setShowRoleSelector(false);
                     }}
-                    className="p-4 bg-gray-50 border border-gray-100 rounded-2xl text-left hover:border-indigo-500 hover:text-indigo-600 transition-all group"
+                    className="p-4 bg-gray-50 border border-gray-100 rounded-2xl text-left hover:border-cyan-500 hover:text-cyan-600 transition-all group"
                   >
-                    <p className="text-sm font-bold text-gray-700 group-hover:text-indigo-600">{role}</p>
+                    <p className="text-sm font-bold text-gray-700 group-hover:text-cyan-600">{role}</p>
                   </button>
                 ))}
               </div>
@@ -185,9 +247,9 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
                 <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-1">Impact</p>
                 <p className="text-lg font-black text-emerald-900">High</p>
               </div>
-              <div className="p-4 bg-indigo-50 rounded-2xl border border-indigo-100">
-                <p className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-1">Formatting</p>
-                <p className="text-lg font-black text-indigo-900">Optimized</p>
+              <div className="p-4 bg-cyan-50 rounded-2xl border border-cyan-100">
+                <p className="text-[10px] font-black text-cyan-600 uppercase tracking-[0.2em] mb-1">Formatting</p>
+                <p className="text-lg font-black text-cyan-900">Optimized</p>
               </div>
               <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
                 <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-1">Keywords</p>
@@ -203,7 +265,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
         <section className="bg-gray-900 text-white rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden">
            <div className="relative z-10 space-y-8">
               <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-indigo-400">
+                 <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-cyan-400">
                     <TrendingUp className="w-6 h-6" />
                  </div>
                  <div>
@@ -223,7 +285,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
                  </div>
                  <div className="p-6 bg-white/5 rounded-3xl border border-white/5 col-span-2">
                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Est. Salary Bonus Range</p>
-                    <p className="text-3xl font-black text-indigo-400">{analysis?.marketInsights?.salaryRange || '$120k - $160k'}</p>
+                    <p className="text-3xl font-black text-cyan-400">{analysis?.marketInsights?.salaryRange || '$120k - $160k'}</p>
                     <p className="text-[10px] text-gray-600 mt-2 italic">*Based on current skill clusters and certifications</p>
                  </div>
               </div>
@@ -243,7 +305,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
         {/* AI Recommendations */}
         <section className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-2xl shadow-gray-200/40">
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600">
+            <div className="w-12 h-12 bg-cyan-50 rounded-2xl flex items-center justify-center text-cyan-600">
               <ListChecks className="w-6 h-6" />
             </div>
             <div>
@@ -261,7 +323,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
                 transition={{ delay: idx * 0.1 }}
                 className="group flex items-start gap-4 p-5 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-white hover:shadow-xl hover:shadow-gray-200/40 transition-all cursor-default"
               >
-                <div className="w-8 h-8 bg-indigo-100 rounded-lg flex-shrink-0 flex items-center justify-center text-indigo-600 font-black text-sm">
+                <div className="w-8 h-8 bg-cyan-100 rounded-lg flex-shrink-0 flex items-center justify-center text-cyan-600 font-black text-sm">
                   {idx + 1}
                 </div>
                 <p className="text-sm font-bold text-gray-700 leading-relaxed pt-1">{rec}</p>
@@ -307,7 +369,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
       <section className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-2xl shadow-gray-200/40 mt-10">
          <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-4">
-               <div className="w-12 h-12 bg-white border border-gray-100 rounded-2xl flex items-center justify-center text-indigo-600 shadow-sm">
+               <div className="w-12 h-12 bg-white border border-gray-100 rounded-2xl flex items-center justify-center text-cyan-600 shadow-sm">
                   <ShieldCheck className="w-6 h-6" />
                </div>
                <div>
@@ -331,7 +393,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
             ]).map((check: any, i: number) => (
               <div key={i} className="p-6 bg-gray-50 rounded-3xl border border-gray-100 transition-all hover:bg-white hover:shadow-lg">
                  <div className="flex justify-between items-start mb-4">
-                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{check.label}</span>
+                    <span className="text-[10px] font-black text-cyan-600 uppercase tracking-widest">{check.label}</span>
                     <CheckCircle2 className={`w-4 h-4 ${check.passed ? 'text-emerald-500' : 'text-rose-500'}`} />
                  </div>
                  <p className="text-sm font-black text-gray-900 mb-1">{check.status}</p>
@@ -347,11 +409,11 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
           onClick={onReset}
           className="px-10 py-5 bg-white border border-gray-100 rounded-2xl text-gray-400 font-black uppercase tracking-widest text-[10px] hover:bg-gray-50 transition-all"
         >
-          Re-upload Resume
+          Upload New Resume
         </button>
         <button 
           onClick={() => onNavigate('skill-gap-analysis')}
-          className="px-10 py-5 bg-indigo-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100"
+          className="px-10 py-5 bg-cyan-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-cyan-700 transition-all shadow-xl shadow-cyan-100"
         >
           Select Target Role & Analyze Gap →
         </button>

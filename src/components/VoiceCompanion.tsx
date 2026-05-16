@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Mic, MicOff, Volume2, VolumeX, Sparkles, Loader2, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useAuth } from '../App';
-import { db } from '../App';
+import { db } from '../firebase';
 import { collection, query, getDocs, limit } from 'firebase/firestore';
 import { getMithraAdvice } from '../services/gemini';
 
@@ -142,7 +142,7 @@ export function VoiceCompanion({ isOpen, onToggle }: { isOpen: boolean, onToggle
                 animate={{ scale: 1.2, opacity: 0.2 }}
                 exit={{ scale: 1.5, opacity: 0 }}
                 transition={{ repeat: Infinity, duration: 2 }}
-                className="absolute inset-0 bg-indigo-500 rounded-full blur-3xl"
+                className="absolute inset-0 bg-cyan-500 rounded-full blur-3xl"
               />
             )}
             {isSpeaking && (
@@ -163,7 +163,7 @@ export function VoiceCompanion({ isOpen, onToggle }: { isOpen: boolean, onToggle
             } : {}}
             transition={{ repeat: Infinity, duration: 2 }}
             className={`w-40 h-40 bg-gradient-to-tr ${
-              isListening ? 'from-indigo-600 to-purple-600' : 
+              isListening ? 'from-cyan-600 to-teal-600' : 
               isSpeaking ? 'from-emerald-500 to-teal-500' : 
               'from-gray-700 to-gray-800'
             } rounded-[40%] flex items-center justify-center shadow-2xl relative z-10 transition-colors duration-500`}
@@ -191,9 +191,9 @@ export function VoiceCompanion({ isOpen, onToggle }: { isOpen: boolean, onToggle
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-2"
               >
-                <p className="text-indigo-400 font-mono text-xs uppercase tracking-widest font-bold">Mithra is Listening</p>
+                <p className="text-cyan-400 font-mono text-xs uppercase tracking-widest font-bold">Boost AI is Listening</p>
                 <h3 className="text-3xl font-medium text-white/90 italic serif px-10">
-                  {interimTranscript || transcript || "Speak to Mithra..."}
+                   {interimTranscript || transcript || "Speak to Boost AI..."}
                 </h3>
               </motion.div>
             ) : isLoading ? (
@@ -235,7 +235,7 @@ export function VoiceCompanion({ isOpen, onToggle }: { isOpen: boolean, onToggle
            <button 
              onClick={toggleListening}
              className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
-               isListening ? 'bg-red-500 scale-110 shadow-red-500/20 shadow-2xl' : 'bg-indigo-600 hover:scale-105 active:scale-95'
+               isListening ? 'bg-red-500 scale-110 shadow-red-500/20 shadow-2xl' : 'bg-cyan-600 hover:scale-105 active:scale-95'
              }`}
            >
               {isListening ? <MicOff className="w-8 h-8 text-white" /> : <Mic className="w-8 h-8 text-white" />}

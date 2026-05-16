@@ -29,7 +29,8 @@ import {
   Lock,
   Menu,
   ChevronDown,
-  Bell
+  Bell,
+  Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -41,15 +42,17 @@ interface LayoutProps {
 }
 
 export function Layout({ children, currentView, onNavigate, resumeData }: LayoutProps) {
-  const { userData, logout } = useAuth();
+  const { userData, logout, stats } = useAuth();
   const [isVoiceOpen, setIsVoiceOpen] = React.useState(false);
 
   const hasResume = !!resumeData;
   const hasTargetRole = !!resumeData?.targetRole;
+  const sessionsCount = stats?.sessions || 0;
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'assistant', label: 'AI Coach', icon: Bot },
+    { id: 'coach', label: 'Mithra AI Coach', icon: Bot },
+    { id: 'progress', label: 'Growth Roadmap', icon: Activity },
     { id: 'resume-upload', label: 'Resume Upload', icon: Upload },
     { id: 'builder', label: 'Resume Builder', icon: FileEdit },
     { id: 'resume-analysis', label: 'Resume Analysis', icon: BarChart3, isLocked: !hasResume },
@@ -60,11 +63,9 @@ export function Layout({ children, currentView, onNavigate, resumeData }: Layout
     { id: 'dsa-course', label: 'DSA Course', icon: Activity },
     { id: 'aptitude-v5', label: 'Aptitude Mastery', icon: Brain },
     { id: 'psychometric-test', label: 'Personality Test', icon: UserIcon },
-    { id: 'higher-studies', label: 'Higher Studies', icon: GraduationCap },
-    { id: 'examination', label: 'Examination', icon: ClipboardList },
-    { id: 'mock-interview', label: 'Mock Interview', icon: Mic2 },
-    { id: 'courses', label: 'Courses', icon: Book },
+    { id: 'interviews', label: 'Mock Interview', icon: Mic2 },
     { id: 'job-tracker', label: 'Job Tracker', icon: Briefcase },
+    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   interface NavItem {
@@ -75,16 +76,21 @@ export function Layout({ children, currentView, onNavigate, resumeData }: Layout
   }
 
   return (
-    <div className="flex h-screen overflow-hidden font-sans">
+    <div className="flex h-screen overflow-hidden font-sans bg-white">
       {/* Sidebar */}
-      <aside className="w-64 bg-[#0F172A] flex flex-col h-full z-20 shrink-0">
-        <div className="p-6">
-          <div className="flex flex-col gap-1 mb-8">
-            <h1 className="text-2xl font-bold text-white tracking-tight">Mithra Careers</h1>
-            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-[0.15em] opacity-60">Elite Career Platform</p>
+      <aside className="w-72 bg-white border-r border-zinc-200/50 flex flex-col h-full z-20 shrink-0">
+        <div className="p-10">
+          <div className="flex items-center gap-3.5 mb-12">
+            <div className="w-10 h-10 bg-cyan-600 rounded-2xl flex items-center justify-center text-white font-bold shadow-xl shadow-cyan-100 italic text-xl">
+               C
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-zinc-900 tracking-tight font-display leading-none mb-1">CareerBoost</h1>
+              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-[0.2em]">Career OS</span>
+            </div>
           </div>
 
-          <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-250px)] custom-scrollbar pr-1">
+          <nav className="space-y-2 overflow-y-auto max-h-[calc(100vh-320px)] custom-scrollbar pr-1">
             {(navItems as NavItem[]).map((item) => {
               const Icon = item.icon;
               const isActive = currentView === item.id;
@@ -93,25 +99,31 @@ export function Layout({ children, currentView, onNavigate, resumeData }: Layout
                   key={item.id}
                   onClick={() => !item.isLocked && onNavigate(item.id)}
                   id={`nav-${item.id}`}
-                  className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all group relative overflow-hidden ${
+                  className={`w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl text-[13px] font-semibold transition-all group relative ${
                     isActive 
-                      ? 'bg-[#10B981] text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]' 
-                      : 'text-gray-400 hover:bg-white/5 hover:text-gray-200'
-                  } ${item.isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      ? 'bg-cyan-50 text-cyan-600' 
+                      : 'text-zinc-600 hover:bg-zinc-50 hover:text-zinc-900'
+                  } ${item.isLocked ? 'opacity-30 cursor-not-allowed' : ''}`}
                 >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-500 group-hover:text-gray-300'}`} />
-                  <span className="flex-1 text-left">{item.label}</span>
-                  {item.isLocked && <Lock className="w-3 h-3 ml-auto opacity-40" />}
+                  <Icon className={`w-4.5 h-4.5 transition-colors ${isActive ? 'text-cyan-600' : 'text-zinc-500 group-hover:text-zinc-600'}`} />
+                  <span className="flex-1 text-left tracking-tight">{item.label}</span>
+                  {item.isLocked && <Lock className="w-3 h-3 ml-auto opacity-30 text-zinc-500" />}
+                  {isActive && (
+                    <motion.div 
+                       layoutId="activeNav"
+                       className="absolute left-0 w-1 h-6 bg-cyan-600 rounded-r-full"
+                    />
+                  )}
                 </button>
               );
             })}
           </nav>
         </div>
 
-        <div className="mt-auto p-6 bg-black/20">
+        <div className="mt-auto p-8 space-y-3">
           <button 
              onClick={() => setIsVoiceOpen(true)}
-             className="w-full mb-4 py-2.5 bg-indigo-600/10 border border-indigo-500/20 text-indigo-400 rounded-xl flex items-center justify-center gap-2 hover:bg-indigo-600/20 transition-all font-bold text-xs uppercase tracking-widest"
+             className="w-full py-4 bg-cyan-600 text-white rounded-2xl flex items-center justify-center gap-3 hover:bg-cyan-700 transition-all font-bold text-xs uppercase tracking-widest shadow-xl shadow-cyan-100"
              id="voice-companion-trigger"
           >
              <Volume2 className="w-4 h-4" />
@@ -120,56 +132,65 @@ export function Layout({ children, currentView, onNavigate, resumeData }: Layout
           
           <button 
             onClick={logout}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-red-500/10 hover:text-red-400 transition-all"
+            className="w-full flex items-center gap-3.5 px-5 py-3 rounded-2xl text-[13px] font-bold text-zinc-500 hover:bg-rose-50 hover:text-rose-600 transition-all group"
           >
-            <LogOut className="w-4 h-4" />
-            Logout
+            <LogOut className="w-4.5 h-4.5 group-hover:rotate-12 transition-transform" />
+            Sign Out
           </button>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto bg-[#F0F4F8] flex flex-col">
-        <header className="sticky top-0 z-10 bg-white border-b border-gray-100 h-20 shrink-0 flex items-center justify-between px-8 shadow-sm">
-          <div className="flex items-center gap-4">
-             <button className="p-2 lg:hidden">
-               <Menu className="w-6 h-6 text-gray-500" />
+      <main className="flex-1 overflow-hidden bg-[#FDFDFD] flex flex-col swiss-grid">
+        <header className="sticky top-0 z-10 bg-white/80 backdrop-blur-xl border-b border-zinc-200/50 h-24 shrink-0 flex items-center justify-between px-12">
+          <div className="flex items-center gap-10">
+             <button className="p-2 lg:hidden text-zinc-500 hover:bg-zinc-50 rounded-xl transition-colors">
+               <Menu className="w-6 h-6" />
              </button>
-             {/* Current View Title is removed per image, it uses a breadcrumb/title in body */}
+             <div className="hidden lg:block">
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest mb-1.5 block">Session Overview</span>
+                <h2 className="text-xl font-bold text-zinc-900 tracking-tight font-display leading-tight">
+                  {navItems.find(i => i.id === currentView)?.label || 'Overview'}
+                </h2>
+             </div>
           </div>
           
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-4 bg-[#F8FAFC] rounded-2xl p-2 px-4 border border-gray-100">
-               <div className="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-inner">
-                 {userData?.displayName?.charAt(0) || 'U'}
-               </div>
-               <div className="hidden sm:block">
-                  <div className="flex items-center gap-2">
-                    <p className="text-sm font-bold text-gray-900">{userData?.displayName || 'User'}</p>
-                    <ChevronDown className="w-3 h-3 text-gray-400" />
-                  </div>
-                  <p className="text-[10px] text-gray-500 font-mono tracking-tight lowercase">{userData?.email || 'demo@mithracareers.com'}</p>
-                  <p className="text-[10px] font-bold text-emerald-500 uppercase tracking-widest mt-0.5">{userData?.tier || 'BASIC'} TIER</p>
-               </div>
+          <div className="flex items-center gap-10">
+            <div 
+              onClick={() => onNavigate('settings')}
+              className="flex items-center gap-4 group cursor-pointer"
+            >
+                <div className="text-right hidden sm:block">
+                  <p className="text-sm font-bold text-zinc-900 leading-none mb-1.5 group-hover:text-cyan-600 transition-colors">{userData?.displayName || 'User'}</p>
+                  <p className="text-[10px] font-bold text-emerald-600 border border-emerald-100 bg-emerald-50/50 px-2 py-0.5 rounded-md uppercase tracking-wider">{userData?.tier || 'BASIC'} PLAN</p>
+                </div>
+                <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-cyan-600 font-bold border border-zinc-200 shadow-sm group-hover:border-cyan-200 transition-all overflow-hidden relative">
+                  {userData?.photoURL ? (
+                    <img src={userData.photoURL} alt="Profile" className="w-full h-full object-cover relative z-10" />
+                  ) : (
+                    <>
+                      <div className="absolute inset-0 bg-cyan-50 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      <span className="relative z-10">{userData?.displayName?.charAt(0) || 'U'}</span>
+                    </>
+                  )}
+                </div>
             </div>
-
-            <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 transition-all relative">
-                <span className="w-5 h-5 flex items-center justify-center">📊</span>
-                <span className="text-sm font-semibold text-gray-700">Activity</span>
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-[10px] flex items-center justify-center rounded-full font-bold border-2 border-white shadow-sm">12</div>
+            
+            <div className="flex items-center gap-3.5">
+              <button className="hidden sm:flex items-center gap-2.5 px-5 py-3 bg-white border border-zinc-200 rounded-2xl hover:border-cyan-600 hover:text-cyan-600 transition-all font-bold text-[11px] text-zinc-600 uppercase tracking-widest relative group">
+                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full group-hover:animate-ping" />
+                Network OK
               </button>
               
-              <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl shadow-sm hover:bg-gray-50 transition-all">
-                <Menu className="w-4 h-4 text-gray-500" />
-                <span className="text-sm font-semibold text-gray-700">Menu</span>
-                <ChevronDown className="w-3 h-3 text-gray-400" />
+              <button className="flex items-center justify-center w-11 h-11 bg-white text-zinc-500 border border-zinc-200 rounded-2xl hover:bg-zinc-50 hover:text-zinc-600 transition-all relative">
+                <Bell className="w-5 h-5" />
+                <div className="absolute top-3 right-3 w-2 h-2 bg-rose-500 rounded-full border-2 border-white" />
               </button>
             </div>
           </div>
         </header>
         
-        <div className="flex-1 overflow-y-auto p-8 lg:p-12">
+        <div className="flex-1 overflow-y-auto p-12 lg:p-16 relative custom-scrollbar">
           {children}
         </div>
       </main>

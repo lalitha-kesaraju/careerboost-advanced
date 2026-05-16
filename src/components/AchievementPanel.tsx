@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../App';
-import { db } from '../App';
+import { db } from '../firebase';
 import { collection, onSnapshot, query, setDoc, doc, Timestamp } from 'firebase/firestore';
 import { Trophy, Award, Star, Flame, Target, Rocket } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -60,38 +60,40 @@ export function AchievementPanel() {
   };
 
   return (
-    <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm space-y-6">
-       <div className="flex items-center justify-between">
-          <h3 className="font-bold flex items-center gap-2">
-            <Trophy className="w-5 h-5 text-amber-500" />
-            Achievements
+    <div className="bg-white rounded-[2.5rem] p-10 border border-zinc-200 shadow-sm space-y-10">
+       <div className="flex items-center justify-between border-b border-zinc-50 pb-8">
+          <h3 className="text-sm font-bold text-zinc-900 border-b-2 border-cyan-600 pb-1 tracking-tight">
+            Milestones
           </h3>
-          <span className="text-[10px] font-mono text-gray-400 uppercase tracking-widest">
-            {Object.keys(unlocked).length} / {ACHIEVEMENTS.length} UNLOCKED
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">
+            Deployment Phase: {Object.keys(unlocked).length} / {ACHIEVEMENTS.length}
           </span>
        </div>
-
-       <div className="grid grid-cols-2 md:grid-cols-1 lg:grid-cols-1 gap-4">
+ 
+       <div className="grid grid-cols-1 gap-2.5">
           {ACHIEVEMENTS.map((ach) => {
             const isUnlocked = !!unlocked[ach.id];
             return (
               <div 
                 key={ach.id} 
-                className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${
-                  isUnlocked ? 'bg-amber-50/50 border-amber-100' : 'bg-gray-50/30 border-transparent opacity-60'
+                className={`flex items-center gap-5 p-5 rounded-[1.75rem] border transition-all group ${
+                  isUnlocked ? 'bg-cyan-50/50 border-cyan-100' : 'bg-zinc-50/50 border-transparent opacity-50 grayscale'
                 }`}
               >
-                 <div className={`p-3 rounded-xl ${isUnlocked ? 'bg-white shadow-sm' : 'bg-gray-100'}`}>
+                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${isUnlocked ? 'bg-white shadow-md' : 'bg-zinc-100'}`}>
                     {getIcon(ach.icon, isUnlocked)}
                  </div>
-                 <div>
-                    <p className={`text-xs font-bold tracking-tight ${isUnlocked ? 'text-amber-900' : 'text-gray-400'}`}>
+                 <div className="flex-1">
+                    <p className={`text-sm font-bold tracking-tight mb-1 ${isUnlocked ? 'text-cyan-900' : 'text-zinc-400'}`}>
                         {ach.name}
                     </p>
-                    <p className={`text-[10px] ${isUnlocked ? 'text-amber-700/60' : 'text-gray-300'} italic serif`}>
+                    <p className={`text-[11px] leading-tight font-medium ${isUnlocked ? 'text-cyan-700/60' : 'text-zinc-400'}`}>
                         {ach.description}
                     </p>
                  </div>
+                 {isUnlocked && (
+                   <div className="w-2 h-2 bg-cyan-600 rounded-full" />
+                 )}
               </div>
             );
           })}

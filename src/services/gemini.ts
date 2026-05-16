@@ -1,28 +1,20 @@
-// The client no longer uses the SDK directly to protect the API key
-// All calls are proxied through the backend /api/gemini/generateContent
+import { safeParseJson } from "../lib/aiUtils";
+import { callGemini } from "../lib/geminiApi";
 
-async function callGeminiProxy(contents: any, config: any = {}) {
-  const response = await fetch('/api/gemini/generateContent', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ payload: { contents, config } })
-  });
-  
-  if (!response.ok) {
-    const err = await response.json();
-    throw new Error(err.error || 'Gemini proxy call failed');
-  }
-  
-  return await response.json();
-}
+const DEFAULT_MODEL = "gemini-flash-latest";
 
 export async function parseResume(rawText: string) {
-  const result = await callGeminiProxy(
-    `Parse the following raw resume text into a structured JSON format. 
-    Text: ${rawText}
+  const result = await callGemini(
+    `You are an expert ATS (Applicant Tracking System) parser. Analyze the input text carefully.
     
-    JSON Schema:
+    CRITICAL: If the input text is not a resume, CV, or professional profile (e.g., if it's random notes, binary garbage, or unrelated content), set "isNotResume": true in the output.
+    
+    Text to parse: 
+    ${rawText}
+    
+    Return JSON structure:
     {
+      "isNotResume": boolean,
       "personalInfo": { "fullName": "string", "email": "string", "phone": "string", "location": "string", "website": "string" },
       "summary": "string",
       "skills": ["string"],
@@ -33,11 +25,24 @@ export async function parseResume(rawText: string) {
     { responseMimeType: "application/json" }
   );
 
-  return JSON.parse(result.text || '{}');
+  const parsed = safeParseJson(result.text, {
+    personalInfo: { fullName: 'No Name Found', email: '', phone: '', location: '', website: '' },
+    summary: '',
+    skills: [],
+    experience: [],
+    projects: [],
+    education: []
+  });
+
+  if (parsed.isNotResume) {
+    throw new Error("The uploaded file does not look like a resume. Please upload a valid professional CV or resume.");
+  }
+
+  return parsed;
 }
 
 export async function analyzeResume(parsedData: any) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Analyze this resume data and provide a professional score (0-100), specific feedback, market positioning, and an ATS parsability audit.
     Data: ${JSON.stringify(parsedData)}
     
@@ -62,11 +67,11 @@ export async function analyzeResume(parsedData: any) {
     { responseMimeType: "application/json" }
   );
 
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function generateReferralMessage(targetCompany: string, role: string, resumeData: any) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Write a compelling 200-character LinkedIn referral request or cold outreach message for a '${role}' position at '${targetCompany}'. 
     Use the user's background: ${JSON.stringify(resumeData.experience?.[0] || {})}
     
@@ -79,11 +84,11 @@ export async function generateReferralMessage(targetCompany: string, role: strin
     { responseMimeType: "application/json" }
   );
 
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function analyzeSkillGap(resumeData: any, targetRole: string) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `You are a high-stakes Career Strategist. Compare this user's resume against the standard requirements for a '${targetRole}' role.
     
     Resume Data: ${JSON.stringify(resumeData)}
@@ -109,11 +114,11 @@ export async function analyzeSkillGap(resumeData: any, targetRole: string) {
     { responseMimeType: "application/json" }
   );
 
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function generateLearningPlan(goal: string, missingSkills: string[]) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Create a detailed 4-week learning plan to acquire these skills: ${missingSkills.join(', ')} for the goal: ${goal}.
     
     Return JSON:
@@ -129,11 +134,11 @@ export async function generateLearningPlan(goal: string, missingSkills: string[]
     { responseMimeType: "application/json" }
   );
 
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function generateInterviewQuestions(role: string, level: string, resumeData?: any) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Generate 5 challenging interview questions for a ${level} ${role} position. ${resumeData ? `Tailor them to this resume: ${JSON.stringify(resumeData)}` : ''}
     
     Return JSON:
@@ -145,11 +150,11 @@ export async function generateInterviewQuestions(role: string, level: string, re
     { responseMimeType: "application/json" }
   );
 
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function analyzeInterviewResponse(question: string, responseText: string) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Analyze the following interview response.
     Question: ${question}
     Response: ${responseText}
@@ -165,11 +170,11 @@ export async function analyzeInterviewResponse(question: string, responseText: s
     { responseMimeType: "application/json" }
   );
 
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function getCareerProjection(role: string, level: string, currentSkills: string[]) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Provide a high-stakes, realistic career projection for a ${level} ${role}. 
     The user currently has these skills: ${currentSkills.join(', ')}.
     
@@ -196,11 +201,11 @@ export async function getCareerProjection(role: string, level: string, currentSk
     { responseMimeType: "application/json" }
   );
 
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function getDetailedLearningPath(goal: string, missingSkills: string[], durationMonths: number) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Create a ${durationMonths}-month intensive learning path for: ${goal}.
     Missing Skills: ${missingSkills.join(', ')}
     
@@ -219,11 +224,11 @@ export async function getDetailedLearningPath(goal: string, missingSkills: strin
     { responseMimeType: "application/json" }
   );
 
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function getRecommendedCourses(targetRole: string, missingSkills: string[]) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Recommend 6 high-quality, real-world courses (from Coursera, Udemy, edX, or YouTube) for someone targeting a '${targetRole}' role who lacks these skills: ${missingSkills.join(', ')}.
     
     Return JSON:
@@ -244,17 +249,16 @@ export async function getRecommendedCourses(targetRole: string, missingSkills: s
     { responseMimeType: "application/json" }
   );
 
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 import { HARDCODED_COURSES } from '../constants/courseContent';
 
 export async function getCourseContent(courseTitle: string, topic: string, phase: 'understand' | 'apply' | 'evaluate' | 'master') {
-  // Check hardcoded first for "neatness"
+  // Check hardcoded first
   if (HARDCODED_COURSES[courseTitle] && HARDCODED_COURSES[courseTitle][topic]) {
     const hardcoded = HARDCODED_COURSES[courseTitle][topic][phase];
     if (hardcoded) {
-        // Simulate a tiny delay for realism if needed, but the user wants "neatness"
         return hardcoded;
     }
   }
@@ -266,15 +270,41 @@ export async function getCourseContent(courseTitle: string, topic: string, phase
     master: `Generate a final mastery summary and a list of 5 "What's Next" recommendations for "${topic}" in "${courseTitle}".`
   };
 
-  const result = await callGeminiProxy(prompts[phase], { responseMimeType: "application/json" });
+  const result = await callGemini(prompts[phase], { responseMimeType: "application/json" });
 
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
+}
+
+export async function getIDEAgentAdvice(task: string, currentCode: string, language: string, context: any) {
+  const systemInstruction = `You are "AG-1 Orchestrator", an advanced AI Coding Agent integrated into a professional IDE.
+    Your mission is to assist the user in completing high-stakes engineering tasks effectively.
+    
+    Current Task: ${task}
+    Current Code Environment:
+    \`\`\`${language}
+    ${currentCode}
+    \`\`\`
+    
+    Context: ${JSON.stringify(context)}
+    
+    Rules:
+    1. Respond ONLY with the complete, updated code block that solves the task.
+    2. Ensure the code is production-grade, optimized, and includes necessary comments.
+    3. Do not include conversational text unless it's within code comments.
+    4. Maintain the existing code structure unless the task requires architectural changes.`;
+
+  const result = await callGemini(
+    `Task: ${task}\n\nCode:\n${currentCode}`,
+    { systemInstruction }
+  );
+  
+  return result.text?.replace(/```[a-z]*\n/g, '').replace(/```/g, '') || "";
 }
 
 export async function getMithraAdvice(question: string, context: any, history: {role: string, content: string}[]) {
   const historyText = history.map(h => `${h.role === 'user' ? 'User' : 'Mithra'}: ${h.content}`).join('\n');
   
-  const systemPrompt = `You are "Mithra", an elite career strategist and personal growth companion. 
+  const systemInstruction = `You are "Mithra", an elite career strategist and personal growth companion. 
     You have absolute knowledge of the user's career data on this platform.
     
     Current User Data Context:
@@ -287,20 +317,18 @@ export async function getMithraAdvice(question: string, context: any, history: {
     1. Be concise, strategic, and encouraging.
     2. Reference their specific data (e.g., "I noticed you're interviewing at Stripe...").
     3. Use Markdown for formatting (bolding, lists, etc.).
-    4. Proactively suggest the next best action.
-    
-    Conversation History:
-    ${historyText}
-    
-    Current Question: ${question}`;
+    4. Proactively suggest the next best action.`;
 
-  const result = await callGeminiProxy(systemPrompt);
+  const result = await callGemini(
+    `Conversation History:\n${historyText}\n\nCurrent Question: ${question}`,
+    { systemInstruction }
+  );
 
-  return result.text;
+  return result.text || "";
 }
 
 export async function getPracticeQuestions(role: string, level: string) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Generate 10 diverse and challenging interview questions for a ${level} ${role} position. 
     Include a mix of Technical, Behavioral, and Situational questions. 
     For each question, provide a detailed "answerGuide" that explains both the recruiter's expectations and a sample high-quality response.
@@ -320,11 +348,11 @@ export async function getPracticeQuestions(role: string, level: string) {
     }`,
     { responseMimeType: "application/json" }
   );
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function getInterviewTips(category: string) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Generate 15 essential interview tips for the category: ${category}. 
     Include Do's, Don'ts, Strategy, and Preparation.
     
@@ -336,11 +364,11 @@ export async function getInterviewTips(category: string) {
     }`,
     { responseMimeType: "application/json" }
   );
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function getCodingExam(role: string, level: string, language: string) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Generate a challenging coding problem for a ${level} ${role} in ${language}.
     
     Return JSON:
@@ -356,11 +384,11 @@ export async function getCodingExam(role: string, level: string, language: strin
     }`,
     { responseMimeType: "application/json" }
   );
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function evaluateCode(problem: any, code: string, language: string) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Evaluate this ${language} code for the following problem. 
     Problem: ${JSON.stringify(problem)}
     User Code: ${code}
@@ -375,11 +403,11 @@ export async function evaluateCode(problem: any, code: string, language: string)
     }`,
     { responseMimeType: "application/json" }
   );
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function getSessionAnalysis(setup: any, history: any[], codingResult?: any) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Provide a comprehensive performance analysis for the following interview session.
     Setup Data: ${JSON.stringify(setup)}
     Interview History: ${JSON.stringify(history)}
@@ -438,11 +466,11 @@ export async function getSessionAnalysis(setup: any, history: any[], codingResul
     }`,
     { responseMimeType: "application/json" }
   );
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
 
 export async function getDetailedAnswerSuggestions(setup: any, history: any[]) {
-  const result = await callGeminiProxy(
+  const result = await callGemini(
     `Analyze the following interview transcript and provide improved answer suggestions.
     Role: ${setup.role}
     History: ${JSON.stringify(history)}
@@ -462,5 +490,6 @@ export async function getDetailedAnswerSuggestions(setup: any, history: any[]) {
     }`,
     { responseMimeType: "application/json" }
   );
-  return JSON.parse(result.text || '{}');
+  return safeParseJson(result.text);
 }
+
