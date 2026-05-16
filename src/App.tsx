@@ -20,7 +20,7 @@ import { CoursesSection } from './components/CoursesSection';
 import { BootcampMasterCourse } from './components/BootcampMasterCourse';
 import { MithraChat } from './components/MithraChat';
 import { MeRIDPsychometricTest } from './components/MeRIDPsychometricTest';
-import { AptitudeTestSection } from './components/AptitudeTestSection';
+import { AptitudeMasterySection } from './components/AptitudeMasterySection';
 import { MockInterviewSection } from './components/MockInterviewSection';
 import { JobTrackerSection } from './components/JobTrackerSection';
 import { PortfolioSection } from './components/PortfolioSection';
@@ -411,7 +411,7 @@ function AppContent({
             <BigFiveTest onClose={() => setCurrentView('dashboard')} />
           )}
 
-          {(currentView === 'aptitude' || currentView === 'aptitude-v5') && <AptitudeTestSection />}
+          {(currentView === 'aptitude' || currentView === 'aptitude-v5') && <AptitudeMasterySection />}
 
           {(currentView === 'interviews' || currentView === 'mock-interview') && (
             <MockInterviewSection resumeData={resumeData} />

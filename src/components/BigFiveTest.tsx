@@ -276,46 +276,48 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
   if (!isStarted) {
     return (
       <div className="fixed inset-0 z-[100] bg-[#F8FAFC] flex items-center justify-center p-6 md:p-12 overflow-y-auto">
-        <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-           <div className="space-y-10">
+        <div className="max-w-6xl w-full grid grid-cols-1 lg:grid-cols-5 gap-12 items-start">
+           <div className="lg:col-span-3 space-y-10">
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="inline-flex items-center gap-3 px-4 py-2 bg-cyan-50 border border-cyan-100 rounded-full"
+                className="inline-flex items-center gap-3 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full"
               >
-                 <Shield className="w-4 h-4 text-cyan-600" />
-                 <span className="text-[10px] font-black text-cyan-600 uppercase tracking-widest">Mandatory Proctoring Enabled</span>
+                 <Shield className="w-4 h-4 text-indigo-600" />
+                 <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Secure University Protocol</span>
               </motion.div>
               
               <div className="space-y-6">
                  <h1 className="text-7xl font-black text-gray-900 tracking-tighter leading-[0.85]">
-                    Academic <br/>
-                    <span className="text-cyan-600">Calibration</span>
+                    Behavioral <br/>
+                    <span className="text-indigo-600">Calibration</span>
                  </h1>
                  <p className="text-gray-500 text-xl font-medium italic serif leading-relaxed max-w-lg">
-                    This high-fidelity psychometric mapping helps Mithra AI understand your natural strengths in collaborative and independent study environments.
+                    A university-grade psychological assessment designed to map your natural cognitive biases and collaborative potential for Tier-1 placement rounds.
                  </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  {[
-                   { icon: Camera, title: 'Identity Verification', desc: 'Secure environment monitoring begins on start.', color: 'text-cyan-600', bg: 'bg-cyan-50' },
-                   { icon: Fullscreen, title: 'Safe Exam Mode', desc: 'Full-screen mode is required to maintain integrity.', color: 'text-purple-600', bg: 'bg-purple-50' },
-                   { icon: Lock, title: 'Anti-Tamper', desc: '3 violations will lead to instant disqualification.', color: 'text-rose-600', bg: 'bg-rose-50' },
-                   { icon: Info, title: 'Student Context', desc: 'Questions tailored for university-level environments.', color: 'text-emerald-600', bg: 'bg-emerald-50' }
+                   { icon: Camera, title: 'AI Proctoring', desc: 'Active environment monitoring via Mithra Lens.', color: 'text-indigo-600', bg: 'bg-indigo-50' },
+                   { icon: Fullscreen, title: 'Mastery Mode', desc: 'Full-screen isolation required for validation.', color: 'text-purple-600', bg: 'bg-purple-50' },
+                   { icon: Lock, title: 'Anti-Bypass', desc: 'Disqualification on 3rd security breach.', color: 'text-rose-600', bg: 'bg-rose-50' },
+                   { icon: Target, title: 'Trait Mapping', desc: 'Evaluates Openness, Grit, and Adaptability.', color: 'text-emerald-600', bg: 'bg-emerald-50' }
                  ].map((feat, i) => (
                    <motion.div 
                     key={i}
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
-                    className="p-5 bg-white border border-gray-100 rounded-[2rem] shadow-sm hover:shadow-md transition-shadow"
+                    className="p-6 bg-white border border-gray-100 rounded-[2rem] shadow-sm flex gap-4 items-start"
                    >
-                      <div className={`w-10 h-10 ${feat.bg} ${feat.color} rounded-xl flex items-center justify-center mb-4`}>
-                         <feat.icon className="w-5 h-5" />
+                      <div className={`w-12 h-12 flex-shrink-0 ${feat.bg} ${feat.color} rounded-2xl flex items-center justify-center`}>
+                         <feat.icon className="w-6 h-6" />
                       </div>
-                      <h4 className="text-gray-900 font-black text-sm uppercase tracking-wider">{feat.title}</h4>
-                      <p className="text-gray-400 text-[10px] font-bold leading-tight mt-1">{feat.desc}</p>
+                      <div>
+                         <h4 className="text-gray-900 font-black text-xs uppercase tracking-wider">{feat.title}</h4>
+                         <p className="text-gray-400 text-[10px] font-bold leading-tight mt-1">{feat.desc}</p>
+                      </div>
                    </motion.div>
                  ))}
               </div>
@@ -323,36 +325,53 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
               <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
                  <button 
                   onClick={handleStart}
-                  className="w-full sm:w-auto px-12 py-6 bg-cyan-600 hover:bg-cyan-700 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl shadow-cyan-200 transition-all transform active:scale-95 flex items-center justify-center gap-3 group"
+                  className="w-full sm:w-auto px-12 py-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl shadow-indigo-200 transition-all transform active:scale-95 flex items-center justify-center gap-3 group"
                  >
-                    Start Assessment <Zap className="w-5 h-5 group-hover:animate-pulse" />
+                    Initialize Test <Zap className="w-5 h-5 group-hover:animate-pulse" />
                  </button>
                  <button 
-                   onClick={() => onClose ? onClose() : window.location.reload()}
-                   className="text-gray-400 font-black text-xs uppercase tracking-widest hover:text-gray-900 transition-colors"
+                    onClick={() => onClose ? onClose() : window.location.reload()}
+                    className="text-gray-400 font-black text-xs uppercase tracking-widest hover:text-gray-900 transition-colors"
                  >
-                    Back to Batch Portal
+                    Exit to Dashboard
                  </button>
               </div>
            </div>
 
-           <div className="relative hidden lg:block">
-              <div className="absolute inset-0 bg-cyan-500/5 blur-[120px] rounded-full" />
-              <div className="relative aspect-square bg-white border border-gray-100 shadow-2xl shadow-cyan-100/50 rounded-[5rem] flex flex-col items-center justify-center p-16 text-center space-y-10 overflow-hidden group">
-                 <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-cyan-500 to-transparent animate-pulse" />
-                 <div className="w-32 h-32 bg-cyan-50 rounded-[3rem] flex items-center justify-center text-cyan-600 shadow-inner">
-                    <BrainCircuit className="w-16 h-16 animate-pulse" />
+           <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white border border-gray-100 shadow-2xl shadow-indigo-100/50 rounded-[4rem] p-10 space-y-8">
+                 <div className="flex justify-between items-center">
+                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Trait Breakdown</span>
+                    <BarChart3 className="w-4 h-4 text-gray-300" />
                  </div>
-                 <div className="space-y-4">
-                    <h3 className="text-gray-900 font-black text-2xl uppercase tracking-tighter">Academic Integrity</h3>
-                    <p className="text-gray-400 font-bold text-sm max-w-[280px] mx-auto italic serif leading-relaxed">
-                       "Success is not just the result, but the honesty with which it is achieved."
-                    </p>
-                 </div>
-                 <div className="flex gap-2">
-                    {[1, 2, 3].map(i => (
-                      <div key={i} className="w-2 h-2 bg-cyan-200 rounded-full" />
+                 <div className="space-y-6">
+                    {[
+                      { label: 'Openness', desc: 'Intellectual curiosity & innovation', val: 85 },
+                      { label: 'Conscientiousness', desc: 'Discipline & study organization', val: 92 },
+                      { label: 'Extraversion', desc: 'Batch leadership & networking', val: 74 },
+                      { label: 'Agreeableness', desc: 'Peer collaboration & empathy', val: 88 },
+                      { label: 'Neuroticism', desc: 'Stress resilience & focus', val: 15 }
+                    ].map((trait, i) => (
+                      <div key={i} className="space-y-2">
+                         <div className="flex justify-between items-end">
+                            <span className="text-[10px] font-black text-gray-900 uppercase">{trait.label}</span>
+                            <span className="text-[9px] font-bold text-gray-400 italic">{trait.desc}</span>
+                         </div>
+                         <div className="h-1.5 bg-gray-50 rounded-full overflow-hidden">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${trait.val}%` }}
+                              transition={{ delay: 0.5 + (i * 0.1) }}
+                              className="h-full bg-indigo-600 opacity-20"
+                            />
+                         </div>
+                      </div>
                     ))}
+                 </div>
+                 <div className="pt-6 border-t border-gray-50">
+                    <p className="text-[10px] font-bold text-gray-400 italic serif leading-relaxed text-center">
+                       "Character is not just who you are, but how you react to academic pressure."
+                    </p>
                  </div>
               </div>
            </div>
