@@ -450,7 +450,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                    <CheckSquare className="absolute w-4 h-4 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
                 </div>
                 <div className="space-y-1">
-                   <p className="text-sm font-black text-gray-900">✅ Yes, I confirm that all information above is parsed correctly and I'm ready to proceed with the analysis</p>
+                   <p className="text-sm font-black text-gray-900">Yes, I confirm that all information above is parsed correctly and I'm ready to proceed with the analysis</p>
                 </div>
              </label>
 
