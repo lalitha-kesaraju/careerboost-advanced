@@ -17,12 +17,16 @@ export async function analyzeInterview(
     .map(h => `${h.role === 'ai' ? 'Interviewer' : 'Candidate'}: ${h.content}`)
     .join('\n');
 
+  const resumeSection = interviewData.resumeText
+    ? `Candidate Resume:\n"""\n${interviewData.resumeText}\n"""`
+    : 'No resume provided.';
+
   const prompt = `You are an expert interview coach and talent acquisition specialist. Analyze this mock interview and return a detailed JSON report.
 
 Role applied for: ${interviewData.jobRole}
 Difficulty: ${interviewData.difficultyLevel?.toUpperCase() ?? 'MEDIUM'}
 Company: ${interviewData.dreamCompany ?? 'Not specified'}
-${interviewData.resume ? `Candidate Resume:\n"""\n${interviewData.resume}\n"""` : 'No resume provided.'}
+${resumeSection}
 
 Full Interview Transcript:
 ---

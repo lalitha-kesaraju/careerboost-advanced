@@ -4,40 +4,42 @@ import { callGemini } from "../lib/geminiApi";
 const DEFAULT_MODEL = "gemini-flash-latest";
 
 export async function parseResume(rawText: string) {
-  const result = await callGemini(
-    `You are an expert ATS (Applicant Tracking System) parser. Analyze the input text carefully.
-    
-    CRITICAL: If the input text is not a resume, CV, or professional profile (e.g., if it's random notes, binary garbage, or unrelated content), set "isNotResume": true in the output.
-    
-    Text to parse: 
-    ${rawText}
-    
-    Return JSON structure:
-    {
-      "isNotResume": boolean,
-      "personalInfo": { "fullName": "string", "email": "string", "phone": "string", "location": "string", "website": "string" },
-      "summary": "string",
-      "skills": ["string"],
-      "experience": [{ "title": "string", "company": "string", "duration": "string", "description": "string" }],
-      "projects": [{ "title": "string", "description": "string", "link": "string" }],
-      "education": [{ "degree": "string", "school": "string", "year": "string" }]
-    }`,
-    { responseMimeType: "application/json" }
-  );
+  // Use SDK directly — no proxy auth needed for setup screen
+  const { GoogleGenAI } = await import('@google/genai');
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  if (!apiKey) throw new Error('VITE_GEMINI_API_KEY not set');
+  const ai = new GoogleGenAI({ apiKey });
 
-  const parsed = safeParseJson(result.text, {
-    personalInfo: { fullName: 'No Name Found', email: '', phone: '', location: '', website: '' },
-    summary: '',
-    skills: [],
-    experience: [],
-    projects: [],
-    education: []
+  const response = await ai.models.generateContent({
+    model: 'gemini-2.5-flash',
+    contents: `You are an expert ATS parser. Analyze the resume text below.
+CRITICAL: If it is not a resume/CV, set "isNotResume": true.
+
+Text:
+${rawText}
+
+Return ONLY valid JSON:
+{
+  "isNotResume": false,
+  "personalInfo": { "fullName": "", "email": "", "phone": "", "location": "", "website": "" },
+  "targetRole": "",
+  "summary": "",
+  "skills": [],
+  "experience": [{ "title": "", "company": "", "duration": "", "description": "" }],
+  "projects": [{ "title": "", "description": "", "link": "" }],
+  "education": [{ "degree": "", "school": "", "year": "" }]
+}`,
+    config: { responseMimeType: 'application/json' },
+  });
+
+  const parsed = safeParseJson(response.text ?? '{}', {
+    personalInfo: { fullName: '', email: '', phone: '', location: '', website: '' },
+    summary: '', skills: [], experience: [], projects: [], education: []
   });
 
   if (parsed.isNotResume) {
-    throw new Error("The uploaded file does not look like a resume. Please upload a valid professional CV or resume.");
+    throw new Error('The uploaded file does not look like a resume. Please upload a valid CV or resume.');
   }
-
   return parsed;
 }
 

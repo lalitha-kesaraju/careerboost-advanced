@@ -292,7 +292,27 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
       window.speechSynthesis.cancel();
 
       const ai = new GoogleGenAI({ apiKey });
-      const systemPrompt = `You are a voice-based AI interviewer. Conduct a mock interview with ${interviewData.userName ?? 'the candidate'} for the role of '${interviewData.jobRole}'. Duration: ${interviewData.timeLimit} minutes. Keep all responses concise and conversational — suitable for text-to-speech. Ask a mix of technical and HR questions.${interviewData.resume ? ` Resume: """${interviewData.resume}"""` : ''} Start by introducing yourself briefly and asking the first question.`;
+      const companyContext = interviewData.dreamCompany
+        ? ` You are interviewing on behalf of ${interviewData.dreamCompany}. Tailor your questions to reflect ${interviewData.dreamCompany}'s known interview style, culture, and values. Ask company-specific questions such as "Why do you want to work at ${interviewData.dreamCompany}?" and questions that reflect their engineering/work culture.`
+        : '';
+
+      const resumeContext = interviewData.resumeText
+        ? ` The candidate's resume:\n"""\n${interviewData.resumeText}\n"""\nTailor your technical and experience-based questions directly to projects, skills, and roles mentioned in this resume. Ask follow-up questions about specific things they listed.`
+        : interviewData.resume
+        ? ` The candidate uploaded a resume named "${interviewData.resume}". Ask relevant experience-based questions.`
+        : '';
+
+      const systemPrompt = `You are a voice-based AI interviewer conducting a ${interviewData.difficultyLevel ?? 'medium'}-level mock interview with ${interviewData.userName ?? 'the candidate'} for the role of '${interviewData.jobRole}'.${companyContext}${resumeContext}
+
+Duration: ${interviewData.timeLimit} minutes. Keep all responses concise and conversational — optimized for text-to-speech (no markdown, no bullet points, speak in natural sentences).
+
+Ask a smart mix of:
+- Technical questions specific to the ${interviewData.jobRole} role
+- Behavioral questions using STAR method prompts
+- HR/cultural fit questions${interviewData.dreamCompany ? ` relevant to ${interviewData.dreamCompany}` : ''}
+- Follow-up questions based on the candidate's answers
+
+Start by introducing yourself as an AI interviewer, mention the role and company${interviewData.dreamCompany ? ` (${interviewData.dreamCompany})` : ''}, and ask the first question.`;
 
       chatRef.current = ai.chats.create({
         model: 'gemini-2.5-flash',

@@ -137,6 +137,8 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
 
   const [isParsing, setIsParsing] = useState(false);
   const [error, setError] = useState('');
+  const [resumeNameMismatch, setResumeNameMismatch] = useState<string | null>(null);
+  const [resumeParsedName, setResumeParsedName] = useState<string>('');
 
   const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
   const [isQuestionsModalOpen, setIsQuestionsModalOpen] = useState(false);
@@ -252,17 +254,28 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
       if (text.trim().length > 50) {
         setSetupData(prev => ({ ...prev, resumeText: text }));
         const parsedData = await parseResume(text);
-        if (parsedData?.personalInfo?.fullName) {
-          setSetupData(prev => ({
-            ...prev,
-            userName: parsedData.personalInfo.fullName
-          }));
+
+        const parsedName = parsedData?.personalInfo?.fullName || '';
+        setResumeParsedName(parsedName);
+
+        if (parsedName) {
+          // Auto-fill name if empty
+          if (!setupData.userName.trim()) {
+            setSetupData(prev => ({ ...prev, userName: parsedName }));
+          } else {
+            // Check if the entered name matches the resume name
+            const enteredNorm = setupData.userName.trim().toLowerCase();
+            const parsedNorm  = parsedName.trim().toLowerCase();
+            if (enteredNorm !== parsedNorm && !parsedNorm.includes(enteredNorm) && !enteredNorm.includes(parsedNorm)) {
+              setResumeNameMismatch(`Resume name is "${parsedName}" but you entered "${setupData.userName}". Please check.`);
+            } else {
+              setResumeNameMismatch(null);
+            }
+          }
         }
+
         if (parsedData?.targetRole && !roleSearchQuery) {
-          setSetupData(prev => ({
-            ...prev,
-            jobRole: parsedData.targetRole
-          }));
+          setSetupData(prev => ({ ...prev, jobRole: parsedData.targetRole }));
           setRoleSearchQuery(parsedData.targetRole);
         }
       }
@@ -454,13 +467,36 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
               <div className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Your Name *</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="e.g., Jane Doe"
                     value={setupData.userName}
-                    onChange={(e) => setSetupData({...setupData, userName: e.target.value})}
-                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all"
+                    onChange={(e) => {
+                      setSetupData({...setupData, userName: e.target.value});
+                      if (resumeParsedName) {
+                        const entered = e.target.value.trim().toLowerCase();
+                        const parsed  = resumeParsedName.trim().toLowerCase();
+                        setResumeNameMismatch(
+                          entered && parsed && !entered.includes(parsed.split(' ')[0]) && !parsed.includes(entered.split(' ')[0])
+                            ? `Resume says "${resumeParsedName}" — make sure this matches your actual name.`
+                            : null
+                        );
+                      }
+                    }}
+                    className={`w-full px-6 py-4 bg-gray-50 border rounded-2xl font-bold focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all ${resumeNameMismatch ? 'border-amber-300 bg-amber-50/30' : 'border-gray-100'}`}
                   />
+                  {resumeNameMismatch && (
+                    <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                      <span className="text-amber-500 text-sm shrink-0">⚠️</span>
+                      <p className="text-xs font-bold text-amber-700 leading-relaxed">{resumeNameMismatch}</p>
+                    </div>
+                  )}
+                  {resumeParsedName && !resumeNameMismatch && setupData.resumeText && (
+                    <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <p className="text-xs font-bold text-emerald-700">Resume name matches ✓</p>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                     <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Job Role *</label>
