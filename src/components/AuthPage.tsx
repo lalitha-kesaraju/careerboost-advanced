@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../App';
 import { motion, AnimatePresence } from 'motion/react';
-import { Lock, Mail, ArrowRight, Sparkles, Shield, Rocket, User as UserIcon, ChevronDown, ChevronUp } from 'lucide-react';
-import { DEMO_USERS } from '../data/mockUsers';
+import { Lock, Mail, ArrowRight, Sparkles, Shield, Rocket } from 'lucide-react';
 
 export function AuthPage() {
   const { login } = useAuth();
@@ -10,7 +9,6 @@ export function AuthPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [showDemoUsers, setShowDemoUsers] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,17 +20,6 @@ export function AuthPage() {
       await login(email, password);
     } catch (err) {
       setError('Authentication failed. Check your credentials.');
-    }
-  };
-
-  const handleDemoLogin = async (user: typeof DEMO_USERS[0]) => {
-    setEmail(user.email);
-    setPassword(user.password);
-    setShowDemoUsers(false);
-    try {
-      await login(user.email, user.password);
-    } catch (err) {
-      setError('Demo login failed. Please try again.');
     }
   };
 
@@ -142,50 +129,13 @@ export function AuthPage() {
               </button>
             </form>
 
-            <div className="text-center pt-8 space-y-4">
-              <button 
-                onClick={() => setShowDemoUsers(!showDemoUsers)}
-                className="flex items-center justify-center gap-2 w-full py-4 bg-zinc-50 hover:bg-zinc-100 text-zinc-500 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-all border border-zinc-100"
-              >
-                <UserIcon className="w-3 h-3" />
-                {showDemoUsers ? 'Hide Quick Access' : 'Demo Account Access'}
-                {showDemoUsers ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-              </button>
-
-              <AnimatePresence>
-                {showDemoUsers && (
-                  <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="grid grid-cols-1 gap-2 overflow-hidden"
-                  >
-                    {DEMO_USERS.map((user, idx) => (
-                      <button
-                        key={idx}
-                        type="button"
-                        onClick={() => handleDemoLogin(user)}
-                        className="flex flex-col items-start p-4 bg-white border border-zinc-100 rounded-2xl hover:border-cyan-600 hover:bg-cyan-50/30 transition-all text-left group"
-                      >
-                        <div className="flex justify-between w-full items-center mb-1">
-                          <span className="text-xs font-bold text-zinc-900 group-hover:text-cyan-600 transition-colors">{user.role}</span>
-                          <span className="text-[8px] font-black uppercase tracking-tighter px-1.5 py-0.5 bg-zinc-100 rounded text-zinc-500 group-hover:bg-cyan-100 group-hover:text-cyan-600 transition-all">
-                             {user.tier}
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-zinc-400 font-medium">{user.email}</span>
-                      </button>
-                    ))}
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              <button 
+            <div className="text-center pt-8">
+              <button
                 onClick={() => setIsLogin(!isLogin)}
                 className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 hover:text-cyan-600 transition-colors py-2"
                 id="switch-auth-mode"
               >
-                {isLogin ? "Generate New Credentials" : "Access Legacy Account"}
+                {isLogin ? "Create New Account" : "Already have an account? Sign In"}
               </button>
             </div>
           </div>
