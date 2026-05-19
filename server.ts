@@ -6,7 +6,9 @@ import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local" });
+dotenv.config(); // fallback to .env
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
