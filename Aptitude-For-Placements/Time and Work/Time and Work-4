@@ -1,0 +1,34 @@
+Time and Work-4 - Placement Exercise
+NOTE: This kind of question is very common in campus placement (Infosys, TCS, Wipro, etc.) 
+because it makes the use of concepts of time, work and efficiency.
+
+Problem:
+4 men can complete a work in 12 days, and 6 boys can complete the same work in 12 days.
+If 3 men and 9 boys work together, in how many days will they finish the work?
+
+Solution: 
+Note: Formula to be used to solve the problem
+      Work = Efficiency x Time
+
+Work by 4 men in 12 days = Work by 6 boys in 12 days
+So,
+                4M × 12 = 6B × 12
+                     4M = 6B
+                      B = 2/3 M
+
+Now, 9 boys = 9 × (2/3)M = 6 men.
+So, 3 men + 9 boys = 3 men + 6 men = 9 men.
+So, We have written boys in form of men.
+
+Consider that 9 men takes y days to complete the work.
+We can equate the equations again that include the men,
+Work by 4 men in 12 days = Work by 9 men in x days
+So,
+                 4M × 12 = 9M x y
+                       y = 5⅓ days ✅ (On cancelling M)
+
+Final Answer: 
+👍They will finish the work in 5⅓ days.
+
+
+

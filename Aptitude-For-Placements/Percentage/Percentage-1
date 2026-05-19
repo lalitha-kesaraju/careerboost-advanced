@@ -1,0 +1,16 @@
+Problem on Percentage-1 - Placement Exercise
+NOTE: This kind of question is very common in campus placement ( TCS, Wipro, etc.) 
+because it makes the use of percentage and some basic calculation.
+
+Problem:
+What percent is 42 kg of 336 kg?
+
+Solution:
+Percentage = (Part ÷ Whole) × 100
+
+= (42 ÷ 336) × 100
+= (1 ÷ 8) × 100
+= 12.5 ✅
+
+Final Answer:
+👍 42 kg is 12.5% of 336 kg.

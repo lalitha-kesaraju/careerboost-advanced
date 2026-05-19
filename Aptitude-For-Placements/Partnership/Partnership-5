@@ -1,0 +1,35 @@
+Problem on Partnership-5 - Placement Exercise
+NOTE: This kind of question is very common in campus placement ( TCS, Wipro, etc.) 
+because it makes the use of Partnership.
+
+Problem:
+M invests ₹4,000. 
+After 3 months, N joins with ₹8,000 and P joins with ₹20,000.
+At the end of one year, the profit-sharing ratio is given as 6 : 9 : 5,
+The total profit is ₹1,12,000. 
+Find the time of investment of P.
+
+Solution:
+Note: When the time of investment is different, 
+we multiply each partner’s Investment by the time (in months) for which it was invested. 
+Rest the logic is the same — the ratio of (Investment × Time) will be the ratio in which the profit is divided.
+
+M’s investment = ₹4,000 for 12 months             = 4,000 × 12 = 48,000.
+N’s investment = ₹8,000 for (12 − 3) = 9 months   = 8,000 × 9 = 72,000.
+P’s investment = ₹20,000 for t months             = 20,000 × t.
+
+Given ratio = 6 : 9 : 5, so
+48,000 : 72,000 : (20,000 × t) = 6 : 9 : 5.
+
+Since M and N already match the ratio 6 : 9, we only need to compare N and P to find P’s time.
+
+So, compare N and P:
+(72,000) / (20,000 x t) = 9 / 5
+Cross multiplying:
+72,000 × 5 = 9 × 20,000t
+3,60,000 = 1,80,000t
+t = 2
+
+Therefore t = 2 months.✅
+
+👍Final Answer: P invested for 2 months. 

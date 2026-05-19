@@ -1,0 +1,21 @@
+Problem on Time, Speed and Distance-1 - Placement Exercise
+NOTE: This kind of question is very common in campus placement ( TCS, Wipro, etc.) 
+because it makes the use of simple formula and calculations.
+
+Problem:
+A car is running at a speed of 72 km/h. 
+Find the time it will take to cover 6000 meters.
+
+Solution:
+Note: Distance = Speed X Time
+Convert speed into m/s:
+Speed = 72 × (1000 ÷ 3600) = 20 m/s 
+
+Distance = 6000 m
+
+Time = Distance ÷ Speed
+    = 6000 ÷ 20
+    = 300 seconds ✅
+
+👍 Final Answer:
+The car will take 300 seconds to cover 6000 m.

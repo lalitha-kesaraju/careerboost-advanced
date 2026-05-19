@@ -1,0 +1,33 @@
+Time and Work-2 - Placement Exercise
+NOTE: This kind of question is very common in campus placement (Infosys, TCS, Wipro, etc.) 
+because it makes the use of concepts of time, work and efficiency.
+
+Problem:
+A and B together can complete a piece of work in 10 days.
+B and C together can complete it in 12 days.
+C and A together can complete it in 15 days.
+Find in how many days A, B, and C can complete same piece of work if they work together.
+
+Solution:
+Note: Formula to be used to solve the problem
+      Work = Efficiency x Time
+
+(Take LCM for total work)
+LCM of 10, 12, and 15 = 60 units of total work.
+
+(Find efficiency of each pair)
+A + B efficiency = 60 ÷ 10 = 6 units/day 
+B + C efficiency = 60 ÷ 12 = 5 units/day 
+C + A efficiency = 60 ÷ 15 = 4 units/day 
+
+(Add all efficiencies)
+(A + B) + (B + C) + (C + A) = 6 + 5 + 4 = 15
+
+But this equals 2(A + B + C).
+So, A + B + C efficiency = 15 ÷ 2 = 7.5 units/day 
+
+(Time taken together)
+Total Work ÷ Efficiency = 60 ÷ 7.5 = 8 days ✅
+
+Final Answer:
+👍 A, B, and C will finish the work together in 8 days.

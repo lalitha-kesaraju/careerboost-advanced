@@ -1,0 +1,26 @@
+Problem on Partnership-4 - Placement Exercise
+NOTE: This kind of question is very common in campus placement ( TCS, Wipro, etc.) 
+because it makes the use of Partnership.
+
+Problem:
+Rohit starts an agency by investing ₹40,000. 
+After 4 months, Raj joins with an investment of ₹50,000. 
+At the end of one year, the total profit is ₹1,10,000. 
+Find Raj’s share in the profit.
+
+Solution:
+Note: When the time of investment is different, 
+we multiply each partner’s Investment by the time (in months) for which it was invested. 
+Rest the logic is the same — the ratio of (Investment × Time) will be the ratio in which the profit is divided.
+
+Rohit’s investment = ₹40,000 for 12 months            = 40,000 × 12 = 4,80,000
+Raj’s investment = ₹50,000 for 8 months               = 50,000 × 8 = 4,00,000
+Investment Ratio of Rohit : Raj = 4,80,000 : 4,00,000 = 6 : 5
+So, Profit Sharing Ratio of Rohit : Raj = 6  : 5
+
+Total profit = ₹1,10,000
+Total parts = 6 + 5 = 11 parts
+
+Raj’s share = (5/11) × 1,10,000 = ₹50,000 ✅
+
+👍Final Answer: Raj gets ₹50,000. 

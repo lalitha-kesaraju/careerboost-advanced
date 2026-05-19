@@ -1,0 +1,32 @@
+Problem on Profit & Loss-1 – Placement Exercise
+NOTE: This kind of question is very common in campus placements (TCS, Infosys, Wipro, Capgemini, etc.) 
+because it mixes marked price, discount, and selling price.
+
+Problem
+Ajay incurred a loss of 20% by selling a vase for Rs. 2880.
+To get a profit of 20%, at what price should he sell the vase?
+
+Solution
+Let cost price (CP) = 100x 
+
+Loss is calculated on Cost Price
+Loss = 20% on CP
+     = 20x
+
+Selling price at 20% loss = CP - Loss
+                          = 100x − 20x
+                          = 80x
+According to ques, SP = 2880
+80x = 2880
+x = 2880 ÷ 80
+x = 36 
+Cost price = 100x = 100 × 36 = 3600 ✅
+Profit = 20% of CP
+       = 20% of 3600
+
+Selling price for 20% profit = Cost price + Profit
+                            = 3600 + 720
+                            = 4320 ✅
+
+👍 Final Answer:
+To get a profit of 20%, Ajay should sell the vase for Rs. 4320
