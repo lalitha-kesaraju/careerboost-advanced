@@ -426,8 +426,8 @@ function AppContent({
           {currentView === 'builder' && <PortfolioSection />}
           {currentView === 'settings' && <SettingsSection />}
 
-          {/* Placeholders for other tabs */}
-          {['assistant', 'coach', 'analysis', 'code', 'dsa', 'studies', 'exam', 'tracker', 'code-ide', 'higher-studies', 'examination'].includes(currentView) && !['upload', 'resume-upload', 'resume-analysis', 'skills', 'skill-gap-analysis', 'learning', 'learning-plan', 'advice', 'career-advice', 'courses', 'bootcamp', 'aptitude', 'aptitude-v5', 'interviews', 'mock-interview', 'dsa-course', 'job-tracker', 'builder'].includes(currentView) && (
+          {/* Placeholders for genuinely unbuilt tabs */}
+          {['analysis', 'code', 'dsa', 'studies', 'exam', 'tracker', 'higher-studies', 'examination'].includes(currentView) && (
             <div className="h-[60vh] flex flex-col items-center justify-center text-center p-10 bg-white rounded-[3rem] border border-gray-100 shadow-sm">
                 <div className="w-20 h-20 bg-cyan-50 rounded-3xl flex items-center justify-center text-cyan-600 mb-6">
                    <Rocket className="w-10 h-10" />

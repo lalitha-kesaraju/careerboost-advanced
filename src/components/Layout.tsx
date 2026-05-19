@@ -54,7 +54,7 @@ export function Layout({ children, currentView, onNavigate, resumeData }: Layout
     { id: 'coach', label: 'Mithra AI Coach', icon: Bot },
     { id: 'progress', label: 'Growth Roadmap', icon: Activity },
     { id: 'resume-upload', label: 'Resume Upload', icon: Upload },
-    { id: 'builder', label: 'Resume Builder', icon: FileEdit },
+    { id: 'builder', label: 'Portfolio Builder', icon: FolderHeart },
     { id: 'resume-analysis', label: 'Resume Analysis', icon: BarChart3, isLocked: !hasResume },
     { id: 'skill-gap-analysis', label: 'Skill Gap Analysis', icon: Target, isLocked: !hasResume },
     { id: 'career-advice', label: 'Career Advice', icon: MessageSquare, isLocked: !hasTargetRole },
