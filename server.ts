@@ -221,6 +221,54 @@ async function startServer() {
     }
   });
 
+  // ── Gemini streaming proxy (SSE) ─────────────────────────────────────────
+  app.post("/api/gemini/stream", requireAuth, async (req: any, res) => {
+    const userId: string = req.user.uid;
+    if (isRateLimited(userId)) {
+      return res.status(429).json({ error: "Too many requests. Please wait a moment." });
+    }
+
+    const { contents, config, systemInstruction } = req.body;
+    if (!contents) return res.status(400).json({ error: "Missing 'contents'." });
+
+    try {
+      const modelName = typeof config?.model === "string" ? config.model : DEFAULT_MODEL;
+      const genAIClient = getGenAI();
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.flushHeaders();
+
+      const stream = await genAIClient.models.generateContentStream({
+        model: modelName,
+        contents: Array.isArray(contents)
+          ? contents
+          : [{ role: "user", parts: [{ text: String(contents) }] }],
+        config: { ...config, systemInstruction },
+      });
+
+      for await (const chunk of stream) {
+        if (res.writableEnded) break;
+        const text = chunk.text;
+        if (text) res.write(`data: ${JSON.stringify({ text })}\n\n`);
+      }
+
+      if (!res.writableEnded) {
+        res.write("data: [DONE]\n\n");
+        res.end();
+      }
+    } catch (error: any) {
+      console.error("[Gemini Stream Error]", error.message);
+      if (!res.headersSent) {
+        res.status(500).json({ error: error.message || "AI streaming failed." });
+      } else if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ error: error.message })}\n\n`);
+        res.end();
+      }
+    }
+  });
+
   // ── Vite / Static ────────────────────────────────────────────────────────
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
