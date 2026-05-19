@@ -6,7 +6,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
-import firebaseConfig from '../firebase-applet-config.json';
 import { Layout } from './components/Layout';
 import { handleFirestoreError, OperationType } from './services/firestoreService';
 import { Dashboard } from './components/Dashboard';
@@ -115,7 +114,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (!userSnap.exists()) {
           const demoUser = DEMO_USERS.find(du => du.email.toLowerCase() === (u.email || '').toLowerCase());
-          const isAdminEmail = u.email === 'admin@careerboost.ai' || u.email === 'kesarajulalitha@gmail.com';
+          const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+          const isAdminEmail = adminEmails.includes((u.email || '').toLowerCase());
           const newData: UserData = {
             userId: u.uid,
             email: u.email || '',
@@ -139,7 +139,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUserData(newData);
         } else {
           const data = userSnap.data() as UserData;
-          const isAdminEmail = u.email === 'admin@careerboost.ai' || u.email === 'kesarajulalitha@gmail.com';
+          const adminEmails = (import.meta.env.VITE_ADMIN_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+          const isAdminEmail = adminEmails.includes((u.email || '').toLowerCase());
           if (isAdminEmail && data.role !== 'Platform Admin') {
             data.role = 'Platform Admin';
             // Optionally update firestore too
@@ -217,7 +218,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshUsage = async () => {
     if (user) {
-      const resp = await fetch(`/api/user/usage/${user.uid}`);
+      const token = await user.getIdToken();
+      const resp = await fetch(`/api/user/usage/${user.uid}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (resp.ok) {
         const data = await resp.json();
         setUserData(data);

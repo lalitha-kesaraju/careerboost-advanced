@@ -1,10 +1,11 @@
 {
-  "projectId": "gen-lang-client-0658822410",
-  "appId": "1:780826941140:web:ea72020b9cd902db5a8d41",
-  "apiKey": "AIzaSyBV42BeknW1CueQyZr44cHgA0ffukzX5Uo",
-  "authDomain": "gen-lang-client-0658822410.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-0204c508-c626-4194-b7e8-ae16aa8db7ad",
-  "storageBucket": "gen-lang-client-0658822410.firebasestorage.app",
-  "messagingSenderId": "780826941140",
+  "_comment": "DO NOT store real credentials here. Use environment variables instead. See .env.example",
+  "projectId": "REPLACE_WITH_ENV_VAR",
+  "appId": "REPLACE_WITH_ENV_VAR",
+  "apiKey": "REPLACE_WITH_ENV_VAR",
+  "authDomain": "REPLACE_WITH_ENV_VAR",
+  "firestoreDatabaseId": "REPLACE_WITH_ENV_VAR",
+  "storageBucket": "REPLACE_WITH_ENV_VAR",
+  "messagingSenderId": "REPLACE_WITH_ENV_VAR",
   "measurementId": ""
 }

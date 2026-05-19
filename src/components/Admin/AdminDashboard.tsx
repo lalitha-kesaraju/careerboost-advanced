@@ -32,11 +32,32 @@ export function AdminDashboard() {
   const { logout, userData } = useAuth();
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
   const [stats, setStats] = useState({
-    totalUsers: 1420,
-    activeInterviews: 84,
-    proAnalyses: 2310,
+    totalUsers: 0,
+    activeInterviews: 0,
+    proAnalyses: 0,
     apiHealth: '99.9%'
   });
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const usersSnap = await getDocs(collection(db, 'users'));
+        let totalAnalyses = 0;
+        usersSnap.docs.forEach(d => {
+          const usage = d.data().usage || {};
+          totalAnalyses += (usage.resumeAnalyses || 0) + (usage.skillGaps || 0);
+        });
+        setStats(prev => ({
+          ...prev,
+          totalUsers: usersSnap.size,
+          proAnalyses: totalAnalyses,
+        }));
+      } catch (err) {
+        console.error('Failed to fetch admin stats:', err);
+      }
+    }
+    fetchStats();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] flex font-sans">

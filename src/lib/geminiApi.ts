@@ -1,11 +1,15 @@
-import { safeParseJson } from "./aiUtils";
+import { auth } from '../firebase';
 
 export async function callGemini(contents: any, config: any = {}, systemInstruction?: any) {
   try {
+    const token = await auth.currentUser?.getIdToken();
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
     const response = await fetch('/api/gemini/generate', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ contents, config, systemInstruction })
+      headers,
+      body: JSON.stringify({ contents, config, systemInstruction }),
     });
 
     if (!response.ok) {
@@ -14,16 +18,13 @@ export async function callGemini(contents: any, config: any = {}, systemInstruct
     }
 
     const result = await response.json();
-    
-    if (!result || !result.text) {
-      throw new Error("No response from AI");
-    }
+    if (!result?.text) throw new Error('No response from AI');
 
     return result;
   } catch (error: any) {
-    console.error("Gemini API Error:", error);
-    if (error.message?.includes("API key not valid") || error.message?.includes("authentication failed")) {
-      throw new Error("AI authentication failed. Our servers are currently experiencing issues with AI connectivity.");
+    console.error('Gemini API Error:', error);
+    if (error.message?.includes('API key not valid') || error.message?.includes('authentication failed')) {
+      throw new Error('AI authentication failed. Our servers are currently experiencing issues with AI connectivity.');
     }
     throw error;
   }
