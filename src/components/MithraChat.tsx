@@ -52,9 +52,10 @@ export function MithraChat() {
       const advice = await getMithraAdvice(userMsg, contextData, messages);
       setMessages(prev => [...prev, { role: 'mithra', content: advice }]);
       
+      const token = await user.getIdToken();
       await fetch('/api/user/increment-usage', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
         body: JSON.stringify({ userId: user.uid, feature: 'careerAdviceCount' })
       });
       refreshUsage();

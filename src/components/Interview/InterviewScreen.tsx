@@ -35,6 +35,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
+  const isEndingRef = useRef(false);
 
   useEffect(() => {
     if (videoRef.current && stream) {
@@ -67,12 +68,25 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
   };
 
   const handleEndInterview = useCallback(() => {
+    if (isEndingRef.current) return;
+    isEndingRef.current = true;
     setStatus('Interview ended. Finishing up...');
     window.speechSynthesis.cancel();
     if (recognitionRef.current) {
+        recognitionRef.current.onresult = null;
+        recognitionRef.current.onend = null;
+        recognitionRef.current.onerror = null;
         recognitionRef.current.stop();
     }
-    stopRecording();
+    setIsListening(false);
+    const closing = "Thank you for the interview. Your performance analysis will be ready shortly.";
+    setConversation(prev => [...prev, { speaker: 'agent', text: closing, isFinal: true }]);
+    finalTranscriptRef.current.push(`Agent: ${closing}`);
+    const utterance = new SpeechSynthesisUtterance(closing);
+    if (selectedVoiceRef.current) utterance.voice = selectedVoiceRef.current;
+    utterance.onend = () => stopRecording();
+    utterance.onerror = () => stopRecording();
+    window.speechSynthesis.speak(utterance);
   }, [stopRecording]);
 
   useEffect(() => {
@@ -168,30 +182,34 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
 
         chatRef.current = {
             sendMessage: async ({ message }: { message: string }) => {
-                const response = await fetch('/api/gemini/chat', {
+                const { auth } = await import('../../firebase');
+                const token = await auth.currentUser?.getIdToken();
+
+                const newUserEntry = { role: 'user', parts: [{ text: message }] };
+                const contents = [...chatHistoryRef, newUserEntry];
+
+                const response = await fetch('/api/gemini/generate', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
                     body: JSON.stringify({
-                        payload: {
-                            message,
-                            history: [...chatHistoryRef],
-                            systemInstruction,
-                            config: { maxOutputTokens: 256 }
-                        }
+                        contents,
+                        systemInstruction,
+                        config: { maxOutputTokens: 256 }
                     })
                 });
-                
+
                 if (!response.ok) {
                     const err = await response.json();
                     throw new Error(err.error || 'Chat proxy failed');
                 }
-                
+
                 const data = await response.json();
-                
-                // Update local history
-                chatHistoryRef.push({ role: 'user', parts: [{ text: message }] });
+                chatHistoryRef.push(newUserEntry);
                 chatHistoryRef.push({ role: 'model', parts: [{ text: data.text }] });
-                
+
                 return data;
             }
         };
@@ -272,10 +290,19 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
 
   useEffect(() => {
     const timer = setInterval(() => {
-        if (!isPaused) setTimeLeft(prev => Math.max(0, prev - 1));
+      if (!isPaused) {
+        setTimeLeft(prev => {
+          if (prev <= 1) { clearInterval(timer); return 0; }
+          return prev - 1;
+        });
+      }
     }, 1000);
     return () => clearInterval(timer);
   }, [isPaused]);
+
+  useEffect(() => {
+    if (timeLeft === 0) handleEndInterview();
+  }, [timeLeft, handleEndInterview]);
 
   return (
     <div ref={containerRef} className="flex flex-col bg-gray-900 rounded-[3.5rem] overflow-hidden shadow-2xl relative min-h-[85vh] text-white">

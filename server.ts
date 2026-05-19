@@ -52,7 +52,7 @@ const db =
 // ─── Rate limiter (in-memory, per-user) ──────────────────────────────────────
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT_COUNT = 20;
+const RATE_LIMIT_COUNT = 60;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 
 function isRateLimited(key: string): boolean {
@@ -116,7 +116,7 @@ async function startServer() {
   });
 
   // Body parser with size limit
-  app.use(express.json({ limit: "1mb" }));
+  app.use(express.json({ limit: "4mb" }));
 
   // Request logging
   app.use("/api", (req, _res, next) => {

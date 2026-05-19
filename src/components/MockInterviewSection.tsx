@@ -4,13 +4,7 @@ import { useAuth } from '../App';
 import { recordActivity } from '../services/statsService';
 import { doc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { db } from '../firebase';
-import { handleFirestoreError, OperationType } from '../services/firestoreService';
-import { 
-  Mic, Briefcase, Trophy, Sparkles, Brain, 
-  BarChart3, Target, Star, Flame, History, Users, Bell, RefreshCw, WifiOff,
-  UserCircle, MessageSquare, Code, Layout, MessageCircle, ArrowRight,
-  Plus
-} from 'lucide-react';
+import { Mic } from 'lucide-react';
 import SetupScreen from './Interview/SetupScreen';
 import ReadyScreen from './Interview/ReadyScreen';
 import InterviewScreen from './Interview/InterviewScreen';
@@ -93,23 +87,6 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
     }
   };
 
-  const categories = [
-    { label: 'PERFORMANCE', items: [
-      { icon: BarChart3, label: 'Analytics' },
-      { icon: Target, label: 'Practice Drills' },
-      { icon: Star, label: 'Daily Challenge' },
-      { icon: Flame, label: 'Streak Rewards', badge: true },
-      { icon: History, label: 'History' },
-    ]},
-    { label: 'COMMUNITY', items: [
-      { icon: Trophy, label: 'Badges' },
-      { icon: UserCircle, label: 'Personality' },
-      { icon: Users, label: 'Collaborate' },
-      { icon: Bell, label: 'Notifications' },
-      { icon: RefreshCw, label: 'Auto-Sync' },
-      { icon: WifiOff, label: 'Offline' },
-    ]}
-  ];
 
   return (
     <div className="max-w-7xl mx-auto p-4 space-y-8 pb-32 min-h-screen">
@@ -125,22 +102,6 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-            {categories.map((group, idx) => (
-            <div key={idx} className="space-y-4">
-                <h3 className="text-[10px] font-black text-gray-400 tracking-widest uppercase">{group.label}</h3>
-                <div className="flex flex-wrap gap-3">
-                {group.items.map((item, i) => (
-                    <button key={i} className="flex items-center gap-2 px-6 py-3.5 bg-white border border-gray-100 rounded-2xl hover:border-indigo-300 hover:shadow-lg transition-all group relative">
-                    <item.icon className="w-4 h-4 text-indigo-500" />
-                    <span className="text-sm font-bold text-gray-600 group-hover:text-indigo-600">{item.label}</span>
-                    {item.badge && <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-amber-400 rounded-full animate-pulse" />}
-                    </button>
-                ))}
-                </div>
-            </div>
-            ))}
-        </div>
       </div>
 
       {/* Main Stepper Navigation */}
@@ -208,20 +169,6 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
         </AnimatePresence>
       </div>
 
-      {/* Floating Action Menu (Bottom Right) */}
-      <div className="fixed bottom-10 right-10 flex items-center gap-4 z-50">
-          <div className="flex gap-2">
-            <button className="w-14 h-14 bg-gradient-to-tr from-cyan-500 to-blue-600 text-white rounded-2xl shadow-xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center">
-                <MessageCircle className="w-6 h-6" />
-            </button>
-            <button 
-                onClick={() => setCurrentStep('setup')}
-                className="w-14 h-14 bg-indigo-600 text-white rounded-2xl shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center font-bold"
-            >
-                <Plus className="w-7 h-7" />
-            </button>
-          </div>
-      </div>
     </div>
   );
 }
