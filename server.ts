@@ -69,6 +69,12 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Logging middleware for API routes
+  app.use("/api", (req, res, next) => {
+    console.log(`[API Request] ${req.method} ${req.url}`);
+    next();
+  });
+
   // API Routes
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
@@ -145,23 +151,36 @@ async function startServer() {
 
   // Gemini proxy routes
   app.post("/api/gemini/generate", async (req, res) => {
+    console.log("[Gemini Proxy] Received request");
     try {
       const { contents, config, systemInstruction } = req.body;
-      const genAIClient = getGenAI();
       
+      if (!contents) {
+        return res.status(400).json({ error: "Missing 'contents' in request body" });
+      }
+
+      const genAIClient = getGenAI();
+      const modelName = config?.model || DEFAULT_MODEL;
+      console.log(`[Gemini Proxy] Using model: ${modelName}`);
+
+      // Newest @google/genai (1.x+) style
       const response = await genAIClient.models.generateContent({
-        model: config?.model || DEFAULT_MODEL,
-        contents,
+        model: modelName,
+        contents: Array.isArray(contents) ? contents : [{ role: 'user', parts: [{ text: String(contents) }] }],
         config: {
           ...config,
           systemInstruction
         }
       });
       
+      console.log("[Gemini Proxy] Success");
       res.json({ text: response.text });
     } catch (error: any) {
-      console.error("Gemini Proxy Error:", error);
-      res.status(500).json({ error: error.message });
+      console.error("[Gemini Proxy Error]", error);
+      res.status(500).json({ 
+        error: error.message || "An unexpected error occurred during AI generation",
+        stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+      });
     }
   });
 

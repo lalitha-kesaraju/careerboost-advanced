@@ -23,6 +23,7 @@ import {
   Calculator,
   Compass,
   LayoutGrid,
+  Shield,
   FileText
 } from 'lucide-react';
 import Markdown from 'react-markdown';
