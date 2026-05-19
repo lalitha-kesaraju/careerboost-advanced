@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import { AnalysisReport, InterviewData, QuestionAnswerSuggestion } from '../../types';
-import SpinnerIcon from './icons/SpinnerIcon';
-import ScoreBreakdown from './ScoreBreakdown';
-import BusinessToolsSection from './BusinessToolsSection';
-import { 
-  BarChart, Target, Brain, Lightbulb, TrendingUp, ArrowRight, MessageSquare, ShieldCheck, HelpCircle, Sparkles
+import React, { useState } from 'react';
+import { AnalysisReport, InterviewData } from '../../types';
+import {
+  BarChart3, Brain, TrendingUp, ArrowRight, MessageSquare, ShieldCheck,
+  Sparkles, CheckCircle2, XCircle, Target, Shirt, Monitor, Mic2,
+  ChevronDown, ChevronUp, Star, Zap, AlertTriangle, RefreshCw
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { getDetailedAnswerSuggestions } from '../../services/gemini';
 
 interface AnalysisScreenProps {
   report: AnalysisReport | null;
@@ -15,53 +13,159 @@ interface AnalysisScreenProps {
   error: string | null;
   onRestart: () => void;
   interviewData: InterviewData | null;
-  history?: any[]; // To match the component logic
+  history?: any[];
 }
 
-const ScoreBadge: React.FC<{ score: number }> = ({ score }) => {
-  const getColor = (s: number) => {
-    if (s >= 8) return 'bg-emerald-50 text-emerald-600 border-emerald-100';
-    if (s >= 5) return 'bg-amber-50 text-amber-600 border-amber-100';
-    return 'bg-rose-50 text-rose-600 border-rose-100';
-  };
+// ── Helpers ─────────────────────────────────────────────────────────────────
+
+const ScoreBadge = ({ score }: { score: number }) => {
+  const color = score >= 8 ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
+    : score >= 6 ? 'bg-amber-50 text-amber-600 border-amber-200'
+    : 'bg-rose-50 text-rose-600 border-rose-200';
   return (
-    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black border uppercase tracking-widest ${getColor(score)}`}>
+    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black border uppercase tracking-widest ${color}`}>
       {score}/10
     </span>
   );
 };
 
-const AnalysisScreen: React.FC<AnalysisScreenProps> = ({ 
-    report, isLoading, error, onRestart, interviewData, history 
-}) => {
-  const [answerSuggestions, setAnswerSuggestions] = useState<QuestionAnswerSuggestion[]>([]);
-  const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+const ScoreBar = ({ score, color = 'bg-indigo-500' }: { score: number; color?: string }) => (
+  <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+    <motion.div
+      className={`h-full rounded-full ${color}`}
+      initial={{ width: 0 }}
+      animate={{ width: `${score * 10}%` }}
+      transition={{ duration: 0.8, ease: 'easeOut' }}
+    />
+  </div>
+);
 
-  const generateAnswerSuggestions = async () => {
-    if (!interviewData || !history) return;
-    setIsGeneratingSuggestions(true);
-    try {
-      const data = await getDetailedAnswerSuggestions(interviewData, history);
-      setAnswerSuggestions(data.suggestions || []);
-      setShowSuggestions(true);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsGeneratingSuggestions(false);
-    }
-  };
+const OverallScoreRing = ({ score }: { score: number }) => {
+  const pct = score * 10;
+  const color = pct >= 75 ? '#10b981' : pct >= 55 ? '#f59e0b' : '#ef4444';
+  const r = 52, circ = 2 * Math.PI * r;
+  return (
+    <div className="relative w-36 h-36 mx-auto">
+      <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
+        <circle cx="60" cy="60" r={r} fill="none" stroke="#f3f4f6" strokeWidth="10" />
+        <motion.circle cx="60" cy="60" r={r} fill="none" stroke={color} strokeWidth="10"
+          strokeLinecap="round" strokeDasharray={circ}
+          initial={{ strokeDashoffset: circ }}
+          animate={{ strokeDashoffset: circ - (circ * pct) / 100 }}
+          transition={{ duration: 1.2, ease: 'easeOut' }} />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-3xl font-black text-gray-900">{score}</span>
+        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">/ 10</span>
+      </div>
+    </div>
+  );
+};
+
+// ── Q&A Breakdown Card ───────────────────────────────────────────────────────
+
+const QACard = ({ item, index }: { item: any; index: number }) => {
+  const [open, setOpen] = useState(index === 0);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05 }}
+      className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden"
+    >
+      <button
+        className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+        onClick={() => setOpen(o => !o)}
+      >
+        <div className="flex items-center gap-4 min-w-0">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-black shrink-0 ${
+            item.score >= 8 ? 'bg-emerald-100 text-emerald-700' :
+            item.score >= 6 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'
+          }`}>{index + 1}</div>
+          <p className="text-sm font-bold text-gray-800 truncate">{item.question}</p>
+        </div>
+        <div className="flex items-center gap-3 shrink-0 ml-4">
+          <ScoreBadge score={item.score} />
+          {item.used_star_method && (
+            <span className="px-2 py-1 bg-indigo-50 text-indigo-600 text-[9px] font-black rounded-lg border border-indigo-100 uppercase tracking-wider">STAR</span>
+          )}
+          {open ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+        </div>
+      </button>
+
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="overflow-hidden"
+          >
+            <div className="px-6 pb-6 grid grid-cols-1 lg:grid-cols-3 gap-4 border-t border-gray-50">
+              {/* What you said */}
+              <div className="pt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-rose-400" />
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Your Answer</span>
+                </div>
+                <p className="text-sm text-gray-600 leading-relaxed bg-rose-50/50 rounded-2xl p-4 italic">
+                  {item.user_answer || '(No response recorded)'}
+                </p>
+              </div>
+
+              {/* Ideal answer */}
+              <div className="pt-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                  <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ideal Answer</span>
+                </div>
+                <p className="text-sm text-gray-700 leading-relaxed bg-emerald-50/50 rounded-2xl p-4 font-medium">
+                  {item.ideal_answer}
+                </p>
+              </div>
+
+              {/* Feedback */}
+              <div className="pt-4 space-y-3">
+                <div className="p-4 bg-indigo-50/50 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-1">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Strength</span>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">{item.strength}</p>
+                </div>
+                <div className="p-4 bg-amber-50/50 rounded-2xl">
+                  <div className="flex items-center gap-2 mb-1">
+                    <AlertTriangle className="w-3.5 h-3.5 text-amber-500" />
+                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Improve</span>
+                  </div>
+                  <p className="text-xs text-gray-600 leading-relaxed">{item.improvement}</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
+
+// ── Main Component ───────────────────────────────────────────────────────────
+
+const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
+  report, isLoading, error, onRestart, interviewData
+}) => {
 
   if (isLoading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-8 py-20">
         <div className="relative">
           <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-20 animate-pulse" />
-          <Loader2 className="w-16 h-16 text-indigo-600 animate-spin relative z-10" />
+          <div className="relative w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
         </div>
         <div className="text-center space-y-2">
-          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Decrypting Performance Logic</h2>
-          <p className="text-gray-500 font-bold text-xs uppercase tracking-widest">Our AI is calibrating your feedback metrics...</p>
+          <h2 className="text-2xl font-black text-gray-900 tracking-tight">Analyzing Your Performance</h2>
+          <p className="text-gray-500 font-bold text-xs uppercase tracking-widest">AI is reviewing every answer, tone, and technique…</p>
         </div>
       </div>
     );
@@ -69,254 +173,240 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
 
   if (error || !report) {
     return (
-      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-6">
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-6 text-center">
         <div className="w-20 h-20 bg-rose-50 rounded-[2rem] flex items-center justify-center text-rose-500">
-           <ShieldCheck className="w-10 h-10" />
+          <ShieldCheck className="w-10 h-10" />
         </div>
-        <div className="text-center">
-            <h2 className="text-xl font-bold text-gray-900">{error || "Analysis Unavailable"}</h2>
-            <button onClick={onRestart} className="mt-4 text-indigo-600 font-black text-xs uppercase tracking-widest hover:underline">Restart Session</button>
+        <div>
+          <h2 className="text-xl font-bold text-gray-900">{error || 'Analysis Unavailable'}</h2>
+          <p className="text-sm text-gray-500 mt-2">The AI could not generate a report for this session.</p>
+          <button onClick={onRestart} className="mt-6 flex items-center gap-2 mx-auto px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold text-sm hover:bg-indigo-700 transition-all">
+            <RefreshCw className="w-4 h-4" /> Try Again
+          </button>
         </div>
       </div>
     );
   }
 
+  const score = report.overall_score ?? report.overallScore ?? 0;
+  const scoreColor = score >= 8 ? 'text-emerald-600' : score >= 6 ? 'text-amber-600' : 'text-rose-600';
+
   return (
-    <div className="max-w-6xl mx-auto space-y-12 pb-20 animate-fade-in">
-        {/* Header Summary */}
-        <div className="bg-white rounded-[3rem] p-12 border border-gray-100 shadow-xl space-y-10">
-            <div className="flex items-center gap-6 border-b border-gray-100 pb-10">
-                <div className="w-20 h-20 bg-indigo-600 rounded-[2rem] flex items-center justify-center text-white shadow-xl shadow-indigo-100">
-                    <BarChart className="w-10 h-10" />
-                </div>
-                <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight">Executive Performance Audit</h1>
-                    <p className="text-gray-500 font-medium">Session: {interviewData?.jobRole} • {new Date().toLocaleDateString()}</p>
-                </div>
-            </div>
+    <div className="max-w-6xl mx-auto space-y-8 pb-24">
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                <div className="space-y-6">
-                    <h3 className="text-xs font-black text-indigo-600 uppercase tracking-widest mb-4">Core Narrative</h3>
-                    <p className="text-xl font-medium text-gray-800 leading-relaxed italic serif whitespace-pre-wrap">
-                        {report.overall_summary}
-                    </p>
-                </div>
-                <div>
-                     <ScoreBreakdown 
-                        overallScore={report.overallScore} 
-                        detailedScores={{
-                            communication: report.performance_feedback.find(f => f.area.includes('Communication'))?.score,
-                            technical: report.performance_feedback.find(f => f.area.includes('Technical'))?.score,
-                            confidence: report.performance_feedback.find(f => f.area.includes('Confidence'))?.score,
-                            structure: report.performance_feedback.find(f => f.area.includes('Problem'))?.score
-                        }} 
-                    />
-                </div>
-            </div>
+      {/* ── Header ── */}
+      <div className="bg-white rounded-[3rem] p-8 sm:p-12 border border-gray-100 shadow-xl">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 border-b border-gray-100 pb-8 mb-8">
+          <div className="w-16 h-16 bg-indigo-600 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shadow-indigo-100 shrink-0">
+            <BarChart3 className="w-8 h-8" />
+          </div>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Performance Analysis</h1>
+            <p className="text-gray-500 font-medium text-sm mt-1">
+              {interviewData?.jobRole} · {interviewData?.difficultyLevel?.toUpperCase()} · {new Date().toLocaleDateString()}
+            </p>
+          </div>
         </div>
 
-        {/* Feedback Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-xl space-y-8">
-                <h3 className="text-lg font-black text-gray-900 flex items-center gap-3">
-                    <Terminal className="w-5 h-5 text-indigo-600" />
-                    Technical Proficiency
-                </h3>
-                <div className="space-y-4">
-                    {report.performance_feedback.map((item, i) => (
-                        <div key={i} className="p-6 bg-gray-50 rounded-2xl border border-transparent hover:border-indigo-100 transition-all flex justify-between items-start">
-                            <div className="space-y-1">
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{item.area}</p>
-                                <p className="text-sm font-bold text-gray-700 italic serif">{item.feedback}</p>
-                            </div>
-                            <ScoreBadge score={item.score} />
-                        </div>
-                    ))}
-                </div>
-            </div>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+          <div className="flex flex-col items-center gap-3">
+            <OverallScoreRing score={score} />
+            <p className={`text-sm font-black uppercase tracking-widest ${scoreColor}`}>
+              {score >= 8 ? 'Excellent' : score >= 6 ? 'Good' : score >= 4 ? 'Needs Work' : 'Keep Practicing'}
+            </p>
+          </div>
+          <div className="lg:col-span-2">
+            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3">Overall Assessment</p>
+            <p className="text-base sm:text-lg text-gray-800 leading-relaxed font-medium italic">{report.overall_summary}</p>
+          </div>
+        </div>
+      </div>
 
-            <div className="bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-xl space-y-8">
-                <h3 className="text-lg font-black text-gray-900 flex items-center gap-3">
-                    <Brain className="w-5 h-5 text-purple-600" />
-                    Cognitive State Analysis
-                </h3>
-                <div className="space-y-6">
-                    {report.emotional_analysis.map((item, i) => (
-                        <div key={i} className="space-y-2">
-                            <div className="flex justify-between items-center px-1">
-                                <span className="text-[10px] font-black text-purple-600 uppercase tracking-widest">{item.emotion}</span>
-                                <span className="text-xs font-black text-gray-900">{item.score * 10}%</span>
-                            </div>
-                            <div className="h-2 bg-gray-50 rounded-full overflow-hidden">
-                                <div className="h-full bg-purple-600 rounded-full" style={{ width: `${item.score * 10}%` }} />
-                            </div>
-                            <p className="text-[10px] text-gray-400 font-medium italic serif mt-2">{item.justification}</p>
-                        </div>
-                    ))}
-                </div>
+      {/* ── Performance Scores ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl space-y-6">
+          <h3 className="text-base font-black text-gray-900 flex items-center gap-3">
+            <Target className="w-5 h-5 text-indigo-600" /> Performance Breakdown
+          </h3>
+          {report.performance_feedback.map((item, i) => (
+            <div key={i} className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-gray-600">{item.area}</span>
+                <ScoreBadge score={item.score} />
+              </div>
+              <ScoreBar score={item.score}
+                color={item.score >= 8 ? 'bg-emerald-500' : item.score >= 6 ? 'bg-amber-500' : 'bg-rose-500'} />
+              <p className="text-[11px] text-gray-500 leading-relaxed">{item.feedback}</p>
             </div>
+          ))}
         </div>
 
-        {/* Detailed Improvements Section */}
-        <div className="bg-gray-900 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-12 opacity-10">
-                <Lightbulb className="w-48 h-48 rotate-12" />
+        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl space-y-6">
+          <h3 className="text-base font-black text-gray-900 flex items-center gap-3">
+            <Brain className="w-5 h-5 text-purple-600" /> Emotional Tone
+          </h3>
+          {report.emotional_analysis.map((item, i) => (
+            <div key={i} className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs font-bold text-gray-600">{item.emotion}</span>
+                <span className="text-xs font-black text-gray-900">{item.score * 10}%</span>
+              </div>
+              <ScoreBar score={item.score} color="bg-purple-500" />
+              <p className="text-[11px] text-gray-500 italic leading-relaxed">{item.justification}</p>
             </div>
-            
-            <div className="relative z-10 space-y-12">
-                <div className="flex justify-between items-center">
-                    <div>
-                        <h2 className="text-2xl font-black tracking-tight mb-2">High-Stakes Refinement</h2>
-                        <p className="text-indigo-400 font-bold text-xs uppercase tracking-widest">Precision feedback for elite market placement</p>
-                    </div>
-                    <button 
-                        onClick={generateAnswerSuggestions}
-                        disabled={isGeneratingSuggestions || showSuggestions}
-                        className="px-8 py-4 bg-white text-gray-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-50 transition-all flex items-center gap-3 disabled:opacity-50"
-                    >
-                        {isGeneratingSuggestions ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-                        Generate Detailed Answer Fixes
-                    </button>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-                    <div className="space-y-8">
-                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Strategic Suggestions</h3>
-                        <div className="space-y-4">
-                            {report.improvement_suggestions.map((tip, i) => (
-                                <div key={i} className="flex gap-4 p-5 bg-white/5 rounded-2xl border border-white/5">
-                                     <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center flex-shrink-0">
-                                        <TrendingUp className="w-4 h-4" />
-                                     </div>
-                                     <p className="text-sm leading-relaxed italic serif opacity-80">{tip}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <div className="space-y-8">
-                        <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Recommended Next Steps</h3>
-                        <div className="space-y-4">
-                            {report.nextSteps?.map((step, i) => (
-                                <div key={i} className="flex items-center justify-between p-5 bg-indigo-600/20 rounded-2xl border border-indigo-500/20 group cursor-pointer hover:bg-indigo-600/40 transition-all">
-                                     <div className="flex items-center gap-4">
-                                        <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center">
-                                            <Target className="w-4 h-4 text-white" />
-                                        </div>
-                                        <p className="text-sm font-black">{step}</p>
-                                     </div>
-                                     <ArrowRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-1 transition-transform" />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            </div>
+          ))}
         </div>
+      </div>
 
-        {/* Answer Suggestions Modal/Section */}
-        <AnimatePresence>
-            {showSuggestions && (
-                <motion.div 
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    className="space-y-8 pt-10"
-                >
-                    <div className="flex items-center gap-4 mb-4">
-                        <MessageSquare className="w-6 h-6 text-indigo-600" />
-                        <h2 className="text-xl font-black text-gray-900 tracking-tight uppercase tracking-widest">Context-Aware Answer Refinement</h2>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 gap-8">
-                        {answerSuggestions.map((item, i) => (
-                            <div key={i} className="bg-white rounded-[2.5rem] border border-gray-100 shadow-2xl overflow-hidden shadow-indigo-100/50">
-                                <div className="p-10 border-b border-gray-50 bg-indigo-50/20">
-                                    <h4 className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3">The Question</h4>
-                                    <p className="text-lg font-black text-gray-900 italic serif">"{item.question}"</p>
-                                </div>
-                                <div className="p-10 grid grid-cols-1 lg:grid-cols-2 gap-10 bg-white">
-                                     <div className="space-y-8">
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <div className="w-1.5 h-1.5 bg-rose-500 rounded-full" />
-                                                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Your Attempt</h5>
-                                            </div>
-                                            <p className="text-sm font-medium text-gray-600 italic serif bg-gray-50 p-6 rounded-2xl">{item.user_answer}</p>
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full" />
-                                                <h5 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ideal Mental Model (HR Expectations)</h5>
-                                            </div>
-                                            <p className="text-sm font-medium text-gray-600 italic serif leading-relaxed">{item.hr_expectations}</p>
-                                        </div>
-                                     </div>
-                                     <div className="space-y-8">
-                                        <div className="p-10 bg-emerald-50/30 rounded-[2rem] border border-emerald-100">
-                                            <div className="flex items-center gap-2 mb-4">
-                                                <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
-                                                <h5 className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Recommended Logic Flow</h5>
-                                            </div>
-                                            <p className="text-sm font-black text-gray-800 italic serif leading-relaxed mb-6">"{item.suggested_answer}"</p>
-                                            <div className="space-y-3">
-                                                {item.improvement_tips.map((tip, idx) => (
-                                                    <div key={idx} className="flex gap-3 text-xs text-gray-500 font-medium italic serif">
-                                                        <span className="text-emerald-500">•</span>
-                                                        {tip}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between p-6 bg-indigo-50 rounded-2xl">
-                                            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Expected Score Impact</span>
-                                            <span className="text-lg font-black text-indigo-700">{item.score_impact}</span>
-                                        </div>
-                                     </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </motion.div>
+      {/* ── Presentation Analysis ── */}
+      {report.presentation_analysis && (
+        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-base font-black text-gray-900 flex items-center gap-3">
+              <Sparkles className="w-5 h-5 text-cyan-600" /> Presentation & Environment
+            </h3>
+            <ScoreBadge score={report.presentation_analysis.overall_presentation_score} />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-5 bg-cyan-50/50 rounded-2xl border border-cyan-100">
+              <div className="flex items-center gap-2 mb-2">
+                <Shirt className="w-4 h-4 text-cyan-600" />
+                <span className="text-[10px] font-black text-cyan-600 uppercase tracking-widest">Attire</span>
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed">{report.presentation_analysis.attire_recommendation}</p>
+            </div>
+            <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
+              <div className="flex items-center gap-2 mb-2">
+                <Monitor className="w-4 h-4 text-blue-600" />
+                <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Environment</span>
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed">{report.presentation_analysis.environment_recommendation}</p>
+            </div>
+            <div className="p-5 bg-violet-50/50 rounded-2xl border border-violet-100">
+              <div className="flex items-center gap-2 mb-2">
+                <Brain className="w-4 h-4 text-violet-600" />
+                <span className="text-[10px] font-black text-violet-600 uppercase tracking-widest">Body Language</span>
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed">{report.presentation_analysis.body_language_inferred}</p>
+            </div>
+            <div className="p-5 bg-emerald-50/50 rounded-2xl border border-emerald-100">
+              <div className="flex items-center gap-2 mb-2">
+                <Mic2 className="w-4 h-4 text-emerald-600" />
+                <span className="text-[10px] font-black text-emerald-600 uppercase tracking-widest">Vocal Confidence</span>
+              </div>
+              <p className="text-sm text-gray-700 leading-relaxed">{report.presentation_analysis.vocal_confidence_assessment}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Q&A Breakdown ── */}
+      {report.question_breakdown?.length > 0 && (
+        <div className="space-y-4">
+          <h3 className="text-base font-black text-gray-900 flex items-center gap-3 px-1">
+            <MessageSquare className="w-5 h-5 text-indigo-600" />
+            Question-by-Question Breakdown
+            <span className="text-xs font-bold text-gray-400">({report.question_breakdown.length} questions)</span>
+          </h3>
+          {report.question_breakdown.map((item, i) => (
+            <QACard key={i} item={item} index={i} />
+          ))}
+        </div>
+      )}
+
+      {/* ── Keywords + STAR ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {(report.keywords_hit?.length > 0 || report.keywords_missed?.length > 0) && (
+          <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl space-y-5">
+            <h3 className="text-base font-black text-gray-900 flex items-center gap-3">
+              <Zap className="w-5 h-5 text-amber-500" /> Keywords
+            </h3>
+            {report.keywords_hit?.length > 0 && (
+              <div>
+                <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-2">✓ Mentioned</p>
+                <div className="flex flex-wrap gap-2">
+                  {report.keywords_hit.map((k, i) => (
+                    <span key={i} className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-xl border border-emerald-100">{k}</span>
+                  ))}
+                </div>
+              </div>
             )}
-        </AnimatePresence>
-
-        {/* Business Section if applicable */}
-        {interviewData?.roleCategory === 'Home-Based Business' && report.business_plan && (
-            <BusinessToolsSection 
-                businessPlan={report.business_plan}
-                budgetEstimate={report.budget_estimate}
-                resources={report.resources}
-                skillsGap={report.skills_gap}
-                jobRole={interviewData.jobRole}
-            />
+            {report.keywords_missed?.length > 0 && (
+              <div>
+                <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-2">✗ Should Mention</p>
+                <div className="flex flex-wrap gap-2">
+                  {report.keywords_missed.map((k, i) => (
+                    <span key={i} className="px-3 py-1 bg-rose-50 text-rose-700 text-xs font-bold rounded-xl border border-rose-100">{k}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Final Action */}
-        <div className="pt-10 flex justify-center">
-             <button 
-                onClick={onRestart}
-                className="px-12 py-5 bg-gray-900 text-white rounded-2xl font-black shadow-xl hover:bg-black transition-all flex items-center gap-3 hover:scale-105 active:scale-95"
-            >
-                Start New Cycle <ArrowRight className="w-5 h-5" />
-            </button>
+        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl space-y-5">
+          <h3 className="text-base font-black text-gray-900 flex items-center gap-3">
+            <Star className="w-5 h-5 text-amber-500" /> Technique Analysis
+          </h3>
+          {report.star_method_assessment && (
+            <div className="p-4 bg-indigo-50/50 rounded-2xl">
+              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2">STAR Method</p>
+              <p className="text-sm text-gray-700 leading-relaxed">{report.star_method_assessment}</p>
+            </div>
+          )}
+          {report.filler_analysis && (
+            <div className="p-4 bg-amber-50/50 rounded-2xl">
+              <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-2">Filler Words & Verbal Habits</p>
+              <p className="text-sm text-gray-700 leading-relaxed">{report.filler_analysis}</p>
+            </div>
+          )}
         </div>
+      </div>
+
+      {/* ── Improvement + Next Steps ── */}
+      <div className="bg-gray-900 rounded-[3rem] p-8 sm:p-12 text-white shadow-2xl">
+        <h2 className="text-xl font-black tracking-tight mb-2">Action Plan</h2>
+        <p className="text-indigo-400 font-bold text-xs uppercase tracking-widest mb-8">What to do before your next interview</p>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Improvement Areas</p>
+            {report.improvement_suggestions?.map((tip, i) => (
+              <div key={i} className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors">
+                <div className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 text-xs font-black">{i + 1}</div>
+                <p className="text-sm leading-relaxed opacity-80">{tip}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-4">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Priority Next Steps</p>
+            {(report.next_steps ?? report.nextSteps ?? []).map((step, i) => (
+              <div key={i} className="flex items-center justify-between p-4 bg-indigo-600/20 rounded-2xl border border-indigo-500/20 hover:bg-indigo-600/30 transition-colors cursor-pointer group">
+                <div className="flex items-center gap-3">
+                  <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center shrink-0">
+                    <TrendingUp className="w-3.5 h-3.5 text-white" />
+                  </div>
+                  <p className="text-sm font-bold">{step}</p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-1 transition-transform shrink-0" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Restart ── */}
+      <div className="flex justify-center pt-4">
+        <button
+          onClick={onRestart}
+          className="flex items-center gap-3 px-10 py-4 bg-gray-900 text-white rounded-2xl font-black shadow-xl hover:bg-black transition-all hover:scale-105 active:scale-95"
+        >
+          <RefreshCw className="w-5 h-5" /> Start New Interview
+        </button>
+      </div>
     </div>
   );
 };
 
 export default AnalysisScreen;
-
-const Loader2 = ({ className }: { className?: string }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-    </svg>
-);
-
-const Terminal = ({ className }: { className?: string }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <polyline points="4 17 10 11 4 5"></polyline>
-        <line x1="12" y1="19" x2="20" y2="19"></line>
-    </svg>
-);

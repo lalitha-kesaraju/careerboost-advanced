@@ -10,7 +10,7 @@ import ReadyScreen from './Interview/ReadyScreen';
 import InterviewScreen from './Interview/InterviewScreen';
 import AnalysisScreen from './Interview/AnalysisScreen';
 import { InterviewData, AnalysisReport } from '../types';
-import { getSessionAnalysis } from '../services/gemini';
+import { analyzeInterview } from '../services/interviewAnalysis';
 
 type StepType = 'setup' | 'ready' | 'interview' | 'analysis';
 
@@ -52,7 +52,7 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
     setHistory(mockHistory);
 
     try {
-      const analysis = await getSessionAnalysis(interviewData, mockHistory);
+      const analysis = await analyzeInterview(interviewData, mockHistory);
       setAnalysisReport(analysis);
 
       // Persist to Firestore
