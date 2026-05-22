@@ -1,0 +1,8 @@
+{
+  "name": "AI Mock Interviewer",
+  "description": "An AI-powered mock interview platform where users can upload their resume, select a job role, and engage in a voice-based interview with an AI agent. The application provides real-time audio transcription, speech generation, and a detailed post-interview performance analysis.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
