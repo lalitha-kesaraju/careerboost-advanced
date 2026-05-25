@@ -48,15 +48,17 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
     setCurrentStep('analysis');
     setIsAnalyzing(true);
     
-    // Convert transcript string to history-like array for analysis if needed
-    const lines = transcript.split('\n').filter(l => l.trim() !== '');
-    const mockHistory = lines.map(line => {
-        const isUser = line.toLowerCase().startsWith('user:');
-        return { 
-            role: (isUser ? 'user' : 'ai') as 'user' | 'ai', 
-            content: line.replace(/^(User|Agent|AI): /i, '').trim()
-        };
-    });
+    // Convert transcript string to history-like array for analysis
+    // Format from InterviewScreen: "User: ...", "Agent: ...", "SYSTEM: ..."
+    const mockHistory = transcript
+      .split('\n')
+      .map(l => l.trim())
+      .filter(l => l !== '' && !l.toLowerCase().startsWith('system:'))
+      .map(line => ({
+        role: (line.toLowerCase().startsWith('user:') ? 'user' : 'ai') as 'user' | 'ai',
+        content: line.replace(/^(User|Agent|AI):\s*/i, '').trim(),
+      }))
+      .filter(item => item.content !== '');
     setHistory(mockHistory);
 
     try {

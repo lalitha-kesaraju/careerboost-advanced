@@ -2,8 +2,8 @@
 import { AnalysisReport, InterviewData } from '../../types';
 import {
   BarChart3, Brain, TrendingUp, ArrowRight, MessageSquare, ShieldCheck,
-  Sparkles, CheckCircle2, XCircle, Target, Shirt, Monitor, Mic2,
-  ChevronDown, ChevronUp, Star, Zap, AlertTriangle, RefreshCw, Download
+  Sparkles, CheckCircle2, Target, Shirt, Monitor, Mic2,
+  ChevronDown, ChevronUp, Star, Zap, AlertTriangle, RefreshCw, Download, Smile
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -191,6 +191,14 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
   const score = report.overall_score ?? report.overallScore ?? 0;
   const scoreColor = score >= 8 ? 'text-emerald-600' : score >= 6 ? 'text-amber-600' : 'text-rose-600';
 
+  const hireLikelihood = score >= 8
+    ? { label: 'Strong Hire', color: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+    : score >= 7
+    ? { label: 'Likely Hire', color: 'bg-blue-50 text-blue-700 border-blue-200' }
+    : score >= 5
+    ? { label: 'Possible Hire', color: 'bg-amber-50 text-amber-700 border-amber-200' }
+    : { label: 'Not Ready Yet', color: 'bg-rose-50 text-rose-700 border-rose-200' };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-24">
 
@@ -200,12 +208,15 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
           <div className="w-16 h-16 bg-blue-700 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shadow-blue-100 shrink-0">
             <BarChart3 className="w-8 h-8" />
           </div>
-          <div>
+          <div className="flex-1">
             <h1 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">Performance Analysis</h1>
             <p className="text-gray-500 font-medium text-sm mt-1">
               {interviewData?.jobRole} · {interviewData?.difficultyLevel?.toUpperCase()} · {new Date().toLocaleDateString()}
             </p>
           </div>
+          <span className={`px-4 py-2 rounded-2xl text-xs font-black border uppercase tracking-widest ${hireLikelihood.color}`}>
+            {hireLikelihood.label}
+          </span>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
@@ -257,6 +268,36 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
           ))}
         </div>
       </div>
+
+      {/* ── Facial Expression Analysis ── */}
+      {report.facial_expression_analysis && report.facial_expression_analysis.length > 0 && (
+        <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl">
+          <h3 className="text-base font-black text-gray-900 flex items-center gap-3 mb-6">
+            <Smile className="w-5 h-5 text-blue-700" /> Inferred Body Language & Expressions
+          </h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {report.facial_expression_analysis.map((item, i) => {
+              const exprColor = item.score >= 8
+                ? 'bg-emerald-50 border-emerald-100'
+                : item.score >= 6
+                ? 'bg-blue-50 border-blue-100'
+                : 'bg-amber-50 border-amber-100';
+              const scoreTextColor = item.score >= 8 ? 'text-emerald-600' : item.score >= 6 ? 'text-blue-600' : 'text-amber-600';
+              return (
+                <div key={i} className={`p-5 rounded-2xl border ${exprColor} space-y-3`}>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-black text-gray-800">{item.expression}</span>
+                    <span className={`text-xs font-black ${scoreTextColor}`}>{item.score}/10</span>
+                  </div>
+                  <ScoreBar score={item.score}
+                    color={item.score >= 8 ? 'bg-emerald-500' : item.score >= 6 ? 'bg-blue-500' : 'bg-amber-500'} />
+                  <p className="text-[11px] text-gray-500 leading-relaxed italic">{item.justification}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Presentation Analysis ── */}
       {report.presentation_analysis && (
