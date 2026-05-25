@@ -1,9 +1,23 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { InterviewData } from '../../types';
 import { GoogleGenAI, Chat } from '@google/genai';
 import { useAudioRecorder } from './hooks/useAudioRecorder';
 import { Mic, MicOff, Brain, User as UserIcon, Volume2, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import RealTimeFeedbackPanel from './RealTimeFeedbackPanel';
+import { realTimeFeedbackAnalyzer, SpeechMetrics, FeedbackIndicator } from './services/realTimeFeedbackService';
+
+// Language name → BCP-47 code
+const LANGUAGE_CODE_MAP: Record<string, string> = {
+  'English': 'en-US', 'Hindi': 'hi-IN', 'Spanish': 'es-ES', 'French': 'fr-FR',
+  'German': 'de-DE', 'Japanese': 'ja-JP', 'Mandarin': 'zh-CN', 'Telugu': 'te-IN',
+  'Tamil': 'ta-IN', 'Kannada': 'kn-IN', 'Malayalam': 'ml-IN', 'Bengali': 'bn-IN',
+  'Marathi': 'mr-IN', 'Gujarati': 'gu-IN', 'Punjabi': 'pa-IN', 'Korean': 'ko-KR',
+  'Russian': 'ru-RU', 'Arabic': 'ar-SA', 'Portuguese': 'pt-BR', 'Italian': 'it-IT',
+  'Turkish': 'tr-TR', 'Vietnamese': 'vi-VN', 'Thai': 'th-TH', 'Dutch': 'nl-NL',
+  'Greek': 'el-GR', 'Hebrew': 'he-IL', 'Indonesian': 'id-ID', 'Malay': 'ms-MY',
+  'Polish': 'pl-PL', 'Swedish': 'sv-SE', 'Norwegian': 'nb-NO',
+};
 
 const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
@@ -20,6 +34,11 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
   const [isListening, setIsListening]       = useState(false);
   const [error, setError]                   = useState<string | null>(null);
   const [hasCamera, setHasCamera]           = useState(false);
+  const [speechMetrics, setSpeechMetrics]   = useState<SpeechMetrics>({
+    wordsPerMinute: 0, fillerWordsCount: 0, pauseCount: 0,
+    sentimentScore: 50, confidence: 0, clarity: 0,
+  });
+  const [feedbackIndicators, setFeedbackIndicators] = useState<FeedbackIndicator[]>([]);
 
   const chatRef                  = useRef<Chat | null>(null);
   const recognitionRef           = useRef<any>(null);
@@ -58,22 +77,23 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
     }
   }, [audioUrl, onFinish]);
 
-  // Load TTS voice
+  // Load TTS voice (language-aware)
   useEffect(() => {
+    const langCode = LANGUAGE_CODE_MAP[interviewData.language] ?? 'en-US';
     const load = () => {
       const voices = window.speechSynthesis.getVoices();
       if (voices.length > 0) {
         selectedVoiceRef.current =
-          voices.find(v => v.name === 'Google US English') ||
+          voices.find(v => v.lang === langCode) ||
+          voices.find(v => v.lang.startsWith(langCode.split('-')[0])) ||
           voices.find(v => v.lang === 'en-US') ||
-          voices.find(v => v.lang.startsWith('en-')) ||
           null;
       }
     };
     window.speechSynthesis.onvoiceschanged = load;
     load();
     return () => { window.speechSynthesis.onvoiceschanged = null; };
-  }, []);
+  }, [interviewData.language]);
 
   const formatTime = (s: number) =>
     `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
@@ -96,7 +116,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
 
     const closing = "Time is up. Thank you for the interview. Your analysis will be ready shortly.";
     const utterance = new SpeechSynthesisUtterance(closing);
-    utterance.lang = 'en-US';
+    utterance.lang = LANGUAGE_CODE_MAP[interviewData.language] ?? 'en-US';
     if (selectedVoiceRef.current) utterance.voice = selectedVoiceRef.current;
     finalTranscriptRef.current.push(`Agent: ${closing}`);
     setConversation(prev => [...prev, { speaker: 'agent', text: closing, isFinal: true }]);
@@ -124,7 +144,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
     if (!text) { setIsAgentSpeaking(false); return; }
 
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
+    utterance.lang = LANGUAGE_CODE_MAP[interviewData.language] ?? 'en-US';
     if (selectedVoiceRef.current) utterance.voice = selectedVoiceRef.current;
     utterance.onend = () => {
       if (utteranceQueueRef.current.length > 0) {
@@ -243,6 +263,15 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
       // simpler: just accumulate
       const display = (currentUserTranscriptRef.current + ' ' + interim).trim();
 
+      // Real-time feedback analysis
+      if (display.length > 10) {
+        const allUserText = finalTranscriptRef.current.filter(l => l.startsWith('User:')).join(' ') + ' ' + display;
+        const metrics = realTimeFeedbackAnalyzer.analyzeSpeech(allUserText);
+        const fb = realTimeFeedbackAnalyzer.generateFeedback(metrics);
+        setSpeechMetrics(metrics);
+        setFeedbackIndicators(fb);
+      }
+
       setConversation(prev => {
         const updated = [...prev];
         const last = updated[updated.length - 1];
@@ -315,7 +344,7 @@ Ask a smart mix of:
 Start by introducing yourself as an AI interviewer, mention the role and company${interviewData.dreamCompany ? ` (${interviewData.dreamCompany})` : ''}, and ask the first question.`;
 
       chatRef.current = ai.chats.create({
-        model: 'gemini-2.5-flash',
+        model: 'gemini-3.5-flash',
         config: { systemInstruction: systemPrompt },
       });
 
@@ -324,8 +353,9 @@ Start by introducing yourself as an AI interviewer, mention the role and company
       const rec = new SpeechRecognitionAPI();
       rec.continuous     = true;
       rec.interimResults = true;
-      rec.lang           = 'en-US';
+      rec.lang           = LANGUAGE_CODE_MAP[interviewData.language] ?? 'en-US';
       recognitionRef.current = rec;
+      realTimeFeedbackAnalyzer.startTracking();
 
       setStatus('Waiting for AI...');
       try {
@@ -387,6 +417,7 @@ Start by introducing yourself as an AI interviewer, mention the role and company
   return (
     // Fixed fullscreen overlay — works on both mobile and desktop
     <div className="fixed inset-0 z-50 flex flex-col bg-[#0D0D0D] text-white overflow-hidden">
+      <RealTimeFeedbackPanel metrics={speechMetrics} feedback={feedbackIndicators} isActive={isListening} />
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-white/5 shrink-0">
         <div className="flex items-center gap-2">
@@ -424,14 +455,14 @@ Start by introducing yourself as an AI interviewer, mention the role and company
 
           {/* AI avatar + voice bars */}
           <div className="flex sm:flex-col flex-row items-center gap-3 sm:gap-4 sm:w-full sm:mt-4">
-            <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all duration-300 ${isAgentSpeaking ? 'bg-indigo-500 shadow-2xl shadow-indigo-500/40 scale-110' : 'bg-white/5'}`}>
+            <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all duration-300 ${isAgentSpeaking ? 'bg-blue-500 shadow-2xl shadow-blue-500/40 scale-110' : 'bg-white/5'}`}>
               <Brain className={`w-7 h-7 sm:w-8 sm:h-8 transition-colors ${isAgentSpeaking ? 'text-white' : 'text-white/20'}`} />
             </div>
             <div className="flex items-end gap-1 h-7">
               {Array.from({ length: 6 }).map((_, i) => (
                 <motion.div
                   key={i}
-                  className="w-1 rounded-full bg-indigo-500"
+                  className="w-1 rounded-full bg-blue-500"
                   animate={isAgentSpeaking
                     ? { height: [4, 16 + i * 3, 4], opacity: [0.3, 1, 0.3] }
                     : { height: 3, opacity: 0.15 }}
@@ -446,7 +477,7 @@ Start by introducing yourself as an AI interviewer, mention the role and company
             {isListening
               ? <Mic className="w-3 h-3 text-emerald-400 animate-pulse shrink-0" />
               : isAgentSpeaking
-              ? <Volume2 className="w-3 h-3 text-indigo-400 animate-pulse shrink-0" />
+              ? <Volume2 className="w-3 h-3 text-blue-500 animate-pulse shrink-0" />
               : <MicOff className="w-3 h-3 text-white/20 shrink-0" />}
             <span className="text-[9px] sm:text-[10px] font-mono text-white/40 uppercase tracking-wider truncate">{status}</span>
           </div>
@@ -462,12 +493,12 @@ Start by introducing yourself as an AI interviewer, mention the role and company
                 animate={{ opacity: 1, y: 0 }}
                 className={`flex gap-2 sm:gap-3 ${entry.speaker === 'user' ? 'flex-row-reverse' : ''}`}
               >
-                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 ${entry.speaker === 'agent' ? 'bg-indigo-500' : 'bg-white/10'}`}>
+                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 ${entry.speaker === 'agent' ? 'bg-blue-500' : 'bg-white/10'}`}>
                   {entry.speaker === 'agent'
                     ? <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                     : <UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/60" />}
                 </div>
-                <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${entry.speaker === 'agent' ? 'bg-white/5 text-white rounded-tl-none' : 'bg-indigo-600/30 text-indigo-100 rounded-tr-none'}`}>
+                <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${entry.speaker === 'agent' ? 'bg-white/5 text-white rounded-tl-none' : 'bg-blue-700/30 text-blue-100 rounded-tr-none'}`}>
                   {entry.text || <span className="opacity-40 text-lg">● ● ●</span>}
                 </div>
               </motion.div>

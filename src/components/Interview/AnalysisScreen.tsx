@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { AnalysisReport, InterviewData } from '../../types';
 import {
   BarChart3, Brain, TrendingUp, ArrowRight, MessageSquare, ShieldCheck,
   Sparkles, CheckCircle2, XCircle, Target, Shirt, Monitor, Mic2,
-  ChevronDown, ChevronUp, Star, Zap, AlertTriangle, RefreshCw
+  ChevronDown, ChevronUp, Star, Zap, AlertTriangle, RefreshCw, Download
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -29,7 +29,7 @@ const ScoreBadge = ({ score }: { score: number }) => {
   );
 };
 
-const ScoreBar = ({ score, color = 'bg-indigo-500' }: { score: number; color?: string }) => (
+const ScoreBar = ({ score, color = 'bg-blue-500' }: { score: number; color?: string }) => (
   <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
     <motion.div
       className={`h-full rounded-full ${color}`}
@@ -87,7 +87,7 @@ const QACard = ({ item, index }: { item: any; index: number }) => {
         <div className="flex items-center gap-3 shrink-0 ml-4">
           <ScoreBadge score={item.score} />
           {item.used_star_method && (
-            <span className="px-2 py-1 bg-indigo-50 text-indigo-600 text-[9px] font-black rounded-lg border border-indigo-100 uppercase tracking-wider">STAR</span>
+            <span className="px-2 py-1 bg-blue-50 text-blue-700 text-[9px] font-black rounded-lg border border-blue-100 uppercase tracking-wider">STAR</span>
           )}
           {open ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
         </div>
@@ -127,7 +127,7 @@ const QACard = ({ item, index }: { item: any; index: number }) => {
 
               {/* Feedback */}
               <div className="pt-4 space-y-3">
-                <div className="p-4 bg-indigo-50/50 rounded-2xl">
+                <div className="p-4 bg-blue-50/50 rounded-2xl">
                   <div className="flex items-center gap-2 mb-1">
                     <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
                     <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Strength</span>
@@ -160,8 +160,8 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-8 py-20">
         <div className="relative">
-          <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-20 animate-pulse" />
-          <div className="relative w-16 h-16 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+          <div className="absolute inset-0 bg-blue-500 blur-3xl opacity-20 animate-pulse" />
+          <div className="relative w-16 h-16 border-4 border-blue-200 border-t-blue-700 rounded-full animate-spin" />
         </div>
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-black text-gray-900 tracking-tight">Analyzing Your Performance</h2>
@@ -180,7 +180,7 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
         <div>
           <h2 className="text-xl font-bold text-gray-900">{error || 'Analysis Unavailable'}</h2>
           <p className="text-sm text-gray-500 mt-2">The AI could not generate a report for this session.</p>
-          <button onClick={onRestart} className="mt-6 flex items-center gap-2 mx-auto px-6 py-3 bg-indigo-600 text-white rounded-2xl font-bold text-sm hover:bg-indigo-700 transition-all">
+          <button onClick={onRestart} className="mt-6 flex items-center gap-2 mx-auto px-6 py-3 bg-blue-700 text-white rounded-2xl font-bold text-sm hover:bg-blue-800 transition-all">
             <RefreshCw className="w-4 h-4" /> Try Again
           </button>
         </div>
@@ -197,7 +197,7 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
       {/* ── Header ── */}
       <div className="bg-white rounded-[3rem] p-8 sm:p-12 border border-gray-100 shadow-xl">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 border-b border-gray-100 pb-8 mb-8">
-          <div className="w-16 h-16 bg-indigo-600 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shadow-indigo-100 shrink-0">
+          <div className="w-16 h-16 bg-blue-700 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl shadow-blue-100 shrink-0">
             <BarChart3 className="w-8 h-8" />
           </div>
           <div>
@@ -216,7 +216,7 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
             </p>
           </div>
           <div className="lg:col-span-2">
-            <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-3">Overall Assessment</p>
+            <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-3">Overall Assessment</p>
             <p className="text-base sm:text-lg text-gray-800 leading-relaxed font-medium italic">{report.overall_summary}</p>
           </div>
         </div>
@@ -226,7 +226,7 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl space-y-6">
           <h3 className="text-base font-black text-gray-900 flex items-center gap-3">
-            <Target className="w-5 h-5 text-indigo-600" /> Performance Breakdown
+            <Target className="w-5 h-5 text-blue-700" /> Performance Breakdown
           </h3>
           {report.performance_feedback.map((item, i) => (
             <div key={i} className="space-y-2">
@@ -243,7 +243,7 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
 
         <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl space-y-6">
           <h3 className="text-base font-black text-gray-900 flex items-center gap-3">
-            <Brain className="w-5 h-5 text-purple-600" /> Emotional Tone
+            <Brain className="w-5 h-5 text-blue-700" /> Emotional Tone
           </h3>
           {report.emotional_analysis.map((item, i) => (
             <div key={i} className="space-y-2">
@@ -251,7 +251,7 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
                 <span className="text-xs font-bold text-gray-600">{item.emotion}</span>
                 <span className="text-xs font-black text-gray-900">{item.score * 10}%</span>
               </div>
-              <ScoreBar score={item.score} color="bg-purple-500" />
+              <ScoreBar score={item.score} color="bg-blue-500" />
               <p className="text-[11px] text-gray-500 italic leading-relaxed">{item.justification}</p>
             </div>
           ))}
@@ -263,15 +263,15 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
         <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-xl">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-base font-black text-gray-900 flex items-center gap-3">
-              <Sparkles className="w-5 h-5 text-cyan-600" /> Presentation & Environment
+              <Sparkles className="w-5 h-5 text-blue-700" /> Presentation & Environment
             </h3>
             <ScoreBadge score={report.presentation_analysis.overall_presentation_score} />
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="p-5 bg-cyan-50/50 rounded-2xl border border-cyan-100">
+            <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
               <div className="flex items-center gap-2 mb-2">
-                <Shirt className="w-4 h-4 text-cyan-600" />
-                <span className="text-[10px] font-black text-cyan-600 uppercase tracking-widest">Attire</span>
+                <Shirt className="w-4 h-4 text-blue-700" />
+                <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Attire</span>
               </div>
               <p className="text-sm text-gray-700 leading-relaxed">{report.presentation_analysis.attire_recommendation}</p>
             </div>
@@ -282,10 +282,10 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
               </div>
               <p className="text-sm text-gray-700 leading-relaxed">{report.presentation_analysis.environment_recommendation}</p>
             </div>
-            <div className="p-5 bg-violet-50/50 rounded-2xl border border-violet-100">
+            <div className="p-5 bg-blue-50/50 rounded-2xl border border-blue-100">
               <div className="flex items-center gap-2 mb-2">
-                <Brain className="w-4 h-4 text-violet-600" />
-                <span className="text-[10px] font-black text-violet-600 uppercase tracking-widest">Body Language</span>
+                <Brain className="w-4 h-4 text-blue-700" />
+                <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Body Language</span>
               </div>
               <p className="text-sm text-gray-700 leading-relaxed">{report.presentation_analysis.body_language_inferred}</p>
             </div>
@@ -304,7 +304,7 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
       {report.question_breakdown?.length > 0 && (
         <div className="space-y-4">
           <h3 className="text-base font-black text-gray-900 flex items-center gap-3 px-1">
-            <MessageSquare className="w-5 h-5 text-indigo-600" />
+            <MessageSquare className="w-5 h-5 text-blue-700" />
             Question-by-Question Breakdown
             <span className="text-xs font-bold text-gray-400">({report.question_breakdown.length} questions)</span>
           </h3>
@@ -349,8 +349,8 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
             <Star className="w-5 h-5 text-amber-500" /> Technique Analysis
           </h3>
           {report.star_method_assessment && (
-            <div className="p-4 bg-indigo-50/50 rounded-2xl">
-              <p className="text-[10px] font-black text-indigo-600 uppercase tracking-widest mb-2">STAR Method</p>
+            <div className="p-4 bg-blue-50/50 rounded-2xl">
+              <p className="text-[10px] font-black text-blue-700 uppercase tracking-widest mb-2">STAR Method</p>
               <p className="text-sm text-gray-700 leading-relaxed">{report.star_method_assessment}</p>
             </div>
           )}
@@ -366,14 +366,14 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
       {/* ── Improvement + Next Steps ── */}
       <div className="bg-gray-900 rounded-[3rem] p-8 sm:p-12 text-white shadow-2xl">
         <h2 className="text-xl font-black tracking-tight mb-2">Action Plan</h2>
-        <p className="text-indigo-400 font-bold text-xs uppercase tracking-widest mb-8">What to do before your next interview</p>
+        <p className="text-blue-500 font-bold text-xs uppercase tracking-widest mb-8">What to do before your next interview</p>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div className="space-y-4">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Improvement Areas</p>
             {report.improvement_suggestions?.map((tip, i) => (
               <div key={i} className="flex gap-4 p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-colors">
-                <div className="w-7 h-7 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0 text-xs font-black">{i + 1}</div>
+                <div className="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-500 flex items-center justify-center shrink-0 text-xs font-black">{i + 1}</div>
                 <p className="text-sm leading-relaxed opacity-80">{tip}</p>
               </div>
             ))}
@@ -382,14 +382,14 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
           <div className="space-y-4">
             <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Priority Next Steps</p>
             {(report.next_steps ?? report.nextSteps ?? []).map((step, i) => (
-              <div key={i} className="flex items-center justify-between p-4 bg-indigo-600/20 rounded-2xl border border-indigo-500/20 hover:bg-indigo-600/30 transition-colors cursor-pointer group">
+              <div key={i} className="flex items-center justify-between p-4 bg-blue-700/20 rounded-2xl border border-blue-500/20 hover:bg-blue-700/30 transition-colors cursor-pointer group">
                 <div className="flex items-center gap-3">
-                  <div className="w-7 h-7 rounded-lg bg-indigo-500 flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 rounded-lg bg-blue-500 flex items-center justify-center shrink-0">
                     <TrendingUp className="w-3.5 h-3.5 text-white" />
                   </div>
                   <p className="text-sm font-bold">{step}</p>
                 </div>
-                <ArrowRight className="w-4 h-4 text-indigo-400 group-hover:translate-x-1 transition-transform shrink-0" />
+                <ArrowRight className="w-4 h-4 text-blue-500 group-hover:translate-x-1 transition-transform shrink-0" />
               </div>
             ))}
           </div>
@@ -397,7 +397,19 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
       </div>
 
       {/* ── Restart ── */}
-      <div className="flex justify-center pt-4">
+      <div className="flex flex-wrap justify-center gap-4 pt-4">
+        <button
+          onClick={() => {
+            const title = `Interview Report - ${interviewData?.jobRole ?? 'Interview'} - ${new Date().toLocaleDateString()}`;
+            const prevTitle = document.title;
+            document.title = title;
+            window.print();
+            document.title = prevTitle;
+          }}
+          className="flex items-center gap-3 px-8 py-4 bg-white border-2 border-gray-200 text-gray-700 rounded-2xl font-black shadow hover:shadow-md hover:border-blue-500 transition-all hover:scale-105 active:scale-95"
+        >
+          <Download className="w-5 h-5" /> Export PDF
+        </button>
         <button
           onClick={onRestart}
           className="flex items-center gap-3 px-10 py-4 bg-gray-900 text-white rounded-2xl font-black shadow-xl hover:bg-black transition-all hover:scale-105 active:scale-95"
@@ -410,3 +422,4 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
 };
 
 export default AnalysisScreen;
+

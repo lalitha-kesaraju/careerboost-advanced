@@ -61,7 +61,7 @@ export function MeRIDPsychometricTest() {
 
     try {
       const response = await getMithraAdvice(
-        `You are a professional career psychologist. Given these validated Big Five OCEAN personality scores (0â€“100 scale, higher = more of that trait):
+        `You are a professional career psychologist. Given these validated Big Five OCEAN personality scores (0–100 scale, higher = more of that trait):
 - Extraversion (EXT): ${scores.EXT}
 - Agreeableness (AGR): ${scores.AGR}
 - Conscientiousness (CSN): ${scores.CSN}
@@ -71,10 +71,10 @@ export function MeRIDPsychometricTest() {
 Provide a career-focused personality analysis as a single JSON object with ONLY these fields:
 {
   "persona": "brief professional archetype name",
-  "strengths": ["3â€“4 key professional strengths based on the scores"],
-  "potentialKillers": ["2â€“3 career derailers to watch out for"],
-  "workEnvironment": "2â€“3 sentence description of ideal work environment",
-  "careerMatches": ["4â€“5 specific best-fit career paths or roles"],
+  "strengths": ["3–4 key professional strengths based on the scores"],
+  "potentialKillers": ["2–3 career derailers to watch out for"],
+  "workEnvironment": "2–3 sentence description of ideal work environment",
+  "careerMatches": ["4–5 specific best-fit career paths or roles"],
   "insight": "2-sentence motivational career insight tailored to this profile"
 }
 Response must be ONLY valid JSON with no markdown.`,
@@ -121,7 +121,7 @@ Response must be ONLY valid JSON with no markdown.`,
             className="bg-white rounded-[3rem] p-12 shadow-2xl border border-gray-100 text-center space-y-10"
           >
             <div className="relative inline-block">
-              <div className="absolute inset-0 bg-indigo-500 blur-3xl opacity-10 animate-pulse" />
+              <div className="absolute inset-0 bg-blue-500 blur-3xl opacity-10 animate-pulse" />
               <div className="w-24 h-24 bg-gray-900 rounded-[2.5rem] flex items-center justify-center text-white relative z-10 shadow-xl">
                 <Brain className="w-12 h-12" />
               </div>
@@ -129,12 +129,12 @@ Response must be ONLY valid JSON with no markdown.`,
 
             <div className="space-y-4">
               <div className="flex items-center justify-center gap-2">
-                <Shield className="w-4 h-4 text-indigo-600" />
-                <span className="text-xs font-black text-indigo-600 uppercase tracking-widest">Big Five IPIP Assessment</span>
+                <Shield className="w-4 h-4 text-blue-700" />
+                <span className="text-xs font-black text-blue-700 uppercase tracking-widest">Big Five IPIP Assessment</span>
               </div>
               <h1 className="text-5xl font-black text-gray-900 tracking-tighter">Personality Diagnostics</h1>
               <p className="text-xl text-gray-500 italic max-w-lg mx-auto leading-relaxed">
-                The gold-standard OCEAN model. 50 validated questions reveal your Openness, Conscientiousness, Extraversion, Agreeableness and Neuroticism â€” mapped to your career potential.
+                The gold-standard OCEAN model. 50 validated questions reveal your Openness, Conscientiousness, Extraversion, Agreeableness and Neuroticism — mapped to your career potential.
               </p>
             </div>
 
@@ -145,7 +145,7 @@ Response must be ONLY valid JSON with no markdown.`,
                 { icon: Sparkles,  label: 'Career Insight', desc: 'AI-powered readout' },
               ].map((item, i) => (
                 <div key={i} className="p-6 bg-gray-50 rounded-2xl border border-gray-100">
-                  <item.icon className="w-5 h-5 text-indigo-600 mb-3" />
+                  <item.icon className="w-5 h-5 text-blue-700 mb-3" />
                   <p className="font-bold text-gray-900 text-sm">{item.label}</p>
                   <p className="text-xs text-gray-400 mt-1">{item.desc}</p>
                 </div>
@@ -154,7 +154,7 @@ Response must be ONLY valid JSON with no markdown.`,
 
             <button
               onClick={() => setStep('test')}
-              className="w-full py-6 bg-indigo-600 text-white rounded-[2rem] font-black text-xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-4 shadow-xl shadow-indigo-100"
+              className="w-full py-6 bg-blue-700 text-white rounded-[2rem] font-black text-xl hover:bg-blue-800 transition-all flex items-center justify-center gap-4 shadow-xl shadow-blue-100"
             >
               Begin Assessment
               <ArrowRight className="w-6 h-6" />
@@ -179,7 +179,7 @@ Response must be ONLY valid JSON with no markdown.`,
                   Page {page + 1} of {TOTAL_PAGES} Â· {totalAnswered} / {BIG_FIVE_QUESTIONS.length} answered
                 </p>
               </div>
-              <div className="px-4 py-2 bg-indigo-50 rounded-2xl text-indigo-600 text-xs font-black uppercase tracking-widest">
+              <div className="px-4 py-2 bg-blue-50 rounded-2xl text-blue-700 text-xs font-black uppercase tracking-widest">
                 OCEAN Model
               </div>
             </div>
@@ -189,7 +189,7 @@ Response must be ONLY valid JSON with no markdown.`,
               <motion.div
                 animate={{ width: `${(totalAnswered / BIG_FIVE_QUESTIONS.length) * 100}%` }}
                 transition={{ type: 'spring', stiffness: 120 }}
-                className="h-full bg-indigo-600 rounded-full"
+                className="h-full bg-blue-700 rounded-full"
               />
             </div>
 
@@ -213,13 +213,13 @@ Response must be ONLY valid JSON with no markdown.`,
                     key={q.id}
                     className={`bg-white rounded-3xl border p-5 transition-all ${
                       selected !== undefined
-                        ? 'border-indigo-200 shadow-sm shadow-indigo-50'
+                        ? 'border-blue-200 shadow-sm shadow-blue-50'
                         : 'border-gray-100 shadow-sm'
                     }`}
                   >
                     <div className="grid grid-cols-1 md:grid-cols-[1fr_repeat(5,_minmax(60px,_80px))] gap-4 items-center">
                       <p className="text-sm font-bold text-gray-800 leading-snug">
-                        <span className="text-indigo-400 mr-2 font-black">{globalIdx + 1}.</span>
+                        <span className="text-blue-500 mr-2 font-black">{globalIdx + 1}.</span>
                         {q.text}
                       </p>
                       {LIKERT_CHOICES.map(choice => (
@@ -228,8 +228,8 @@ Response must be ONLY valid JSON with no markdown.`,
                           onClick={() => handleSelect(q.id, choice.value)}
                           className={`w-full aspect-square md:aspect-auto md:h-12 rounded-2xl border-2 font-black text-sm transition-all flex items-center justify-center ${
                             selected === choice.value
-                              ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-100'
-                              : 'border-gray-200 text-gray-500 hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-600'
+                              ? 'bg-blue-700 border-blue-700 text-white shadow-lg shadow-blue-100'
+                              : 'border-gray-200 text-gray-500 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700'
                           }`}
                           title={choice.label}
                         >
@@ -239,7 +239,7 @@ Response must be ONLY valid JSON with no markdown.`,
                       ))}
                     </div>
                     {selected !== undefined && (
-                      <p className="md:hidden text-[10px] text-indigo-500 font-bold mt-2 text-right">
+                      <p className="md:hidden text-[10px] text-blue-500 font-bold mt-2 text-right">
                         {LIKERT_CHOICES.find(c => c.value === selected)?.label}
                       </p>
                     )}
@@ -264,7 +264,7 @@ Response must be ONLY valid JSON with no markdown.`,
                 disabled={!pageAnswered}
                 className={`flex-1 py-5 rounded-[2rem] font-black text-lg flex items-center justify-center gap-3 transition-all ${
                   pageAnswered
-                    ? 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-xl shadow-indigo-100'
+                    ? 'bg-blue-700 text-white hover:bg-blue-800 shadow-xl shadow-blue-100'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
@@ -295,13 +295,13 @@ Response must be ONLY valid JSON with no markdown.`,
             <motion.div
               animate={{ rotate: 360 }}
               transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
-              className="w-24 h-24 bg-indigo-50 rounded-[2.5rem] flex items-center justify-center text-indigo-600 mx-auto shadow-2xl shadow-indigo-100"
+              className="w-24 h-24 bg-blue-50 rounded-[2.5rem] flex items-center justify-center text-blue-700 mx-auto shadow-2xl shadow-blue-100"
             >
               <Loader2 className="w-12 h-12" />
             </motion.div>
             <div>
               <h2 className="text-4xl font-black text-gray-900 mb-2">Scoring Your OCEAN Profile</h2>
-              <p className="text-gray-500 italic text-lg opacity-60">Computing trait scores and generating your career blueprintâ€¦</p>
+              <p className="text-gray-500 italic text-lg opacity-60">Computing trait scores and generating your career blueprint…</p>
             </div>
           </motion.div>
         )}
@@ -319,7 +319,7 @@ Response must be ONLY valid JSON with no markdown.`,
               <Sparkles className="absolute top-[-20px] right-[-20px] w-64 h-64 text-white/5" />
               <div className="relative z-10 space-y-6">
                 <div className="flex items-center gap-3">
-                  <div className="px-4 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-[10px] font-black uppercase tracking-[0.2em]">
+                  <div className="px-4 py-1.5 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300 text-[10px] font-black uppercase tracking-[0.2em]">
                     Big Five Â· OCEAN Profile
                   </div>
                   <div className="flex items-center gap-1">
@@ -342,7 +342,7 @@ Response must be ONLY valid JSON with no markdown.`,
             {/* OCEAN Trait Bars */}
             <section className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100">
               <div className="flex items-center gap-3 mb-8">
-                <BarChart3 className="w-6 h-6 text-indigo-600" />
+                <BarChart3 className="w-6 h-6 text-blue-700" />
                 <h4 className="font-black text-gray-900 tracking-tight text-lg">Your OCEAN Scores</h4>
               </div>
               <div className="space-y-6">
@@ -408,30 +408,30 @@ Response must be ONLY valid JSON with no markdown.`,
               <section className="bg-[#1A1A1A] text-white p-10 rounded-[2.5rem] shadow-xl relative overflow-hidden">
                 <div className="relative z-10 h-full flex flex-col">
                   <div className="flex items-center gap-3 mb-8">
-                    <Target className="w-6 h-6 text-indigo-400" />
+                    <Target className="w-6 h-6 text-blue-500" />
                     <h4 className="font-black tracking-tight text-white">Ideal Habitat</h4>
                   </div>
                   <p className="text-sm text-gray-400 italic leading-relaxed flex-1">
                     {result.workEnvironment}
                   </p>
                 </div>
-                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px]" />
+                <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px]" />
               </section>
             </div>
 
             {/* Career Matches */}
             <section className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-gray-100">
               <div className="flex items-center gap-3 mb-8">
-                <Briefcase className="w-6 h-6 text-indigo-600" />
+                <Briefcase className="w-6 h-6 text-blue-700" />
                 <h4 className="font-black text-gray-900 tracking-tight text-lg">Best-Fit Career Paths</h4>
               </div>
               <div className="flex flex-wrap gap-4">
                 {result.careerMatches.map((career: string, idx: number) => (
                   <div
                     key={idx}
-                    className="px-6 py-3 bg-indigo-50 border border-indigo-100 rounded-2xl text-sm font-bold text-indigo-700 flex items-center gap-2"
+                    className="px-6 py-3 bg-blue-50 border border-blue-100 rounded-2xl text-sm font-bold text-blue-800 flex items-center gap-2"
                   >
-                    <span className="w-2 h-2 bg-indigo-400 rounded-full" />
+                    <span className="w-2 h-2 bg-blue-500 rounded-full" />
                     {career}
                   </div>
                 ))}

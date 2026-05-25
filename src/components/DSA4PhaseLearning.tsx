@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   BookOpen, 
@@ -579,27 +579,44 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
     }
   };
 
-  const runCode = async () => {
+  const runCode = () => {
+    const problem = content.problems?.[selectedProblem];
+    if (!problem) return;
     setRunningCode(true);
-    // Simulate real execution with actual test cases
-    setTimeout(() => {
-      const problem = content.problems?.[selectedProblem];
-      if (!problem) return;
-      
-      const cases = problem.testCases && problem.testCases.length > 0 
-        ? problem.testCases 
-        : [
-            { input: "Sample Input", expected: "Sample Output" },
-            { input: "Edge Case", expected: "Standard Output" }
-          ];
 
-      setTestResults(cases.map((tc: any) => ({
-        ...tc,
-        passed: Math.random() > 0.15, // Higher pass rate for better feel
-        actual: tc.expected // Simulate success mostly
-      })));
-      setRunningCode(false);
-    }, 1200);
+    const logs: string[] = [];
+    const _log = console.log;
+    const _error = console.error;
+    const _warn = console.warn;
+    console.log = (...args: any[]) => {
+      logs.push(args.map((x: any) => typeof x === 'object' ? JSON.stringify(x, null, 2) : String(x)).join(' '));
+    };
+    console.error = (...args: any[]) => { logs.push('❌ ' + args.map(String).join(' ')); };
+    console.warn  = (...args: any[]) => { logs.push('⚠️  ' + args.map(String).join(' ')); };
+
+    let execError: string | null = null;
+    try {
+      // eslint-disable-next-line no-new-func
+      new Function(code)();
+    } catch (e: any) {
+      execError = `❌ ${e.name}: ${e.message}`;
+    } finally {
+      console.log = _log;
+      console.error = _error;
+      console.warn = _warn;
+    }
+
+    const output = execError ? [execError] : logs;
+    const cases = problem.testCases?.length > 0
+      ? problem.testCases
+      : [{ input: 'Run your code and check output below', expected: '(Expected output depends on your logic)' }];
+
+    setTestResults(cases.map((tc: any, i: number) => ({
+      ...tc,
+      actual: output[i] !== undefined ? output[i] : (output[0] ?? '(No output)'),
+      passed: !execError && output.length > 0,
+    })));
+    setRunningCode(false);
   };
 
   const handleAgentTask = async () => {
@@ -644,7 +661,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
             </button>
             <div>
                <h3 className="font-bold text-gray-900 leading-none mb-1">{stepTitle}</h3>
-               <p className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">{courseTitle} • Level 0{stepIndex + 1}</p>
+               <p className="text-[10px] font-black uppercase text-blue-700 tracking-widest">{courseTitle} • Level 0{stepIndex + 1}</p>
             </div>
          </div>
 
@@ -655,7 +672,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                 disabled={loading}
                 onClick={() => setActivePhase(p.id as any)}
                 className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                  activePhase === p.id ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+                  activePhase === p.id ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-400 hover:text-gray-600'
                 }`}
               >
                 {p.icon} {p.label}
@@ -666,7 +683,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
          <div className="flex items-center gap-2">
             <button 
                onClick={() => speak(content?.theory || "Learning content loading")}
-               className={`p-3 rounded-xl transition-all ${isSpeaking ? 'bg-indigo-600 text-white animate-pulse' : 'bg-gray-50 text-gray-400 hover:text-indigo-600'}`}
+               className={`p-3 rounded-xl transition-all ${isSpeaking ? 'bg-blue-700 text-white animate-pulse' : 'bg-gray-50 text-gray-400 hover:text-blue-700'}`}
             >
                <Volume2 className="w-5 h-5" />
             </button>
@@ -684,7 +701,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
          <div className="flex-1 overflow-y-auto p-10">
             {loading ? (
               <div className="h-full flex flex-col items-center justify-center space-y-4 opacity-50">
-                 <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+                 <Loader2 className="w-12 h-12 text-blue-700 animate-spin" />
                  <p className="font-bold text-lg italic serif animate-pulse">Initializing Phase Environment...</p>
               </div>
             ) : error ? (
@@ -718,7 +735,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                 >
                    {activePhase === 'understand' && (
                      <div className="space-y-10">
-                        <section className="prose prose-indigo max-w-none">
+                        <section className="prose prose-blue max-w-none">
                            <Markdown>{content?.theory || ''}</Markdown>
                         </section>
                         
@@ -727,13 +744,13 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                              <div key={idx} className="bg-gray-900 rounded-3xl overflow-hidden shadow-xl">
                                 <div className="p-4 bg-gray-800 flex justify-between items-center">
                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{ex.title}</span>
-                                   <span className="text-[10px] font-bold text-indigo-400">{ex.language}</span>
+                                   <span className="text-[10px] font-bold text-blue-500">{ex.language}</span>
                                 </div>
-                                <pre className="p-6 text-sm text-indigo-100 font-mono overflow-x-auto">
+                                <pre className="p-6 text-sm text-blue-100 font-mono overflow-x-auto">
                                    <code>{ex.code}</code>
                                 </pre>
-                                <div className="p-4 bg-indigo-900/20 border-t border-white/5">
-                                   <p className="text-xs text-indigo-300 italic serif">{ex.explanation}</p>
+                                <div className="p-4 bg-blue-950/20 border-t border-white/5">
+                                   <p className="text-xs text-blue-300 italic serif">{ex.explanation}</p>
                                 </div>
                              </div>
                            ))}
@@ -772,7 +789,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                                 key={i}
                                 onClick={() => { setSelectedProblem(i); setCode(p.starterCode); }}
                                 className={`flex-shrink-0 px-6 py-4 rounded-2xl flex flex-col items-start gap-1 transition-all ${
-                                  selectedProblem === i ? 'bg-indigo-600 text-white shadow-xl' : 'bg-white border border-gray-100 text-gray-500 hover:border-indigo-300'
+                                  selectedProblem === i ? 'bg-blue-700 text-white shadow-xl' : 'bg-white border border-gray-100 text-gray-500 hover:border-blue-300'
                                 }`}
                              >
                                 <span className="text-[9px] font-black uppercase tracking-widest opacity-60">Challenge {i + 1}</span>
@@ -786,12 +803,12 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                            <div className="lg:col-span-4 space-y-6 flex flex-col">
                               <div className="bg-white rounded-[2.5rem] p-8 border border-gray-100 shadow-sm flex-1 flex flex-col overflow-y-auto">
                                  <div className="flex items-center gap-3 mb-6">
-                                    <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
-                                       <Terminal className="w-5 h-5 text-indigo-600" />
+                                    <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                                       <Terminal className="w-5 h-5 text-blue-700" />
                                     </div>
                                     <h4 className="font-black text-gray-900 tracking-tight text-xl uppercase italic serif">Task Brief</h4>
                                  </div>
-                                 <div className="prose prose-sm prose-indigo leading-relaxed text-gray-600 mb-8 italic serif text-lg opacity-90">
+                                 <div className="prose prose-sm prose-blue leading-relaxed text-gray-600 mb-8 italic serif text-lg opacity-90">
                                     <Markdown>{content?.problems?.[selectedProblem]?.prompt || ''}</Markdown>
                                  </div>
                                  
@@ -814,7 +831,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                            {/* Agentic IDE */}
                            <div className="lg:col-span-8 flex flex-col gap-6">
                               <div className="bg-gray-950 rounded-[3rem] overflow-hidden flex flex-col shadow-2xl relative border border-white/5 h-full group">
-                                 <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
+                                 <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
                                  
                                  {/* IDE Top Bar */}
                                  <div className="p-4 bg-white/5 backdrop-blur-md flex justify-between items-center text-white/40 text-[10px] font-mono font-bold tracking-widest border-b border-white/5">
@@ -824,7 +841,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                                           <div className="w-2.5 h-2.5 rounded-full bg-amber-500/40" />
                                           <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/40" />
                                        </div>
-                                       <div className="flex items-center gap-2 text-indigo-400/60">
+                                       <div className="flex items-center gap-2 text-blue-500/60">
                                           <BrainCircuit className="w-3.5 h-3.5" />
                                           <span>AGENTIC_WORKFLOW_ACTIVE</span>
                                        </div>
@@ -848,14 +865,14 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                                     <textarea 
                                       value={code}
                                       onChange={(e) => setCode(e.target.value)}
-                                      className="flex-1 bg-transparent p-8 text-indigo-200 font-mono text-sm outline-none resize-none leading-relaxed selection:bg-indigo-500/30"
+                                      className="flex-1 bg-transparent p-8 text-blue-200 font-mono text-sm outline-none resize-none leading-relaxed selection:bg-blue-500/30"
                                       spellCheck={false}
                                       placeholder="// Brainstorm with AG-1 or start coding..."
                                     />
 
                                     {/* AI Feedback Overlay */}
                                     {isAgentic && (
-                                       <div className="absolute bottom-8 right-8 max-w-xs p-6 bg-indigo-600/90 backdrop-blur-xl rounded-[2rem] border border-white/10 shadow-2xl text-white transform translate-y-1 group-hover:translate-y-0 transition-transform">
+                                       <div className="absolute bottom-8 right-8 max-w-xs p-6 bg-blue-700/90 backdrop-blur-xl rounded-[2rem] border border-white/10 shadow-2xl text-white transform translate-y-1 group-hover:translate-y-0 transition-transform">
                                           <div className="flex items-center gap-2 mb-3">
                                              <Sparkles className="w-4 h-4 text-amber-400" />
                                              <span className="text-[10px] font-black uppercase tracking-widest opacity-80">Orchestrator Tip</span>
@@ -878,7 +895,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                                                 onChange={(e) => setIdePrompt(e.target.value)}
                                                 placeholder="Prompt the IDE: e.g. 'Generate sorting logic'..."
                                                 onKeyDown={(e) => e.key === 'Enter' && handleAgentTask()}
-                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-xs text-white  outline-none focus:ring-4 focus:ring-indigo-500/20 transition-all font-bold pr-32"
+                                                className="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-xs text-white  outline-none focus:ring-4 focus:ring-blue-500/20 transition-all font-bold pr-32"
                                              />
                                              <button 
                                                onClick={handleAgentTask}
@@ -905,7 +922,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                                        <button 
                                          onClick={runCode}
                                          disabled={runningCode}
-                                         className="px-8 py-4 bg-indigo-600 text-white rounded-2xl hover:bg-indigo-500 transition-all font-black text-xs flex items-center gap-3 shadow-xl shadow-indigo-500/20"
+                                         className="px-8 py-4 bg-blue-700 text-white rounded-2xl hover:bg-blue-500 transition-all font-black text-xs flex items-center gap-3 shadow-xl shadow-blue-500/20"
                                        >
                                           {runningCode ? <Loader2 className="w-4 h-4 animate-spin" /> : <Play className="w-4 h-4" />}
                                           {isAgentic ? 'VERIFY MISSION' : 'RUN CODE'}
@@ -922,7 +939,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                                  >
                                     <div className="flex justify-between items-center mb-6">
                                        <h5 className="font-black text-gray-900 flex items-center gap-3">
-                                          <BarChart3 className="w-5 h-5 text-indigo-600" /> 
+                                          <BarChart3 className="w-5 h-5 text-blue-700" /> 
                                           Deployment Logs
                                        </h5>
                                        <span className="text-[10px] font-black uppercase text-emerald-600 tracking-widest">Environment stable</span>
@@ -970,7 +987,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                                           className={`p-4 rounded-2xl text-left text-sm font-bold transition-all border ${
                                             showQuizResults 
                                               ? (isCorrect ? 'bg-emerald-50 border-emerald-500 text-emerald-900' : isSelected ? 'bg-rose-50 border-rose-500 text-rose-900' : 'bg-gray-50 border-transparent text-gray-400')
-                                              : (isSelected ? 'bg-indigo-50 border-indigo-500 text-indigo-900' : 'bg-white border-gray-100 text-gray-600 hover:border-indigo-200')
+                                              : (isSelected ? 'bg-blue-50 border-blue-500 text-blue-950' : 'bg-white border-gray-100 text-gray-600 hover:border-blue-200')
                                           }`}
                                         >
                                            {opt}
@@ -995,8 +1012,8 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                                       </div>
                                       
                                       {selectedAnswers[qIdx] !== q.correctIndex && (
-                                         <div className="p-4 bg-indigo-50/50 text-indigo-800 rounded-2xl flex gap-3 italic serif text-sm border border-indigo-100/50">
-                                            <Lightbulb className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />
+                                         <div className="p-4 bg-blue-50/50 text-blue-900 rounded-2xl flex gap-3 italic serif text-sm border border-blue-100/50">
+                                            <Lightbulb className="w-4 h-4 text-blue-500 mt-0.5 flex-shrink-0" />
                                             <div>
                                                <p className="font-bold mb-1 text-[11px] uppercase tracking-wider">Corrective Logic</p>
                                                <p className="opacity-80 leading-relaxed font-bold">{q.feedback?.[q.correctIndex] || q.explanation}</p>
@@ -1013,7 +1030,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                           <div className="flex justify-center">
                              <button 
                                 onClick={finishQuiz}
-                                className="px-12 py-5 bg-indigo-600 text-white rounded-2xl font-black shadow-xl hover:bg-indigo-700 transition-all"
+                                className="px-12 py-5 bg-blue-700 text-white rounded-2xl font-black shadow-xl hover:bg-blue-800 transition-all"
                              >
                                 Submit Assessment
                              </button>
@@ -1021,11 +1038,11 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                         ) : (
                           <div className="flex justify-center flex-col items-center gap-6">
                              <div className="text-center bg-gray-900 text-white p-10 rounded-[2.5rem] w-full max-w-lg shadow-2xl">
-                                <Trophy className="w-12 h-12 text-indigo-400 mx-auto mb-4" />
+                                <Trophy className="w-12 h-12 text-blue-500 mx-auto mb-4" />
                                 <h4 className="text-2xl font-black tracking-tight">Assessment Completed</h4>
                                 <p className="text-gray-400 font-bold mb-6 italic serif text-lg opacity-80">"Your conceptual foundation is solid."</p>
                                 <div className="flex justify-center items-end gap-2">
-                                   <span className="text-5xl font-black text-indigo-400">80</span>
+                                   <span className="text-5xl font-black text-blue-500">80</span>
                                    <span className="text-xl text-gray-500 font-bold mb-2">/ 100</span>
                                 </div>
                              </div>
@@ -1055,12 +1072,12 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                            <div className="bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-sm space-y-6">
                               <h4 className="font-black text-gray-900 flex items-center gap-2">
-                                 <RefreshCcw className="w-5 h-5 text-indigo-600" /> Longitudinal Roadmap
+                                 <RefreshCcw className="w-5 h-5 text-blue-700" /> Longitudinal Roadmap
                               </h4>
                               <div className="space-y-4">
                                  {content.recommendations?.map((rec: string, i: number) => (
                                    <div key={i} className="flex gap-4 p-4 hover:bg-gray-50 rounded-2xl transition-all cursor-pointer group">
-                                      <div className="w-2 h-2 bg-indigo-200 rounded-full mt-2 group-hover:bg-indigo-500" />
+                                      <div className="w-2 h-2 bg-blue-200 rounded-full mt-2 group-hover:bg-blue-500" />
                                       <p className="text-sm font-bold text-gray-600 group-hover:text-gray-900">{rec}</p>
                                    </div>
                                  ))}
@@ -1069,11 +1086,11 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
 
                            <div className="bg-gray-900 rounded-[2.5rem] p-10 text-white flex flex-col justify-between">
                               <div className="space-y-6">
-                                 <h4 className="text-lg font-black uppercase tracking-widest text-indigo-400">Mastery Snapshot</h4>
+                                 <h4 className="text-lg font-black uppercase tracking-widest text-blue-500">Mastery Snapshot</h4>
                                  <div className="space-y-4">
                                     <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl">
                                        <span className="text-xs font-bold text-gray-400">Conceptual Depth</span>
-                                       <span className="text-indigo-400 font-black">94%</span>
+                                       <span className="text-blue-500 font-black">94%</span>
                                     </div>
                                     <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl">
                                        <span className="text-xs font-bold text-gray-400">Implementation Spped</span>
@@ -1087,7 +1104,7 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                               </div>
                               <button 
                                 onClick={onComplete}
-                                className="mt-8 w-full py-5 bg-white text-gray-900 rounded-2xl font-black hover:bg-indigo-50 transition-all flex items-center justify-center gap-3"
+                                className="mt-8 w-full py-5 bg-white text-gray-900 rounded-2xl font-black hover:bg-blue-50 transition-all flex items-center justify-center gap-3"
                               >
                                  Unlock Next Step <ChevronRight className="w-5 h-5" />
                               </button>

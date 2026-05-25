@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { 
   LineChart, 
   Wallet, 
@@ -29,7 +29,7 @@ const BusinessToolsSection: React.FC<BusinessToolsSectionProps> = ({
   return (
     <div className="space-y-12 mt-16 animate-fade-in">
       <div className="flex items-center gap-4 border-b border-gray-100 pb-6">
-        <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+        <div className="w-12 h-12 bg-blue-700 rounded-2xl flex items-center justify-center text-white shadow-lg">
           <Briefcase className="w-6 h-6" />
         </div>
         <div>
@@ -121,11 +121,11 @@ const BusinessToolsSection: React.FC<BusinessToolsSectionProps> = ({
              <h3 className="text-xl font-black mb-6 relative z-10">Readiness Gap</h3>
              <div className="space-y-6 relative z-10">
                 <div>
-                   <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Timeline to Launch</p>
+                   <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-3">Timeline to Launch</p>
                    <p className="text-2xl font-black">{skillsGap.timeline_to_readiness}</p>
                 </div>
                 <div>
-                   <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-3">Critical Skills Needed</p>
+                   <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-3">Critical Skills Needed</p>
                    <div className="flex flex-wrap gap-2">
                       {skillsGap.skills_needed?.map((skill: string, i: number) => (
                         <span key={i} className="px-3 py-1 bg-white/10 rounded-lg text-[10px] font-black uppercase tracking-wider">{skill}</span>
@@ -144,10 +144,10 @@ const BusinessToolsSection: React.FC<BusinessToolsSectionProps> = ({
                     href={res.url} 
                     target="_blank" 
                     rel="noreferrer"
-                    className="block p-4 bg-gray-50 rounded-2xl hover:bg-indigo-600 hover:text-white transition-all group border border-transparent"
+                    className="block p-4 bg-gray-50 rounded-2xl hover:bg-blue-700 hover:text-white transition-all group border border-transparent"
                   >
                     <div className="flex justify-between items-start mb-1">
-                      <span className="text-[10px] font-black uppercase tracking-widest text-indigo-500 group-hover:text-white/80">{res.category}</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest text-blue-500 group-hover:text-white/80">{res.category}</span>
                       <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100" />
                     </div>
                     <p className="text-sm font-black leading-tight mb-1">{res.title}</p>

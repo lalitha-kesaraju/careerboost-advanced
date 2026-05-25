@@ -70,7 +70,7 @@ export function MithraChat() {
     <div className="max-w-5xl mx-auto flex flex-col h-[75vh]">
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <div className="p-3 bg-cyan-600 rounded-2xl shadow-xl shadow-cyan-100">
+          <div className="p-3 bg-blue-700 rounded-2xl shadow-xl shadow-blue-100">
             <BrainCircuit className="w-6 h-6 text-white" />
           </div>
           <div>
@@ -88,8 +88,8 @@ export function MithraChat() {
         {messages.length === 0 && (
           <div className="h-full flex flex-col items-center justify-center text-center py-20 px-10">
              <div className="relative mb-8">
-                <div className="absolute inset-0 bg-cyan-500 blur-3xl opacity-10 animate-pulse" />
-                <Bot className="w-20 h-20 text-cyan-600 relative z-10" />
+                <div className="absolute inset-0 bg-blue-600 blur-3xl opacity-10 animate-pulse" />
+                <Bot className="w-20 h-20 text-blue-700 relative z-10" />
              </div>
              <h3 className="font-bold text-2xl mb-3 tracking-tight">Behold, Integrated Wisdom</h3>
              <p className="text-gray-500 text-sm max-w-md leading-relaxed italic serif opacity-80">
@@ -100,7 +100,7 @@ export function MithraChat() {
                   <button 
                     key={q}
                     onClick={() => { setInput(q); }}
-                    className="p-4 bg-white border border-gray-100 rounded-2xl text-xs font-medium text-gray-500 hover:border-cyan-200 hover:text-cyan-600 transition-all text-left"
+                    className="p-4 bg-white border border-gray-100 rounded-2xl text-xs font-medium text-gray-500 hover:border-blue-200 hover:text-blue-700 transition-all text-left"
                   >
                     {q}
                   </button>
@@ -117,7 +117,7 @@ export function MithraChat() {
             className={`flex gap-6 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
           >
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-sm transition-all ${
-              msg.role === 'user' ? 'bg-gray-100 text-gray-400' : 'bg-cyan-600 text-white'
+              msg.role === 'user' ? 'bg-gray-100 text-gray-400' : 'bg-blue-700 text-white'
             }`}>
               {msg.role === 'user' ? <UserIcon className="w-6 h-6" /> : <Sparkles className="w-6 h-6" />}
             </div>
@@ -137,13 +137,13 @@ export function MithraChat() {
         
         {loading && (
           <div className="flex gap-6">
-            <div className="w-12 h-12 rounded-2xl bg-cyan-600 flex items-center justify-center text-white shadow-lg animate-pulse">
+            <div className="w-12 h-12 rounded-2xl bg-blue-700 flex items-center justify-center text-white shadow-lg animate-pulse">
               <Loader2 className="w-6 h-6 animate-spin" />
             </div>
             <div className="p-8 rounded-[2.5rem] bg-gray-900 border border-gray-800 rounded-tl-none flex items-center gap-2">
               <div className="flex gap-1">
                 {[0, 1, 2].map(i => (
-                  <div key={i} className="w-1.5 h-1.5 bg-cyan-50 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                  <div key={i} className="w-1.5 h-1.5 bg-blue-50 rounded-full animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
                 ))}
               </div>
               <span className="text-xs font-mono text-gray-500 uppercase tracking-widest ml-2">Synaptic Processing</span>
@@ -153,8 +153,8 @@ export function MithraChat() {
       </div>
 
       <div className="relative group">
-        <div className="absolute inset-0 bg-cyan-500 blur-2xl opacity-5 group-focus-within:opacity-10 transition-opacity" />
-        <div className="relative p-2 bg-white rounded-[2rem] border border-gray-100 shadow-2xl flex gap-3 items-center focus-within:ring-4 focus-within:ring-cyan-500/5 transition-all">
+        <div className="absolute inset-0 bg-blue-600 blur-2xl opacity-5 group-focus-within:opacity-10 transition-opacity" />
+        <div className="relative p-2 bg-white rounded-[2rem] border border-gray-100 shadow-2xl flex gap-3 items-center focus-within:ring-4 focus-within:ring-blue-600/5 transition-all">
           <input 
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -165,7 +165,7 @@ export function MithraChat() {
           <button 
             onClick={handleSend}
             disabled={!input.trim() || loading}
-            className="bg-cyan-600 text-white p-4 rounded-2xl hover:bg-cyan-700 transition-all disabled:opacity-30 shadow-xl shadow-cyan-100"
+            className="bg-blue-700 text-white p-4 rounded-2xl hover:bg-blue-800 transition-all disabled:opacity-30 shadow-xl shadow-blue-100"
           >
             <Send className="w-5 h-5" />
           </button>
@@ -174,3 +174,4 @@ export function MithraChat() {
     </div>
   );
 }
+

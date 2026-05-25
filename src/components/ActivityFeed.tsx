@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+﻿import React, { useEffect, useState } from 'react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { collection, query, orderBy, limit, onSnapshot, Timestamp } from 'firebase/firestore';
@@ -26,11 +26,12 @@ interface ActivityItem {
 
 export function ActivityFeed() {
   const { user } = useAuth();
+  const isLocal = !!(user as any)?.isLocal;
   const [activities, setActivities] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || isLocal) { setIsLoading(false); return; }
 
     // Collect latest from multiple collections
     // Since we don't have a centralized 'activity' collection yet, 
@@ -63,8 +64,8 @@ export function ActivityFeed() {
   const getIcon = (type: string) => {
     const props = { className: "w-5 h-5" };
     switch (type) {
-      case 'resume': return <FileText {...props} className={props.className + " text-cyan-500"} />;
-      case 'interview': return <Mic {...props} className={props.className + " text-purple-500"} />;
+      case 'resume': return <FileText {...props} className={props.className + " text-blue-600"} />;
+      case 'interview': return <Mic {...props} className={props.className + " text-blue-500"} />;
       case 'application': return <Briefcase {...props} className={props.className + " text-emerald-500"} />;
       case 'code': return <Code {...props} className={props.className + " text-amber-500"} />;
       case 'login': return <CheckCircle2 {...props} className={props.className + " text-blue-500"} />;
@@ -77,7 +78,7 @@ export function ActivityFeed() {
       <div className="px-10 py-8 border-b border-zinc-100 flex items-center justify-between">
          <div className="flex items-center gap-3">
             <History className="w-5 h-5 text-gray-900" />
-            <h3 className="text-sm font-black text-gray-900 border-b-2 border-cyan-500 pb-0.5 tracking-tight uppercase">System Logs</h3>
+            <h3 className="text-sm font-black text-gray-900 border-b-2 border-blue-600 pb-0.5 tracking-tight uppercase">System Logs</h3>
          </div>
          <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
@@ -133,7 +134,7 @@ export function ActivityFeed() {
       </div>
 
       <div className="p-8 border-t border-zinc-100 bg-zinc-50/50">
-         <div className="flex items-center gap-4 text-cyan-600">
+         <div className="flex items-center gap-4 text-blue-700">
             <Clock className="w-4 h-4" />
             <p className="text-[10px] font-black uppercase tracking-widest">End-to-End Encryption Active</p>
          </div>

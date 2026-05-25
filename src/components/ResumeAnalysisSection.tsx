@@ -88,9 +88,9 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
          <motion.div 
            animate={{ rotate: 360 }}
            transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-           className="mb-6 p-4 bg-cyan-50 rounded-full"
+           className="mb-6 p-4 bg-blue-50 rounded-full"
          >
-           <Loader2 className="w-12 h-12 text-cyan-600" />
+           <Loader2 className="w-12 h-12 text-blue-700" />
          </motion.div>
          <h2 className="text-3xl font-black mb-2">Quantifying Professional Value...</h2>
          <p className="text-gray-500 italic serif opacity-60">Our AI is running cross-market comparisons</p>
@@ -123,10 +123,10 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
            </div>
            <div className="flex-1 h-1 bg-emerald-500 mx-4 -mt-6" />
            <div className="flex flex-col items-center">
-             <div className="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-white shadow-lg shadow-cyan-100 z-10">
+             <div className="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center text-white shadow-lg shadow-blue-100 z-10">
                <span className="font-bold">3</span>
              </div>
-             <span className="text-xs font-bold text-cyan-600 mt-2 uppercase tracking-widest">Analysis</span>
+             <span className="text-xs font-bold text-blue-700 mt-2 uppercase tracking-widest">Analysis</span>
            </div>
         </div>
       </div>
@@ -140,7 +140,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
         <div className="flex items-center gap-4">
            <button 
              onClick={() => setShowRoleSelector(true)}
-             className="px-6 py-3 bg-cyan-50 text-cyan-600 rounded-xl font-bold border border-cyan-100 hover:bg-cyan-100 transition-all flex items-center gap-2"
+             className="px-6 py-3 bg-blue-50 text-blue-700 rounded-xl font-bold border border-blue-100 hover:bg-blue-100 transition-all flex items-center gap-2"
            >
               <Target className="w-4 h-4" />
               Set Target Role
@@ -179,7 +179,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search over 50+ roles..."
-                  className="w-full pl-16 pr-6 py-5 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-cyan-500/5 focus:border-cyan-500 transition-all"
+                  className="w-full pl-16 pr-6 py-5 bg-gray-50 border border-gray-100 rounded-2xl font-bold outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all"
                 />
               </div>
 
@@ -192,9 +192,9 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
                       onNavigate('skill-gap-analysis'); 
                       setShowRoleSelector(false);
                     }}
-                    className="p-4 bg-gray-50 border border-gray-100 rounded-2xl text-left hover:border-cyan-500 hover:text-cyan-600 transition-all group"
+                    className="p-4 bg-gray-50 border border-gray-100 rounded-2xl text-left hover:border-blue-600 hover:text-blue-700 transition-all group"
                   >
-                    <p className="text-sm font-bold text-gray-700 group-hover:text-cyan-600">{role}</p>
+                    <p className="text-sm font-bold text-gray-700 group-hover:text-blue-700">{role}</p>
                   </button>
                 ))}
               </div>
@@ -247,9 +247,9 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
                 <p className="text-[10px] font-black text-emerald-600 uppercase tracking-[0.2em] mb-1">Impact</p>
                 <p className="text-lg font-black text-emerald-900">High</p>
               </div>
-              <div className="p-4 bg-cyan-50 rounded-2xl border border-cyan-100">
-                <p className="text-[10px] font-black text-cyan-600 uppercase tracking-[0.2em] mb-1">Formatting</p>
-                <p className="text-lg font-black text-cyan-900">Optimized</p>
+              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                <p className="text-[10px] font-black text-blue-700 uppercase tracking-[0.2em] mb-1">Formatting</p>
+                <p className="text-lg font-black text-blue-950">Optimized</p>
               </div>
               <div className="p-4 bg-amber-50 rounded-2xl border border-amber-100">
                 <p className="text-[10px] font-black text-amber-600 uppercase tracking-[0.2em] mb-1">Keywords</p>
@@ -265,7 +265,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
         <section className="bg-gray-900 text-white rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden">
            <div className="relative z-10 space-y-8">
               <div className="flex items-center gap-4">
-                 <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-cyan-400">
+                 <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-blue-500">
                     <TrendingUp className="w-6 h-6" />
                  </div>
                  <div>
@@ -285,7 +285,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
                  </div>
                  <div className="p-6 bg-white/5 rounded-3xl border border-white/5 col-span-2">
                     <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mb-1">Est. Salary Bonus Range</p>
-                    <p className="text-3xl font-black text-cyan-400">{analysis?.marketInsights?.salaryRange || '$120k - $160k'}</p>
+                    <p className="text-3xl font-black text-blue-500">{analysis?.marketInsights?.salaryRange || '$120k - $160k'}</p>
                     <p className="text-[10px] text-gray-600 mt-2 italic">*Based on current skill clusters and certifications</p>
                  </div>
               </div>
@@ -305,7 +305,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
         {/* AI Recommendations */}
         <section className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-2xl shadow-gray-200/40">
           <div className="flex items-center gap-4 mb-8">
-            <div className="w-12 h-12 bg-cyan-50 rounded-2xl flex items-center justify-center text-cyan-600">
+            <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-700">
               <ListChecks className="w-6 h-6" />
             </div>
             <div>
@@ -323,7 +323,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
                 transition={{ delay: idx * 0.1 }}
                 className="group flex items-start gap-4 p-5 bg-gray-50 border border-gray-100 rounded-2xl hover:bg-white hover:shadow-xl hover:shadow-gray-200/40 transition-all cursor-default"
               >
-                <div className="w-8 h-8 bg-cyan-100 rounded-lg flex-shrink-0 flex items-center justify-center text-cyan-600 font-black text-sm">
+                <div className="w-8 h-8 bg-blue-100 rounded-lg flex-shrink-0 flex items-center justify-center text-blue-700 font-black text-sm">
                   {idx + 1}
                 </div>
                 <p className="text-sm font-bold text-gray-700 leading-relaxed pt-1">{rec}</p>
@@ -369,7 +369,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
       <section className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-2xl shadow-gray-200/40 mt-10">
          <div className="flex items-center justify-between mb-10">
             <div className="flex items-center gap-4">
-               <div className="w-12 h-12 bg-white border border-gray-100 rounded-2xl flex items-center justify-center text-cyan-600 shadow-sm">
+               <div className="w-12 h-12 bg-white border border-gray-100 rounded-2xl flex items-center justify-center text-blue-700 shadow-sm">
                   <ShieldCheck className="w-6 h-6" />
                </div>
                <div>
@@ -393,7 +393,7 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
             ]).map((check: any, i: number) => (
               <div key={i} className="p-6 bg-gray-50 rounded-3xl border border-gray-100 transition-all hover:bg-white hover:shadow-lg">
                  <div className="flex justify-between items-start mb-4">
-                    <span className="text-[10px] font-black text-cyan-600 uppercase tracking-widest">{check.label}</span>
+                    <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">{check.label}</span>
                     <CheckCircle2 className={`w-4 h-4 ${check.passed ? 'text-emerald-500' : 'text-rose-500'}`} />
                  </div>
                  <p className="text-sm font-black text-gray-900 mb-1">{check.status}</p>
@@ -413,11 +413,12 @@ export function ResumeAnalysisSection({ data, onReset, onNavigate, onDataUpdate 
         </button>
         <button 
           onClick={() => onNavigate('skill-gap-analysis')}
-          className="px-10 py-5 bg-cyan-600 text-white rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-cyan-700 transition-all shadow-xl shadow-cyan-100"
+          className="px-10 py-5 bg-blue-700 text-white rounded-2xl font-black flex items-center justify-center gap-3 hover:bg-blue-800 transition-all shadow-xl shadow-blue-100"
         >
-          Select Target Role & Analyze Gap →
+          Select Target Role & Analyze Gap â†’
         </button>
       </div>
     </div>
   );
 }
+

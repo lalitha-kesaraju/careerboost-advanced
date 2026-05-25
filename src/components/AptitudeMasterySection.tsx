@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   BookOpen, 
@@ -29,6 +29,9 @@ import {
 import Markdown from 'react-markdown';
 import { getMithraAdvice } from '../services/gemini';
 import { generateAptitudeQuestions, AptitudeQuestion } from '../services/questionService';
+import { useAuth } from '../App';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 // Topic Configuration
 const APTITUDE_TOPICS = [
@@ -105,6 +108,7 @@ interface TopicProgress {
 import { APTITUDE_PHASE_CONTENT } from '../data/aptitudeTheory';
 
 export function AptitudeMasterySection() {
+  const { user } = useAuth();
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [activePhase, setActivePhase] = useState<number>(0);
   const [loading, setLoading] = useState(false);
@@ -288,13 +292,28 @@ export function AptitudeMasterySection() {
     let interval: any;
     if (examState === 'running' && examTime > 0) {
       interval = setInterval(() => setExamTime(t => t - 1), 1000);
-    } else if (examTime === 0) {
-      setExamState('finished');
+    } else if (examTime === 0 && examState === 'running') {
+      submitExam();
     }
     return () => clearInterval(interval);
   }, [examState, examTime]);
 
-  const submitExam = () => setExamState('finished');
+  const submitExam = () => {
+    const finalScore = getExamScore();
+    setExamState('finished');
+    if (user && selectedTopic) {
+      setDoc(
+        doc(db, 'users', user.uid, 'aptitudeScores', selectedTopic),
+        {
+          topicId: selectedTopic,
+          score: finalScore,
+          total: examQuestions.length,
+          completedAt: new Date().toISOString()
+        },
+        { merge: true }
+      ).catch((e) => console.error('Failed to save aptitude score', e));
+    }
+  };
 
   const getExamScore = () => {
     let score = 0;
@@ -308,18 +327,18 @@ export function AptitudeMasterySection() {
   const renderLobby = () => (
     <div className="space-y-12">
       <div className="bg-gray-900 rounded-[3rem] p-12 text-white relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/20 to-transparent" />
         <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-12">
            <div className="max-w-xl space-y-6 text-center md:text-left">
-              <span className="px-4 py-1 bg-indigo-500 rounded-full text-[10px] font-black uppercase tracking-widest">Mastery Gated Learning</span>
-              <h1 className="text-6xl font-black tracking-tight leading-tight">Aptitude <span className="text-indigo-400">Hub</span></h1>
+              <span className="px-4 py-1 bg-blue-500 rounded-full text-[10px] font-black uppercase tracking-widest">Mastery Gated Learning</span>
+              <h1 className="text-6xl font-black tracking-tight leading-tight">Aptitude <span className="text-blue-500">Hub</span></h1>
               <p className="text-gray-400 text-lg italic serif leading-relaxed">
                  7 core pillars of cognitive placement evaluation. Complete the phases to simulate target firm assessments.
               </p>
            </div>
            <div className="flex gap-4">
               <div className="w-32 h-32 bg-white/5 rounded-3xl border border-white/10 flex flex-col items-center justify-center">
-                 <span className="text-3xl font-black text-indigo-400">{Object.keys(topicProgress).length}</span>
+                 <span className="text-3xl font-black text-blue-500">{Object.keys(topicProgress).length}</span>
                  <span className="text-[10px] font-bold text-gray-500 uppercase mt-2">Active</span>
               </div>
               <div className="w-32 h-32 bg-white/5 rounded-3xl border border-white/10 flex flex-col items-center justify-center">
@@ -340,20 +359,20 @@ export function AptitudeMasterySection() {
               key={topic.id}
               whileHover={{ y: -5 }}
               onClick={() => handleTopicSelect(topic.id)}
-              className="group p-8 bg-white border border-gray-100 rounded-[2.5rem] text-left hover:border-indigo-200 transition-all shadow-sm relative overflow-hidden"
+              className="group p-8 bg-white border border-gray-100 rounded-[2.5rem] text-left hover:border-blue-200 transition-all shadow-sm relative overflow-hidden"
             >
               <div className="absolute top-0 right-0 p-6 opacity-5 transform translate-x-4 -translate-y-4 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform">
                 {topic.icon}
               </div>
 
-              <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:bg-indigo-50 transition-colors">
+              <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-2xl mb-6 group-hover:bg-blue-50 transition-colors">
                 {topic.emoji}
               </div>
               
               <h3 className="text-xl font-black text-gray-900 mb-2 truncate">{topic.title}</h3>
               <p className="text-[11px] text-gray-400 font-bold mb-6 line-clamp-2 uppercase tracking-wide leading-relaxed">{topic.description}</p>
               
-              <div className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl group-hover:bg-indigo-50/50">
+              <div className="flex justify-between items-center bg-gray-50 p-4 rounded-2xl group-hover:bg-blue-50/50">
                  <div className="flex flex-col">
                     <span className="text-[9px] font-black uppercase text-gray-400">Content</span>
                     <span className="text-xs font-bold text-gray-600">{topic.examplesCount} Examples • {topic.practiceCount} MCQ</span>
@@ -375,7 +394,7 @@ export function AptitudeMasterySection() {
         </button>
         <div>
           <h3 className="font-bold text-gray-900 leading-none mb-1">{currentTopic?.title}</h3>
-          <p className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">Phase 0{activePhase + 1} Mastery</p>
+          <p className="text-[10px] font-black uppercase text-blue-700 tracking-widest">Phase 0{activePhase + 1} Mastery</p>
         </div>
       </div>
 
@@ -388,7 +407,7 @@ export function AptitudeMasterySection() {
               disabled={isLocked || loading}
               onClick={() => setActivePhase(idx)}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${
-                activePhase === idx ? 'bg-white text-indigo-600 shadow-sm' : isLocked ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-gray-600'
+                activePhase === idx ? 'bg-white text-blue-700 shadow-sm' : isLocked ? 'text-gray-300 cursor-not-allowed' : 'text-gray-400 hover:text-gray-600'
               }`}
             >
               {idx === 0 && <BookOpen className="w-3.5 h-3.5" />}
@@ -404,7 +423,7 @@ export function AptitudeMasterySection() {
       {activePhase < 3 && (
         <button 
           onClick={() => setShowDoubtBox(!showDoubtBox)}
-          className={`p-3 rounded-xl transition-all ${showDoubtBox ? 'bg-indigo-600 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:text-indigo-600'}`}
+          className={`p-3 rounded-xl transition-all ${showDoubtBox ? 'bg-blue-700 text-white shadow-lg' : 'bg-gray-50 text-gray-400 hover:text-blue-700'}`}
         >
           <HelpCircle className="w-5 h-5" />
         </button>
@@ -414,15 +433,15 @@ export function AptitudeMasterySection() {
 
   const renderLearn = () => (
     <div className="max-w-4xl mx-auto space-y-12">
-      <div className="prose prose-indigo max-w-none">
+      <div className="prose prose-blue max-w-none">
         <Markdown>{theoryContent?.content || ''}</Markdown>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="p-8 bg-indigo-50 border border-indigo-100 rounded-[2.5rem] space-y-4">
-           <Zap className="w-8 h-8 text-indigo-600" />
-           <h4 className="text-xl font-black italic serif text-indigo-900 leading-tight">Engineered Explainer</h4>
-           <p className="text-sm font-bold text-indigo-800 leading-relaxed opacity-80 italic">
+        <div className="p-8 bg-blue-50 border border-blue-100 rounded-[2.5rem] space-y-4">
+           <Zap className="w-8 h-8 text-blue-700" />
+           <h4 className="text-xl font-black italic serif text-blue-950 leading-tight">Engineered Explainer</h4>
+           <p className="text-sm font-bold text-blue-900 leading-relaxed opacity-80 italic">
               "Need a custom analogy for this topic? Use the DoubtBox. I can break down these formulas into real-world business scenarios."
            </p>
         </div>
@@ -458,7 +477,7 @@ export function AptitudeMasterySection() {
             key={i}
             onClick={() => { setCurrentExampleIdx(i); setShowStep(0); }}
             className={`px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap border ${
-              currentExampleIdx === i ? 'bg-indigo-600 text-white border-transparent' : 'bg-white border-gray-100 text-gray-400 hover:border-indigo-100'
+              currentExampleIdx === i ? 'bg-blue-700 text-white border-transparent' : 'bg-white border-gray-100 text-gray-400 hover:border-blue-100'
             }`}
           >
             Example 0{i + 1}
@@ -468,7 +487,7 @@ export function AptitudeMasterySection() {
 
       <div className="bg-white rounded-[3.5rem] p-12 border border-gray-100 shadow-xl space-y-12">
         <div className="space-y-4">
-           <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Problem Statement</span>
+           <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Problem Statement</span>
            <h2 className="text-3xl font-black text-gray-900 tracking-tight leading-tight">
              {workedExamples[currentExampleIdx]?.problem}
            </h2>
@@ -500,7 +519,7 @@ export function AptitudeMasterySection() {
            {showStep < workedExamples[currentExampleIdx]?.steps.length - 1 ? (
              <button 
                onClick={() => setShowStep(s => s + 1)}
-               className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-indigo-700 shadow-lg flex items-center gap-2"
+               className="px-8 py-4 bg-blue-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-800 shadow-lg flex items-center gap-2"
              >
                Reveal Next Step <Zap className="w-4 h-4" />
              </button>
@@ -529,7 +548,7 @@ export function AptitudeMasterySection() {
     <div className="max-w-4xl mx-auto space-y-10">
       <div className="grid grid-cols-5 gap-3">
         {practiceQuestions.map((_, i) => (
-          <div key={i} className={`h-2 rounded-full ${practiceAnswers[practiceQuestions[i].id] !== undefined ? 'bg-indigo-600' : 'bg-gray-100'}`} />
+          <div key={i} className={`h-2 rounded-full ${practiceAnswers[practiceQuestions[i].id] !== undefined ? 'bg-blue-700' : 'bg-gray-100'}`} />
         ))}
       </div>
 
@@ -555,7 +574,7 @@ export function AptitudeMasterySection() {
                       status === 'correct' ? 'bg-emerald-50 border-emerald-500 text-emerald-900' :
                       status === 'wrong' ? 'bg-rose-50 border-rose-500 text-rose-900' :
                       (practiceAnswers[q.id] !== undefined && isCorrect) ? 'bg-emerald-50 border-emerald-500/30 text-emerald-900' :
-                      'bg-gray-50 border-transparent text-gray-600 hover:border-indigo-200'
+                      'bg-gray-50 border-transparent text-gray-600 hover:border-blue-200'
                     }`}
                   >
                     {opt}
@@ -570,12 +589,12 @@ export function AptitudeMasterySection() {
                 animate={{ opacity: 1, height: 'auto' }}
                 className="pl-14 pt-4"
               >
-                <div className="p-6 bg-indigo-50 border border-indigo-100 rounded-[2rem] space-y-2">
+                <div className="p-6 bg-blue-50 border border-blue-100 rounded-[2rem] space-y-2">
                    <div className="flex items-center gap-2 mb-2">
-                      <Sparkles className="w-4 h-4 text-indigo-600" />
-                      <span className="text-[10px] font-black uppercase text-indigo-900 tracking-widest">Boost Reasoning</span>
+                      <Sparkles className="w-4 h-4 text-blue-700" />
+                      <span className="text-[10px] font-black uppercase text-blue-950 tracking-widest">Boost Reasoning</span>
                    </div>
-                   <p className="text-sm font-bold text-indigo-800 italic serif leading-relaxed">
+                   <p className="text-sm font-bold text-blue-900 italic serif leading-relaxed">
                       {q.explanation}
                    </p>
                 </div>
@@ -589,7 +608,7 @@ export function AptitudeMasterySection() {
         <div className="flex justify-center pt-10">
            <button 
              onClick={() => { saveProgress(selectedTopic!, 2); setActivePhase(3); }}
-             className="px-12 py-5 bg-indigo-600 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-black transition-all shadow-xl flex items-center gap-3"
+             className="px-12 py-5 bg-blue-700 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-black transition-all shadow-xl flex items-center gap-3"
            >
              Unlock Final Exam <Timer className="w-4 h-4" />
            </button>
@@ -622,9 +641,9 @@ export function AptitudeMasterySection() {
 
       {examState === 'idle' && (
         <div className="bg-gray-900 rounded-[3rem] p-16 text-center text-white space-y-8 shadow-2xl relative overflow-hidden">
-           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent" />
+           <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent" />
            <div className="relative z-10 space-y-12">
-              <div className="w-20 h-20 bg-indigo-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl">
+              <div className="w-20 h-20 bg-blue-700 rounded-[2rem] flex items-center justify-center mx-auto shadow-2xl">
                  <Timer className="w-10 h-10" />
               </div>
               <div className="space-y-4">
@@ -640,14 +659,14 @@ export function AptitudeMasterySection() {
                     <CheckCircle2 className="w-4 h-4" />
                     <span className="text-[11px] font-black uppercase">Mandatory Camera Proctoring</span>
                  </div>
-                 <div className="flex items-center gap-3 text-indigo-400">
+                 <div className="flex items-center gap-3 text-blue-500">
                     <CheckCircle2 className="w-4 h-4" />
                     <span className="text-[11px] font-black uppercase">3 Violations = Disqualification</span>
                  </div>
               </div>
               <button 
                 onClick={startExam}
-                className="px-16 py-6 bg-white text-gray-900 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-[0_0_50px_rgba(255,255,255,0.1)]"
+                className="px-16 py-6 bg-white text-gray-900 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-blue-50 transition-all shadow-[0_0_50px_rgba(255,255,255,0.1)]"
               >
                 Initiate Secure Sequence
               </button>
@@ -664,7 +683,7 @@ export function AptitudeMasterySection() {
                  </div>
                  <div>
                     <h4 className="font-black text-gray-900">Module Verification</h4>
-                    <p className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">Integrity Level: {3 - violations}/3</p>
+                    <p className="text-[10px] font-black uppercase text-blue-700 tracking-widest">Integrity Level: {3 - violations}/3</p>
                  </div>
               </div>
               
@@ -681,7 +700,7 @@ export function AptitudeMasterySection() {
                  </div>
                  <button 
                    onClick={submitExam}
-                   className="px-6 py-3 bg-indigo-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-700 shadow-lg"
+                   className="px-6 py-3 bg-blue-700 text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-800 shadow-lg"
                  >
                     Final Submission
                  </button>
@@ -702,7 +721,7 @@ export function AptitudeMasterySection() {
                         if (currentExamIdx < examQuestions.length - 1) setCurrentExamIdx(i => i + 1);
                      }}
                      className={`p-8 rounded-[2rem] text-left text-lg font-black transition-all border ${
-                       examAnswers[examQuestions[currentExamIdx].id] === i ? 'bg-indigo-600 text-white shadow-xl' : 'bg-gray-50 border-transparent hover:border-indigo-200'
+                       examAnswers[examQuestions[currentExamIdx].id] === i ? 'bg-blue-700 text-white shadow-xl' : 'bg-gray-50 border-transparent hover:border-blue-200'
                      }`}
                    >
                      {opt}
@@ -718,7 +737,7 @@ export function AptitudeMasterySection() {
                   onClick={() => setCurrentExamIdx(i)}
                   className={`w-10 h-10 rounded-xl font-black text-xs transition-all ${
                     currentExamIdx === i ? 'bg-gray-900 text-white' : 
-                    examAnswers[q.id] !== undefined ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-400'
+                    examAnswers[q.id] !== undefined ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'
                   }`}
                 >
                   {i + 1}
@@ -737,7 +756,7 @@ export function AptitudeMasterySection() {
           <div className="bg-gray-900 rounded-[3rem] p-16 text-center text-white relative overflow-hidden shadow-2xl">
              <Sparkles className="absolute top-[-40px] left-[-40px] w-64 h-64 text-white/5 pointer-events-none" />
              <div className="relative z-10 space-y-8">
-                <div className={`w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl ${getExamScore() >= 8 ? 'bg-emerald-600' : 'bg-indigo-600'}`}>
+                <div className={`w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl ${getExamScore() >= 8 ? 'bg-emerald-600' : 'bg-blue-700'}`}>
                    {getExamScore() >= 8 ? <Award className="w-12 h-12" /> : <Calculator className="w-12 h-12" />}
                 </div>
                 <h2 className="text-5xl font-black tracking-tight mt-6">Examination Complete</h2>
@@ -746,7 +765,7 @@ export function AptitudeMasterySection() {
                 <div className="grid grid-cols-3 gap-6 max-w-xl mx-auto py-8">
                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                       <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">Percentage</p>
-                      <p className="text-2xl font-black text-indigo-400">{getExamScore() * 10}%</p>
+                      <p className="text-2xl font-black text-blue-500">{getExamScore() * 10}%</p>
                    </div>
                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                       <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">Status</p>
@@ -756,7 +775,7 @@ export function AptitudeMasterySection() {
                    </div>
                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
                       <p className="text-[9px] font-black uppercase text-gray-400 tracking-widest mb-1">Speed</p>
-                      <p className="text-2xl font-black text-indigo-400">Optimum</p>
+                      <p className="text-2xl font-black text-blue-500">Optimum</p>
                    </div>
                 </div>
 
@@ -784,7 +803,7 @@ export function AptitudeMasterySection() {
 
           <div className="bg-white rounded-[3rem] p-12 border border-gray-100 shadow-sm space-y-10">
              <div className="flex items-center gap-3">
-                <FileText className="w-6 h-6 text-indigo-600" />
+                <FileText className="w-6 h-6 text-blue-700" />
                 <h3 className="text-2xl font-black text-gray-900">Solution Review</h3>
              </div>
              <div className="space-y-6">
@@ -843,7 +862,7 @@ export function AptitudeMasterySection() {
                   <div className="flex-1 overflow-y-auto p-12 pb-24 relative scroll-smooth">
                      {loading ? (
                         <div className="h-full flex flex-col items-center justify-center space-y-6">
-                           <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+                           <Loader2 className="w-12 h-12 text-blue-700 animate-spin" />
                            <p className="font-bold text-lg italic serif animate-pulse">Synchronizing Cognitive Material...</p>
                         </div>
                      ) : (
@@ -867,7 +886,7 @@ export function AptitudeMasterySection() {
                        >
                          <div className="p-6 border-b border-gray-100 flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                               <div className="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                               <div className="w-10 h-10 bg-blue-50 text-blue-700 rounded-xl flex items-center justify-center">
                                   <Sparkles className="w-5 h-5" />
                                </div>
                                <h4 className="font-black text-gray-900 tracking-tight">Mithra Support</h4>
@@ -892,22 +911,22 @@ export function AptitudeMasterySection() {
                                     <div className="text-xs font-black text-gray-400 uppercase tracking-widest mt-1">You</div>
                                     <p className="text-sm font-bold text-gray-700 leading-relaxed">{d.q}</p>
                                  </div>
-                                 <div className="p-5 bg-indigo-50/50 border border-indigo-100 rounded-[2rem] space-y-4 relative overflow-hidden">
-                                    <Sparkles className="absolute top-[-10px] right-[-10px] w-20 h-20 text-indigo-100/50 pointer-events-none" />
+                                 <div className="p-5 bg-blue-50/50 border border-blue-100 rounded-[2rem] space-y-4 relative overflow-hidden">
+                                    <Sparkles className="absolute top-[-10px] right-[-10px] w-20 h-20 text-blue-100/50 pointer-events-none" />
                                     <div className="flex items-center gap-2">
-                                       <div className="w-2 h-2 bg-indigo-400 rounded-full" />
-                                       <span className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">Mithra's Insight</span>
+                                       <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                                       <span className="text-[10px] font-black uppercase text-blue-700 tracking-widest">Mithra's Insight</span>
                                     </div>
-                                    <div className="prose prose-sm prose-indigo text-xs font-bold italic serif leading-relaxed text-indigo-900 opacity-90">
+                                    <div className="prose prose-sm prose-blue text-xs font-bold italic serif leading-relaxed text-blue-950 opacity-90">
                                        <Markdown>{d.a}</Markdown>
                                     </div>
                                  </div>
                               </div>
                             ))}
                             {doubtLoading && (
-                              <div className="flex items-center gap-3 p-4 bg-indigo-50/50 rounded-2xl border border-indigo-100/50 animate-pulse">
-                                 <Loader2 className="w-4 h-4 text-indigo-600 animate-spin" />
-                                 <span className="text-[10px] font-black uppercase text-indigo-600 tracking-widest">Bridging Synapses...</span>
+                              <div className="flex items-center gap-3 p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 animate-pulse">
+                                 <Loader2 className="w-4 h-4 text-blue-700 animate-spin" />
+                                 <span className="text-[10px] font-black uppercase text-blue-700 tracking-widest">Bridging Synapses...</span>
                               </div>
                             )}
                          </div>
@@ -919,12 +938,12 @@ export function AptitudeMasterySection() {
                                  onChange={(e) => setDoubtInput(e.target.value)}
                                  onKeyDown={(e) => e.key === 'Enter' && handleAskDoubt()}
                                  placeholder="Ask anything about the topic..."
-                                 className="w-full bg-white border border-gray-200 rounded-2xl px-6 py-4 text-xs font-bold focus:ring-4 focus:ring-indigo-500/10 outline-none transition-all pr-12 shadow-sm"
+                                 className="w-full bg-white border border-gray-200 rounded-2xl px-6 py-4 text-xs font-bold focus:ring-4 focus:ring-blue-500/10 outline-none transition-all pr-12 shadow-sm"
                                />
                                <button 
                                  onClick={handleAskDoubt}
                                  disabled={doubtLoading || !doubtInput.trim()}
-                                 className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-indigo-600 text-white rounded-xl shadow-lg hover:bg-indigo-700 disabled:opacity-30"
+                                 className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-blue-700 text-white rounded-xl shadow-lg hover:bg-blue-800 disabled:opacity-30"
                                >
                                   <Send className="w-4 h-4" />
                                </button>

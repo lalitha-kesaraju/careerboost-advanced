@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   BrainCircuit, 
@@ -281,16 +281,16 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
               <motion.div 
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="inline-flex items-center gap-3 px-4 py-2 bg-indigo-50 border border-indigo-100 rounded-full"
+                className="inline-flex items-center gap-3 px-4 py-2 bg-blue-50 border border-blue-100 rounded-full"
               >
-                 <Shield className="w-4 h-4 text-indigo-600" />
-                 <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Secure University Protocol</span>
+                 <Shield className="w-4 h-4 text-blue-700" />
+                 <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Secure University Protocol</span>
               </motion.div>
               
               <div className="space-y-6">
                  <h1 className="text-7xl font-black text-gray-900 tracking-tighter leading-[0.85]">
                     Behavioral <br/>
-                    <span className="text-indigo-600">Calibration</span>
+                    <span className="text-blue-700">Calibration</span>
                  </h1>
                  <p className="text-gray-500 text-xl font-medium italic serif leading-relaxed max-w-lg">
                     A university-grade psychological assessment designed to map your natural cognitive biases and collaborative potential for Tier-1 placement rounds.
@@ -299,8 +299,8 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  {[
-                   { icon: Camera, title: 'AI Proctoring', desc: 'Active environment monitoring via Mithra Lens.', color: 'text-indigo-600', bg: 'bg-indigo-50' },
-                   { icon: Fullscreen, title: 'Mastery Mode', desc: 'Full-screen isolation required for validation.', color: 'text-purple-600', bg: 'bg-purple-50' },
+                   { icon: Camera, title: 'AI Proctoring', desc: 'Active environment monitoring via Mithra Lens.', color: 'text-blue-700', bg: 'bg-blue-50' },
+                   { icon: Fullscreen, title: 'Mastery Mode', desc: 'Full-screen isolation required for validation.', color: 'text-blue-700', bg: 'bg-blue-50' },
                    { icon: Lock, title: 'Anti-Bypass', desc: 'Disqualification on 3rd security breach.', color: 'text-rose-600', bg: 'bg-rose-50' },
                    { icon: Target, title: 'Trait Mapping', desc: 'Evaluates Openness, Grit, and Adaptability.', color: 'text-emerald-600', bg: 'bg-emerald-50' }
                  ].map((feat, i) => (
@@ -325,7 +325,7 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
               <div className="flex flex-col sm:flex-row items-center gap-6 pt-4">
                  <button 
                   onClick={handleStart}
-                  className="w-full sm:w-auto px-12 py-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl shadow-indigo-200 transition-all transform active:scale-95 flex items-center justify-center gap-3 group"
+                  className="w-full sm:w-auto px-12 py-6 bg-blue-700 hover:bg-blue-800 text-white rounded-[2rem] font-black text-sm uppercase tracking-widest shadow-2xl shadow-blue-200 transition-all transform active:scale-95 flex items-center justify-center gap-3 group"
                  >
                     Initialize Test <Zap className="w-5 h-5 group-hover:animate-pulse" />
                  </button>
@@ -339,9 +339,9 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
            </div>
 
            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white border border-gray-100 shadow-2xl shadow-indigo-100/50 rounded-[4rem] p-10 space-y-8">
+              <div className="bg-white border border-gray-100 shadow-2xl shadow-blue-100/50 rounded-[4rem] p-10 space-y-8">
                  <div className="flex justify-between items-center">
-                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Trait Breakdown</span>
+                    <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Trait Breakdown</span>
                     <BarChart3 className="w-4 h-4 text-gray-300" />
                  </div>
                  <div className="space-y-6">
@@ -362,7 +362,7 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
                               initial={{ width: 0 }}
                               animate={{ width: `${trait.val}%` }}
                               transition={{ delay: 0.5 + (i * 0.1) }}
-                              className="h-full bg-indigo-600 opacity-20"
+                              className="h-full bg-blue-700 opacity-20"
                             />
                          </div>
                       </div>
@@ -436,16 +436,16 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
           </div>
 
           <div className="bg-gray-900 rounded-[4rem] p-16 text-white relative overflow-hidden shadow-2xl">
-             <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-[120px] -mr-20 -mt-20" />
+             <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[120px] -mr-20 -mt-20" />
              <div className="relative z-10 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
                 <div className="space-y-8">
                    <div className="inline-flex items-center gap-3 px-4 py-2 bg-white/5 border border-white/10 rounded-full">
-                      <Sparkles className="w-4 h-4 text-cyan-400" />
+                      <Sparkles className="w-4 h-4 text-blue-500" />
                       <span className="text-[10px] font-black uppercase tracking-widest">Mithra AI Logic Engine</span>
                    </div>
                    <h3 className="text-5xl font-black tracking-tight leading-[0.95]">
                       Behavioral <br/> 
-                      <span className="text-cyan-400">Synthesis</span>
+                      <span className="text-blue-500">Synthesis</span>
                    </h3>
                    <p className="text-gray-400 text-lg font-medium leading-relaxed italic serif">
                       "Your high score in {Object.entries(results).sort((a, b) => (b[1] as number) - (a[1] as number))[0][0]} indicates unique capacity for system innovation. Strategic alignment successful."
@@ -453,7 +453,7 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
                 </div>
                 <div className="p-10 bg-white/5 rounded-3xl border border-white/5 space-y-6">
                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-purple-500/20 rounded-xl flex items-center justify-center text-purple-400">
+                      <div className="w-10 h-10 bg-blue-500/20 rounded-xl flex items-center justify-center text-blue-500">
                          <Target className="w-5 h-5" />
                       </div>
                       <h4 className="font-black text-sm uppercase tracking-widest">Career Integration</h4>
@@ -482,7 +482,7 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
              </div>
              <div className="h-6 w-px bg-gray-100" />
              <div className="flex items-center gap-3">
-                <Shield className={`w-5 h-5 ${violations > 1 ? 'text-rose-500' : violations > 0 ? 'text-orange-500' : 'text-cyan-600'}`} />
+                <Shield className={`w-5 h-5 ${violations > 1 ? 'text-rose-500' : violations > 0 ? 'text-orange-500' : 'text-blue-700'}`} />
                 <span className={`text-[11px] font-black uppercase tracking-widest ${violations > 0 ? 'text-rose-600' : 'text-gray-400'}`}>
                    Integrity Violations: {violations}/3
                 </span>
@@ -493,7 +493,7 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
                 <p className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-1">Session Progress</p>
                 <div className="w-56 h-2 bg-gray-100 rounded-full overflow-hidden shadow-inner">
                    <motion.div 
-                     className="h-full bg-cyan-600 shadow-[0_0_15px_rgba(8,145,178,0.3)]"
+                     className="h-full bg-blue-700 shadow-[0_0_15px_rgba(8,145,178,0.3)]"
                      initial={{ width: 0 }}
                      animate={{ width: `${progress}%` }}
                    />
@@ -525,12 +525,12 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
                         className="space-y-16"
                       >
                          <div className="space-y-8">
-                            <div className="inline-flex items-center gap-3 px-4 py-2 bg-white border border-cyan-100 rounded-full shadow-sm">
-                               <Info className="w-4 h-4 text-cyan-600" />
-                               <span className="text-[11px] font-black text-cyan-600 uppercase tracking-widest">{currentQuestion.trait} Dimension Assessment</span>
+                            <div className="inline-flex items-center gap-3 px-4 py-2 bg-white border border-blue-100 rounded-full shadow-sm">
+                               <Info className="w-4 h-4 text-blue-700" />
+                               <span className="text-[11px] font-black text-blue-700 uppercase tracking-widest">{currentQuestion.trait} Dimension Assessment</span>
                             </div>
                             <div className="min-h-[160px] flex items-center bg-white p-12 rounded-[3.5rem] border border-gray-100 shadow-xl shadow-gray-200/40 relative overflow-hidden">
-                               <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-50 rounded-full blur-[80px] -mr-16 -mt-16" />
+                               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full blur-[80px] -mr-16 -mt-16" />
                                <h3 className="text-4xl md:text-5xl font-black text-gray-900 leading-tight serif italic relative z-10">
                                   "{currentQuestion.text}"
                                 </h3>
@@ -544,14 +544,14 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
                                 onClick={() => handleAnswer(currentQuestion.id, opt.value)}
                                 className={`group flex flex-col items-center justify-center p-8 rounded-[2.5rem] border-2 transition-all text-center space-y-4 ${
                                   answers[currentQuestion.id] === opt.value 
-                                  ? 'border-cyan-600 bg-white ring-4 ring-cyan-50 shadow-xl -translate-y-2' 
+                                  ? 'border-blue-700 bg-white ring-4 ring-blue-50 shadow-xl -translate-y-2' 
                                   : 'border-white bg-white hover:border-gray-100 hover:shadow-lg shadow-sm'
                                 } ${answers[currentQuestion.id] ? 'pointer-events-none' : ''}`}
                               >
                                  <div className={`w-14 h-14 rounded-full flex items-center justify-center font-black text-lg border-2 transition-all ${
                                    answers[currentQuestion.id] === opt.value 
-                                   ? 'bg-cyan-600 border-cyan-600 text-white' 
-                                   : 'bg-gray-50 border-gray-100 text-gray-400 group-hover:border-cyan-200 group-hover:text-cyan-600'
+                                   ? 'bg-blue-700 border-blue-700 text-white' 
+                                   : 'bg-gray-50 border-gray-100 text-gray-400 group-hover:border-blue-200 group-hover:text-blue-700'
                                  }`}>
                                     {opt.value}
                                  </div>
@@ -559,7 +559,7 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
                                     {opt.label}
                                  </span>
                                  {answers[currentQuestion.id] === opt.value && (
-                                   <div className="w-6 h-6 bg-cyan-600 rounded-full flex items-center justify-center">
+                                   <div className="w-6 h-6 bg-blue-700 rounded-full flex items-center justify-center">
                                       <CheckCircle2 className="w-4 h-4 text-white" />
                                    </div>
                                  )}
@@ -588,7 +588,7 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
                                <button 
                                  onClick={() => setCurrentStep(prev => Math.min(totalQuestions - 1, prev + 1))}
                                  disabled={!answers[currentQuestion.id]}
-                                 className="px-10 py-6 bg-cyan-600 hover:bg-cyan-700 text-white rounded-[2.5rem] font-black text-xs uppercase tracking-widest disabled:opacity-30 transition-all flex items-center gap-3 shadow-xl shadow-cyan-100"
+                                 className="px-10 py-6 bg-blue-700 hover:bg-blue-800 text-white rounded-[2.5rem] font-black text-xs uppercase tracking-widest disabled:opacity-30 transition-all flex items-center gap-3 shadow-xl shadow-blue-100"
                                >
                                   Next Statement <ChevronRight className="w-5 h-5" />
                                </button>
@@ -626,7 +626,7 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
                       muted 
                       className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity grayscale-[0.5]"
                    />
-                   <div className="absolute inset-0 border-[12px] border-cyan-500/5 pointer-events-none" />
+                   <div className="absolute inset-0 border-[12px] border-blue-600/5 pointer-events-none" />
                    <div className="absolute top-6 left-6 flex items-center gap-3 px-3 py-1.5 bg-white/90 backdrop-blur-md rounded-full shadow-sm border border-gray-100">
                       <div className="w-2 h-2 bg-rose-500 rounded-full animate-pulse" />
                       <span className="text-[9px] font-black text-gray-900 uppercase tracking-widest">Batch_ID: {user?.uid.slice(0, 8)}</span>
@@ -647,27 +647,27 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
                 </div>
                 <div className="space-y-4 max-h-[500px] overflow-y-auto pr-3 custom-scrollbar">
                    {QUESTIONS.map((q, idx) => (
-                     <div key={idx} className={`flex items-start gap-5 p-5 rounded-[2rem] border transition-all ${idx === currentStep ? 'bg-cyan-50 border-cyan-100 shadow-sm' : 'bg-gray-50/50 border-transparent opacity-60'}`}>
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-[12px] shadow-sm ${idx === currentStep ? 'bg-cyan-600 text-white' : 'bg-white text-gray-400'}`}>
+                     <div key={idx} className={`flex items-start gap-5 p-5 rounded-[2rem] border transition-all ${idx === currentStep ? 'bg-blue-50 border-blue-100 shadow-sm' : 'bg-gray-50/50 border-transparent opacity-60'}`}>
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-[12px] shadow-sm ${idx === currentStep ? 'bg-blue-700 text-white' : 'bg-white text-gray-400'}`}>
                            {idx + 1}
                         </div>
                         <div className="flex-1">
-                           <p className={`text-[10px] font-black uppercase tracking-wider mb-1 ${idx === currentStep ? 'text-cyan-800' : 'text-gray-400'}`}>
+                           <p className={`text-[10px] font-black uppercase tracking-wider mb-1 ${idx === currentStep ? 'text-blue-900' : 'text-gray-400'}`}>
                               {idx < currentStep ? 'Completed' : idx === currentStep ? 'Calibrating...' : 'Pending'}
                            </p>
-                           {idx === currentStep && <p className="text-[11px] font-bold text-cyan-600/80 italic serif">{q.trait} Matrix</p>}
+                           {idx === currentStep && <p className="text-[11px] font-bold text-blue-700/80 italic serif">{q.trait} Matrix</p>}
                         </div>
-                        {answers[q.id] && <CheckCircle2 className="w-5 h-5 text-cyan-600" />}
+                        {answers[q.id] && <CheckCircle2 className="w-5 h-5 text-blue-700" />}
                      </div>
                    ))}
                 </div>
              </div>
 
              <div className="p-8 bg-gray-900 rounded-[2.5rem] text-white space-y-4 relative overflow-hidden shadow-xl">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl -mr-8 -mt-8" />
+                <div className="absolute top-0 right-0 w-24 h-24 bg-blue-600/10 rounded-full blur-2xl -mr-8 -mt-8" />
                 <div className="flex items-center gap-3 relative z-10">
-                   <Lock className="w-4 h-4 text-cyan-400" />
-                   <h5 className="text-[10px] font-black uppercase tracking-widest text-cyan-400">Security Invariant</h5>
+                   <Lock className="w-4 h-4 text-blue-500" />
+                   <h5 className="text-[10px] font-black uppercase tracking-widest text-blue-500">Security Invariant</h5>
                 </div>
                 <p className="text-[11px] font-medium leading-relaxed italic serif text-gray-300 relative z-10">
                    "Please maintain focus. Our algorithms track page engagement to ensure calibrated results."
@@ -696,3 +696,5 @@ export function BigFiveTest({ onComplete, onClose }: { onComplete?: (results: an
     </div>
   );
 }
+
+

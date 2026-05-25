@@ -106,7 +106,7 @@ export function ResumeSection() {
         </div>
         <button 
           onClick={() => setShowBuilder(true)}
-          className="flex items-center gap-2 bg-cyan-600 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-cyan-100 hover:bg-cyan-700 transition-all"
+          className="flex items-center gap-2 bg-blue-700 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-blue-100 hover:bg-blue-800 transition-all"
           id="new-resume-button"
         >
           <Plus className="w-4 h-4" /> New Resume
@@ -131,7 +131,7 @@ export function ResumeSection() {
                       value={newResumeName}
                       onChange={(e) => setNewResumeName(e.target.value)}
                       placeholder="e.g. Senior Frontend Dev - 2024"
-                      className="w-full px-6 py-4 bg-gray-50 rounded-2xl border border-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all"
+                      className="w-full px-6 py-4 bg-gray-50 rounded-2xl border border-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all"
                     />
                   </div>
                   <div className="flex-1 flex flex-col">
@@ -140,7 +140,7 @@ export function ResumeSection() {
                       value={newResumeText}
                       onChange={(e) => setNewResumeText(e.target.value)}
                       placeholder="Paste your existing resume text here..."
-                      className="w-full flex-1 p-6 bg-gray-50 rounded-2xl border border-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500/20 transition-all min-h-[300px] resize-none"
+                      className="w-full flex-1 p-6 bg-gray-50 rounded-2xl border border-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600/20 transition-all min-h-[300px] resize-none"
                     />
                   </div>
                </div>
@@ -169,7 +169,7 @@ export function ResumeSection() {
             className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-all group"
           >
             <div className="flex items-center justify-between mb-6">
-              <div className="w-10 h-10 bg-cyan-50 rounded-xl flex items-center justify-center text-cyan-600">
+              <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-700">
                 <FileText className="w-5 h-5" />
               </div>
               <div className="flex gap-2">
@@ -184,19 +184,19 @@ export function ResumeSection() {
               <button 
                 onClick={() => handleAnalyze(resume)}
                 disabled={analyzing}
-                className="w-full flex items-center justify-center gap-2 py-3 bg-gray-50 hover:bg-cyan-50 hover:text-cyan-600 text-gray-600 rounded-2xl text-xs font-bold transition-all border border-transparent hover:border-cyan-100 disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 py-3 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 text-gray-600 rounded-2xl text-xs font-bold transition-all border border-transparent hover:border-blue-100 disabled:opacity-50"
               >
                 {analyzing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                 Analyze with Gemini
               </button>
               {resume.analysis && (
-                <div className="mt-4 p-4 bg-cyan-50/50 rounded-2xl border border-cyan-100">
+                <div className="mt-4 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-[10px] font-bold text-cyan-600 uppercase tracking-widest">AI Score</span>
-                    <span className="text-xl font-black text-cyan-700">{resume.analysis.Score}%</span>
+                    <span className="text-[10px] font-bold text-blue-700 uppercase tracking-widest">AI Score</span>
+                    <span className="text-xl font-black text-blue-800">{resume.analysis.Score}%</span>
                   </div>
-                  <div className="h-1 w-full bg-cyan-100 rounded-full overflow-hidden">
-                    <div className="h-full bg-cyan-600" style={{ width: `${resume.analysis.Score}%` }} />
+                  <div className="h-1 w-full bg-blue-100 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-700" style={{ width: `${resume.analysis.Score}%` }} />
                   </div>
                 </div>
               )}
@@ -228,12 +228,12 @@ export function ResumeSection() {
              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
                 <div className="space-y-6">
                    <div>
-                      <h4 className="flex items-center gap-2 text-cyan-600 font-bold mb-3 uppercase tracking-widest text-[10px]">
+                      <h4 className="flex items-center gap-2 text-blue-700 font-bold mb-3 uppercase tracking-widest text-[10px]">
                         <CheckCircle className="w-4 h-4" /> Strong Points
                       </h4>
                       <ul className="space-y-3">
                         {analysisResult['Strongest points']?.map((pt: string, idx: number) => (
-                           <li key={idx} className="text-sm border-l-2 border-cyan-200 pl-4 py-1 italic serif text-gray-700">{pt}</li>
+                           <li key={idx} className="text-sm border-l-2 border-blue-200 pl-4 py-1 italic serif text-gray-700">{pt}</li>
                         ))}
                       </ul>
                    </div>
@@ -276,3 +276,4 @@ export function ResumeSection() {
     </div>
   );
 }
+

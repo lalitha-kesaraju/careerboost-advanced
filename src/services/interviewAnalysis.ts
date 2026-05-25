@@ -21,7 +21,11 @@ export async function analyzeInterview(
     ? `Candidate Resume:\n"""\n${interviewData.resumeText}\n"""`
     : 'No resume provided.';
 
-  const prompt = `You are an expert interview coach and talent acquisition specialist. Analyze this mock interview and return a detailed JSON report.
+  const practiceNote = interviewData.isPracticeMode
+    ? `\nPRACTICE MODE: This is a PRACTICE session. Use an encouraging, supportive tone throughout. Celebrate what the candidate did well first. Provide gentle, constructive guidance — not harsh criticism. Scores should be slightly generous to build confidence. Frame all improvement suggestions as growth opportunities, not failures. Overall score must account for effort and courage to practice.`
+    : '';
+
+  const prompt = `You are an expert interview coach and talent acquisition specialist. Analyze this mock interview and return a detailed JSON report.${practiceNote}
 
 Role applied for: ${interviewData.jobRole}
 Difficulty: ${interviewData.difficultyLevel?.toUpperCase() ?? 'MEDIUM'}
@@ -37,6 +41,7 @@ EVALUATION GUIDELINES based on difficulty:
 - EASY: Encouraging tone, focus on basics and confidence
 - MEDIUM: Expect structured answers (STAR method), professional communication
 - HARD: Elite evaluation — architectural depth, edge cases, leadership, optimization
+${interviewData.isPracticeMode ? '- PRACTICE MODE: Be a supportive mentor, not a harsh judge.' : ''}
 
 Return ONLY valid JSON matching this exact structure:
 {
@@ -96,7 +101,8 @@ Return ONLY valid JSON matching this exact structure:
 }`;
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    // gemini-3.1-pro-preview: deep post-interview analysis requiring complex reasoning
+    model: 'gemini-3.1-pro-preview',
     contents: prompt,
     config: {
       responseMimeType: 'application/json',

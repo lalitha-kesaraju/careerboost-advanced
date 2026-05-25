@@ -20,7 +20,8 @@ export function AchievementPanel() {
   const [unlocked, setUnlocked] = useState<Record<string, any>>({});
 
   useEffect(() => {
-    if (!user) return;
+    const isLocal = !!(user as any)?.isLocal;
+    if (!user || isLocal) return;
     const unsub = onSnapshot(collection(db, 'users', user.uid, 'achievements'), (snap) => {
         const data: Record<string, any> = {};
         snap.docs.forEach(d => data[d.id] = d.data());
@@ -31,7 +32,8 @@ export function AchievementPanel() {
 
   // Check for new unlocks when usage changes
   useEffect(() => {
-    if (!user || !userData) return;
+    const isLocal = !!(user as any)?.isLocal;
+    if (!user || !userData || isLocal) return;
     
     ACHIEVEMENTS.forEach(async (ach) => {
         if (!unlocked[ach.id] && ach.trigger(userData.usage)) {
@@ -62,7 +64,7 @@ export function AchievementPanel() {
   return (
     <div className="bg-white rounded-[2.5rem] p-10 border border-zinc-200 shadow-sm space-y-10">
        <div className="flex items-center justify-between border-b border-zinc-50 pb-8">
-          <h3 className="text-sm font-bold text-zinc-900 border-b-2 border-cyan-600 pb-1 tracking-tight">
+          <h3 className="text-sm font-bold text-zinc-900 border-b-2 border-blue-700 pb-1 tracking-tight">
             Milestones
           </h3>
           <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.2em]">
@@ -77,22 +79,22 @@ export function AchievementPanel() {
               <div 
                 key={ach.id} 
                 className={`flex items-center gap-5 p-5 rounded-[1.75rem] border transition-all group ${
-                  isUnlocked ? 'bg-cyan-50/50 border-cyan-100' : 'bg-zinc-50/50 border-transparent opacity-50 grayscale'
+                  isUnlocked ? 'bg-blue-50/50 border-blue-100' : 'bg-zinc-50/50 border-transparent opacity-50 grayscale'
                 }`}
               >
                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${isUnlocked ? 'bg-white shadow-md' : 'bg-zinc-100'}`}>
                     {getIcon(ach.icon, isUnlocked)}
                  </div>
                  <div className="flex-1">
-                    <p className={`text-sm font-bold tracking-tight mb-1 ${isUnlocked ? 'text-cyan-900' : 'text-zinc-400'}`}>
+                    <p className={`text-sm font-bold tracking-tight mb-1 ${isUnlocked ? 'text-blue-950' : 'text-zinc-400'}`}>
                         {ach.name}
                     </p>
-                    <p className={`text-[11px] leading-tight font-medium ${isUnlocked ? 'text-cyan-700/60' : 'text-zinc-400'}`}>
+                    <p className={`text-[11px] leading-tight font-medium ${isUnlocked ? 'text-blue-800/60' : 'text-zinc-400'}`}>
                         {ach.description}
                     </p>
                  </div>
                  {isUnlocked && (
-                   <div className="w-2 h-2 bg-cyan-600 rounded-full" />
+                   <div className="w-2 h-2 bg-blue-700 rounded-full" />
                  )}
               </div>
             );

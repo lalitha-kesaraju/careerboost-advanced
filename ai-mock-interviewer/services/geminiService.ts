@@ -135,7 +135,7 @@ export const generateAnalysis = async (resume: string | undefined, jobRole: stri
 
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-pro',
+    model: 'gemini-3.5-flash',
     contents: prompt,
     config: {
       responseMimeType: "application/json",

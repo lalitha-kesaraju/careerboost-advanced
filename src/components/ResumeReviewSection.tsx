@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
   CheckCircle2, User, Mail, Phone, MapPin, Linkedin, 
@@ -85,10 +85,10 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
            </div>
            <div className="flex-1 h-1 bg-emerald-500 mx-4 -mt-6" />
            <div className="flex flex-col items-center">
-             <div className="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg shadow-indigo-100 z-10 border-4 border-white">
+             <div className="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center text-white shadow-lg shadow-blue-100 z-10 border-4 border-white">
                <span className="font-bold">2</span>
              </div>
-             <span className="text-xs font-bold text-indigo-600 mt-2 uppercase tracking-widest">Review</span>
+             <span className="text-xs font-bold text-blue-700 mt-2 uppercase tracking-widest">Review</span>
            </div>
            <div className="flex-1 h-1 bg-gray-200 mx-4 -mt-6" />
            <div className="flex flex-col items-center">
@@ -110,7 +110,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
           {/* 1. Personal Information */}
           <section className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-2xl shadow-gray-200/40">
             <div className="flex items-center gap-4 mb-10">
-              <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 font-black text-xl">1</div>
+              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-700 font-black text-xl">1</div>
               <h3 className="text-2xl font-black text-gray-900 tracking-tight">Personal Information</h3>
             </div>
             
@@ -122,7 +122,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                 <input 
                   value={formData.personalInfo.fullName}
                   onChange={(e) => setFormData({...formData, personalInfo: {...formData.personalInfo, fullName: e.target.value}})}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
                   placeholder="e.g. Rohith"
                 />
               </div>
@@ -134,7 +134,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                 <input 
                   value={formData.personalInfo.email}
                   onChange={(e) => setFormData({...formData, personalInfo: {...formData.personalInfo, email: e.target.value}})}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
                   placeholder="email@example.com"
                 />
               </div>
@@ -144,7 +144,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                 <input 
                   value={formData.personalInfo.phone}
                   onChange={(e) => setFormData({...formData, personalInfo: {...formData.personalInfo, phone: e.target.value}})}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
                   placeholder="6305164517"
                 />
               </div>
@@ -154,7 +154,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                 <input 
                   value={formData.personalInfo.location}
                   onChange={(e) => setFormData({...formData, personalInfo: {...formData.personalInfo, location: e.target.value}})}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
                   placeholder="Location"
                 />
               </div>
@@ -164,7 +164,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                 <input 
                   value={formData.personalInfo.website}
                   onChange={(e) => setFormData({...formData, personalInfo: {...formData.personalInfo, website: e.target.value}})}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all"
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
                   placeholder="https://linkedin.com/in/..."
                 />
               </div>
@@ -174,7 +174,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
           {/* 2. Professional Summary */}
           <section className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-2xl shadow-gray-200/40">
             <div className="flex items-center gap-4 mb-10">
-              <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 font-black text-xl">2</div>
+              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-700 font-black text-xl">2</div>
               <h3 className="text-2xl font-black text-gray-900 tracking-tight">Professional Summary</h3>
             </div>
             
@@ -182,7 +182,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
               value={formData.summary}
               onChange={(e) => setFormData({...formData, summary: e.target.value})}
               rows={6}
-              className="w-full bg-gray-50 border border-gray-100 rounded-[2rem] p-8 text-sm font-medium leading-relaxed focus:bg-white focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all resize-none"
+              className="w-full bg-gray-50 border border-gray-100 rounded-[2rem] p-8 text-sm font-medium leading-relaxed focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all resize-none"
               placeholder="Briefly describe your professional achievements and skills..."
             />
           </section>
@@ -190,7 +190,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
           {/* 3. Skills */}
           <section className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-2xl shadow-gray-200/40">
             <div className="flex items-center gap-4 mb-10">
-              <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 font-black text-xl">3</div>
+              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-700 font-black text-xl">3</div>
               <h3 className="text-2xl font-black text-gray-900 tracking-tight">Skills</h3>
             </div>
             
@@ -208,13 +208,13 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                     }
                   }
                 }}
-                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all"
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:bg-white focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all"
               />
             </div>
 
             <div className="flex flex-wrap gap-3">
               {formData.skills.map((skill: string, idx: number) => (
-                <div key={idx} className="group px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl text-xs font-black uppercase tracking-widest border border-indigo-100 flex items-center gap-2">
+                <div key={idx} className="group px-4 py-2 bg-blue-50 text-blue-700 rounded-xl text-xs font-black uppercase tracking-widest border border-blue-100 flex items-center gap-2">
                    {skill}
                    <button 
                      onClick={() => setFormData({...formData, skills: formData.skills.filter((_: any, i: number) => i !== idx)})}
@@ -231,12 +231,12 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
           <section className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-2xl shadow-gray-200/40">
             <div className="flex items-center justify-between mb-10">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 font-black text-xl">4</div>
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-700 font-black text-xl">4</div>
                 <h3 className="text-2xl font-black text-gray-900 tracking-tight">Work Experience</h3>
               </div>
               <button 
                 onClick={addExperience}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all"
               >
                 <Plus className="w-4 h-4" /> Add Experience
               </button>
@@ -265,7 +265,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                         setFormData({...formData, experience: newExp});
                       }}
                       placeholder="Job Title"
-                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all"
+                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 transition-all"
                     />
                     <input 
                       value={exp.company}
@@ -275,7 +275,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                         setFormData({...formData, experience: newExp});
                       }}
                       placeholder="Company"
-                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all"
+                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 transition-all"
                     />
                     <input 
                       value={exp.duration}
@@ -285,7 +285,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                         setFormData({...formData, experience: newExp});
                       }}
                       placeholder="Duration (e.g. 2021 - 2023)"
-                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all"
+                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 transition-all"
                     />
                     <textarea 
                       value={exp.description}
@@ -296,7 +296,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                       }}
                       placeholder="Description"
                       rows={3}
-                      className="w-full md:col-span-2 bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all resize-none"
+                      className="w-full md:col-span-2 bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 transition-all resize-none"
                     />
                   </div>
                 </div>
@@ -308,12 +308,12 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
           <section className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-2xl shadow-gray-200/40">
             <div className="flex items-center justify-between mb-10">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 font-black text-xl">5</div>
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-700 font-black text-xl">5</div>
                 <h3 className="text-2xl font-black text-gray-900 tracking-tight">Projects</h3>
               </div>
               <button 
                 onClick={addProject}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all"
               >
                 <Plus className="w-4 h-4" /> Add Project
               </button>
@@ -342,7 +342,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                         setFormData({...formData, projects: newProj});
                       }}
                       placeholder="Project Title"
-                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all"
+                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 transition-all"
                     />
                     <input 
                       value={proj.link}
@@ -352,7 +352,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                         setFormData({...formData, projects: newProj});
                       }}
                       placeholder="Project Link (Optional)"
-                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all"
+                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 transition-all"
                     />
                     <textarea 
                       value={proj.description}
@@ -363,7 +363,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                       }}
                       placeholder="Project Description"
                       rows={2}
-                      className="w-full md:col-span-2 bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all resize-none"
+                      className="w-full md:col-span-2 bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 transition-all resize-none"
                     />
                   </div>
                 </div>
@@ -375,12 +375,12 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
           <section className="bg-white rounded-[2.5rem] border border-gray-100 p-10 shadow-2xl shadow-gray-200/40">
             <div className="flex items-center justify-between mb-10">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 font-black text-xl">6</div>
+                <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-700 font-black text-xl">6</div>
                 <h3 className="text-2xl font-black text-gray-900 tracking-tight">Education</h3>
               </div>
               <button 
                 onClick={addEducation}
-                className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-indigo-700 transition-all"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-700 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-800 transition-all"
               >
                 <Plus className="w-4 h-4" /> Add Education
               </button>
@@ -409,7 +409,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                         setFormData({...formData, education: newEdu});
                       }}
                       placeholder="Degree / Major"
-                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all"
+                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 transition-all"
                     />
                     <input 
                       value={edu.school}
@@ -419,7 +419,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                         setFormData({...formData, education: newEdu});
                       }}
                       placeholder="School / University"
-                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all"
+                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 transition-all"
                     />
                     <input 
                       value={edu.year}
@@ -429,7 +429,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                         setFormData({...formData, education: newEdu});
                       }}
                       placeholder="Graduation Year"
-                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-indigo-500 transition-all"
+                      className="w-full bg-white border border-gray-100 rounded-xl px-4 py-3 text-sm font-bold outline-none focus:border-blue-500 transition-all"
                     />
                   </div>
                 </div>
@@ -464,7 +464,7 @@ export function ResumeReviewSection({ initialData, onNext, onPrev }: ResumeRevie
                 <button 
                   onClick={handleNext}
                   className={`flex-1 py-5 rounded-2xl font-black text-white flex items-center justify-center gap-3 transition-all shadow-xl ${
-                    confirmed ? 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100' : 'bg-gray-300 cursor-not-allowed'
+                    confirmed ? 'bg-blue-700 hover:bg-blue-800 shadow-blue-100' : 'bg-gray-300 cursor-not-allowed'
                   }`}
                 >
                   Continue to Resume Analysis →

@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { motion } from 'motion/react';
 
 interface ScoreBreakdownProps {
@@ -14,8 +14,8 @@ interface ScoreBreakdownProps {
 const ScoreBreakdown: React.FC<ScoreBreakdownProps> = ({ overallScore, detailedScores }) => {
   const scores = [
     { label: 'Communication', value: detailedScores.communication || 0, color: 'bg-blue-500' },
-    { label: 'Technical', value: detailedScores.technical || 0, color: 'bg-indigo-500' },
-    { label: 'Confidence', value: detailedScores.confidence || 0, color: 'bg-purple-500' },
+    { label: 'Technical', value: detailedScores.technical || 0, color: 'bg-blue-500' },
+    { label: 'Confidence', value: detailedScores.confidence || 0, color: 'bg-blue-500' },
     { label: 'Structure', value: detailedScores.structure || 0, color: 'bg-pink-500' },
   ];
 

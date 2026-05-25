@@ -1,7 +1,7 @@
 import { safeParseJson } from "../lib/aiUtils";
 import { callGemini } from "../lib/geminiApi";
 
-const DEFAULT_MODEL = "gemini-flash-latest";
+const DEFAULT_MODEL = "gemini-3.5-flash";
 
 export async function parseResume(rawText: string) {
   // Use SDK directly — no proxy auth needed for setup screen
@@ -11,7 +11,7 @@ export async function parseResume(rawText: string) {
   const ai = new GoogleGenAI({ apiKey });
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-3.5-flash',
     contents: `You are an expert ATS parser. Analyze the resume text below.
 CRITICAL: If it is not a resume/CV, set "isNotResume": true.
 
