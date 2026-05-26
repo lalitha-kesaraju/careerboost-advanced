@@ -1,5 +1,6 @@
 import { safeParseJson } from "../lib/aiUtils";
 import { callGemini } from "../lib/geminiApi";
+import { COURSES_CATALOG } from "../data/coursesCatalog";
 
 const DEFAULT_MODEL = "gemini-3.5-flash";
 
@@ -257,24 +258,52 @@ export async function getRecommendedCourses(targetRole: string, missingSkills: s
 import { HARDCODED_COURSES } from '../constants/courseContent';
 
 export async function getCourseContent(courseTitle: string, topic: string, phase: 'understand' | 'apply' | 'evaluate' | 'master') {
-  // Check hardcoded first
+  // 1. Check hardcoded content first (instant, no API call)
   if (HARDCODED_COURSES[courseTitle] && HARDCODED_COURSES[courseTitle][topic]) {
     const hardcoded = HARDCODED_COURSES[courseTitle][topic][phase];
-    if (hardcoded) {
-        return hardcoded;
-    }
+    if (hardcoded) return hardcoded;
   }
 
+  // 2. Check localStorage cache (generated previously, no API call)
+  const cacheKey = `cb_course_${courseTitle}__${topic}__${phase}`;
+  try {
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) return JSON.parse(cached);
+  } catch { /* ignore parse errors */ }
+
+  // 3. Determine if this is a coding course or a general/conceptual course
+  const courseDef = COURSES_CATALOG.find(c => c.title === courseTitle);
+  const isCoding = courseDef?.type === 'coding';
+
+  const applyPrompt = isCoding
+    ? `Generate 3 coding problems for the topic "${topic}" in the course "${courseTitle}". Range: Easy, Medium, Hard.
+       Each problem must have: prompt (clear task description), starterCode (boilerplate to help student begin), testCases (array of {input, expected}), hints (array of 3 hints).
+       Return JSON: {"problems": [...]}`
+    : `Generate 3 real-world scenario tasks for the topic "${topic}" in the course "${courseTitle}".
+       Each scenario must test practical application of "${topic}" — NOT coding. Use domain-appropriate tasks (e.g. case analysis, document drafting, strategy design, calculation, review).
+       Each must have: title (short task name), scenario (2-sentence context/situation), task (clear instruction of what to produce), guidance (3 practical tips).
+       Return JSON: {"scenarios": [...]}`;
+
   const prompts = {
-    understand: `Provide detailed theory, code examples, and a conceptual overview for the topic "${topic}" in the course "${courseTitle}". Format as JSON with: theory (markdown), examples (array of {title, code, language, explanation}), and keyPoints (array).`,
-    apply: `Generate 3 coding problems for "${topic}" in "${courseTitle}". Range: Easy, Medium, Hard. Each with: prompt, starterCode, testCases (array of {input, expected}), and hints (array).`,
-    evaluate: `Generate a 10-question quiz for "${topic}" in "${courseTitle}". Each question: question, options (array), correctIndex (number), explanation.`,
-    master: `Generate a final mastery summary and a list of 5 "What's Next" recommendations for "${topic}" in "${courseTitle}".`
+    understand: `Provide detailed theory, examples, and conceptual overview for the topic "${topic}" in the course "${courseTitle}".
+      Return JSON: { "theory": "markdown string with headings and code/examples", "examples": [{"title","code","language","explanation"}], "keyPoints": ["3-5 key takeaways"] }`,
+    apply: applyPrompt,
+    evaluate: `Generate a 10-question multiple-choice quiz for the topic "${topic}" in the course "${courseTitle}".
+      Questions should test real understanding, not trivia. Mix difficulty.
+      Return JSON: {"questions": [{"question","options":["A","B","C","D"],"correctIndex":0,"explanation":"why correct"}]}`,
+    master: `Generate a mastery summary for "${topic}" in "${courseTitle}": what the student now knows, how it connects to the broader course, and 5 concrete "What's Next" action items.
+      Return JSON: {"summary":"markdown paragraph","nextSteps":["5 action items"]}`
   };
 
   const result = await callGemini(prompts[phase], { responseMimeType: "application/json" });
+  const parsed = safeParseJson(result.text);
 
-  return safeParseJson(result.text);
+  // 4. Cache the AI result so it's instant next time
+  try {
+    localStorage.setItem(cacheKey, JSON.stringify(parsed));
+  } catch { /* quota full — ignore */ }
+
+  return parsed;
 }
 
 export async function getIDEAgentAdvice(task: string, currentCode: string, language: string, context: any) {

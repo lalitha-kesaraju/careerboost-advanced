@@ -62,6 +62,8 @@ import { IdeSection } from './components/IdeSection';
 
 import { CoachSection } from './components/CoachSection';
 
+import { HigherStudiesSection } from './components/HigherStudiesSection';
+
 import { fetchUserStats, DashboardStats, recordActivity } from './services/statsService';
 
 import { motion, AnimatePresence } from 'motion/react';
@@ -1030,6 +1032,8 @@ function AppContent({
 
           {currentView === 'code-ide' && <IdeSection />}
 
+          {currentView === 'higher-studies' && <HigherStudiesSection data={resumeData} />}
+
           {currentView === 'builder' && <PortfolioSection />}
 
           {currentView === 'settings' && <SettingsSection />}
@@ -1038,7 +1042,7 @@ function AppContent({
 
           {/* Placeholders for genuinely unbuilt tabs */}
 
-          {['analysis', 'code', 'dsa', 'studies', 'exam', 'tracker', 'higher-studies', 'examination'].includes(currentView) && (
+          {['analysis', 'code', 'dsa', 'studies', 'exam', 'tracker', 'examination'].includes(currentView) && (
 
             <div className="h-[60vh] flex flex-col items-center justify-center text-center p-10 bg-white rounded-[3rem] border border-gray-100 shadow-sm">
 
