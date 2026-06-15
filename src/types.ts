@@ -9,6 +9,7 @@ export interface InterviewData {
   resume: string;
   resumeText?: string;
   isPracticeMode: boolean;
+  interviewType?: 'technical' | 'hr' | 'mixed';
   transcript?: string;
   recordingUrl?: string;
 }

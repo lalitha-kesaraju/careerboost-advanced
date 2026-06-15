@@ -1,6 +1,7 @@
 ﻿import React from 'react';
 import { Badge, ALL_BADGES, StreakData } from './services/badgeSystem';
-import { Trophy, Flame, Lock } from 'lucide-react';
+import { Trophy } from 'lucide-react';
+import StreakRewardsWidget from './StreakRewardsWidget';
 
 interface Props {
   earnedBadges: Badge[];
@@ -27,21 +28,7 @@ const BadgeDisplay: React.FC<Props> = ({ earnedBadges, streak }) => {
   return (
     <div className="space-y-6">
       {/* Streak */}
-      <div className="flex items-center gap-4 bg-gradient-to-r from-orange-50 to-rose-50 border border-orange-200 rounded-2xl p-4">
-        <div className="text-4xl">🔥</div>
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-3xl font-black text-orange-600">{streak.currentStreak}</span>
-            <span className="text-sm font-bold text-orange-700">day streak</span>
-          </div>
-          <div className="text-xs text-orange-600/70">Longest: {streak.longestStreak} days</div>
-        </div>
-        {streak.currentStreak > 0 && (
-          <div className="ml-auto text-xs font-semibold text-orange-600 bg-orange-100 px-3 py-1.5 rounded-full">
-            Keep it going!
-          </div>
-        )}
-      </div>
+      <StreakRewardsWidget streak={streak} />
 
       {/* Progress */}
       <div className="flex items-center justify-between">

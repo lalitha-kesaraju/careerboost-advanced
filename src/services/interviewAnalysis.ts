@@ -1,18 +1,11 @@
-import { GoogleGenAI } from '@google/genai';
+import { callGemini } from '../lib/geminiApi';
+import { safeParseJson } from '../lib/aiUtils';
 import { AnalysisReport, InterviewData } from '../types';
-
-function getAI() {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!apiKey) throw new Error('VITE_GEMINI_API_KEY not set');
-  return new GoogleGenAI({ apiKey });
-}
 
 export async function analyzeInterview(
   interviewData: InterviewData,
   history: { role: 'ai' | 'user'; content: string }[]
 ): Promise<AnalysisReport> {
-  const ai = getAI();
-
   const transcript = history
     .map(h => `${h.role === 'ai' ? 'Interviewer' : 'Candidate'}: ${h.content}`)
     .join('\n');
@@ -23,6 +16,35 @@ export async function analyzeInterview(
 
   const practiceNote = interviewData.isPracticeMode
     ? `\nPRACTICE MODE: This is a PRACTICE session. Use an encouraging, supportive tone throughout. Celebrate what the candidate did well first. Provide gentle, constructive guidance — not harsh criticism. Scores should be slightly generous to build confidence. Frame all improvement suggestions as growth opportunities, not failures. Overall score must account for effort and courage to practice.`
+    : '';
+
+  const roleCategory = (interviewData.roleCategory ?? '').toLowerCase();
+  const isBusinessRole = roleCategory.includes('business') || roleCategory.includes('entrepreneur');
+
+  const businessFieldsNote = isBusinessRole
+    ? `\n\nThis candidate's role category ("${interviewData.roleCategory}") relates to entrepreneurship or business ownership. In ADDITION to all fields above, also include these fields in the JSON response:
+"business_plan": {
+  "executive_summary": "...",
+  "market_analysis": "...",
+  "financial_projections": "...",
+  "marketing_strategy": "...",
+  "operational_plan": "..."
+},
+"skills_gap": {
+  "skills_possessed": ["..."],
+  "skills_needed": ["..."],
+  "training_recommendations": ["..."],
+  "timeline_to_readiness": "..."
+},
+"budget_estimate": {
+  "startup_costs": [{ "item": "...", "cost": <number> }],
+  "monthly_expenses": [{ "item": "...", "cost": <number> }],
+  "break_even_months": <number>,
+  "pricing_recommendation": "..."
+},
+"resources": [
+  { "title": "...", "description": "...", "url": "...", "category": "..." }
+]`
     : '';
 
   const prompt = `You are an expert interview coach and talent acquisition specialist. Analyze this mock interview and return a detailed JSON report.${practiceNote}
@@ -98,26 +120,16 @@ Return ONLY valid JSON matching this exact structure:
   "keywords_missed": ["<important keyword for this role they should have mentioned>"],
   "star_method_assessment": "Overall assessment of whether they used Situation/Task/Action/Result structure",
   "filler_analysis": "Analysis of verbal habits — filler words (um, uh, like, basically, you know), repetition, and how to improve"
-}`;
+}${businessFieldsNote}`;
 
-  const response = await ai.models.generateContent({
+  const result = await callGemini(prompt, {
     // gemini-3.1-pro-preview: deep post-interview analysis requiring complex reasoning
     model: 'gemini-3.1-pro-preview',
-    contents: prompt,
-    config: {
-      responseMimeType: 'application/json',
-    },
+    responseMimeType: 'application/json',
   });
 
-  const text = response.text?.trim() ?? '';
-  try {
-    const parsed = JSON.parse(text);
-    // normalize score field
-    if (parsed.overall_score && !parsed.overallScore) parsed.overallScore = parsed.overall_score;
-    return parsed as AnalysisReport;
-  } catch {
-    // strip markdown fences if model added them
-    const cleaned = text.replace(/^```json\s*/i, '').replace(/```\s*$/i, '');
-    return JSON.parse(cleaned) as AnalysisReport;
-  }
+  const parsed = safeParseJson(result.text);
+  // normalize score field
+  if (parsed.overall_score && !parsed.overallScore) parsed.overallScore = parsed.overall_score;
+  return parsed as AnalysisReport;
 }

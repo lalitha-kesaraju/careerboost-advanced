@@ -331,15 +331,26 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
         ? ` The candidate uploaded a resume named "${interviewData.resume}". Ask relevant experience-based questions.`
         : '';
 
+      const questionFocus = interviewData.interviewType === 'hr'
+        ? `Ask a smart mix of:
+- Motivation and career goal questions (why this role, why this company, where they see themselves growing)
+- Teamwork and conflict-resolution questions
+- Leadership and ownership examples
+- Culture-fit questions${interviewData.dreamCompany ? ` relevant to ${interviewData.dreamCompany}` : ''}
+- STAR-structured behavioral questions (Situation, Task, Action, Result)
+- At most one or two light questions about their role or background for context — avoid deep technical or coding questions
+- Follow-up questions based on the candidate's answers`
+        : `Ask a smart mix of:
+- Technical questions specific to the ${interviewData.jobRole} role
+- Behavioral questions using STAR method prompts
+- HR/cultural fit questions${interviewData.dreamCompany ? ` relevant to ${interviewData.dreamCompany}` : ''}
+- Follow-up questions based on the candidate's answers`;
+
       const systemPrompt = `You are a voice-based AI interviewer conducting a ${interviewData.difficultyLevel ?? 'medium'}-level mock interview with ${interviewData.userName ?? 'the candidate'} for the role of '${interviewData.jobRole}'.${companyContext}${resumeContext}
 
 Duration: ${interviewData.timeLimit} minutes. Keep all responses concise and conversational — optimized for text-to-speech (no markdown, no bullet points, speak in natural sentences).
 
-Ask a smart mix of:
-- Technical questions specific to the ${interviewData.jobRole} role
-- Behavioral questions using STAR method prompts
-- HR/cultural fit questions${interviewData.dreamCompany ? ` relevant to ${interviewData.dreamCompany}` : ''}
-- Follow-up questions based on the candidate's answers
+${questionFocus}
 
 Start by introducing yourself as an AI interviewer, mention the role and company${interviewData.dreamCompany ? ` (${interviewData.dreamCompany})` : ''}, and ask the first question.`;
 

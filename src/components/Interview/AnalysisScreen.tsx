@@ -1,11 +1,15 @@
 ﻿import React, { useState } from 'react';
-import { AnalysisReport, InterviewData } from '../../types';
+import { AnalysisReport, InterviewData, QuestionBreakdown } from '../../types';
 import {
   BarChart3, Brain, TrendingUp, ArrowRight, MessageSquare, ShieldCheck,
   Sparkles, CheckCircle2, Target, Shirt, Monitor, Mic2,
   ChevronDown, ChevronUp, Star, Zap, AlertTriangle, RefreshCw, Download, Smile
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import ScoreBreakdown from './ScoreBreakdown';
+import AnswerScoreCard from './AnswerScoreCard';
+import WeakAreaDrills from './WeakAreaDrills';
+import BusinessToolsSection from './BusinessToolsSection';
 
 interface AnalysisScreenProps {
   report: AnalysisReport | null;
@@ -64,7 +68,7 @@ const OverallScoreRing = ({ score }: { score: number }) => {
 
 // ── Q&A Breakdown Card ───────────────────────────────────────────────────────
 
-const QACard = ({ item, index }: { item: any; index: number }) => {
+const QACard = ({ item, index, onViewDetails }: { item: QuestionBreakdown; index: number; onViewDetails: (item: QuestionBreakdown) => void }) => {
   const [open, setOpen] = useState(index === 0);
   return (
     <motion.div
@@ -141,6 +145,12 @@ const QACard = ({ item, index }: { item: any; index: number }) => {
                   </div>
                   <p className="text-xs text-gray-600 leading-relaxed">{item.improvement}</p>
                 </div>
+                <button
+                  onClick={() => onViewDetails(item)}
+                  className="w-full px-4 py-2.5 bg-blue-700 text-white rounded-xl text-xs font-black hover:bg-blue-800 transition-colors"
+                >
+                  View Score Details
+                </button>
               </div>
             </div>
           </motion.div>
@@ -155,6 +165,7 @@ const QACard = ({ item, index }: { item: any; index: number }) => {
 const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
   report, isLoading, error, onRestart, interviewData
 }) => {
+  const [selectedQAItem, setSelectedQAItem] = useState<QuestionBreakdown | null>(null);
 
   if (isLoading) {
     return (
@@ -232,6 +243,9 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
           </div>
         </div>
       </div>
+
+      {/* ── Score Breakdown ── */}
+      <ScoreBreakdown overallScore={score} performanceFeedback={report.performance_feedback} />
 
       {/* ── Performance Scores ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -350,10 +364,17 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
             <span className="text-xs font-bold text-gray-400">({report.question_breakdown.length} questions)</span>
           </h3>
           {report.question_breakdown.map((item, i) => (
-            <QACard key={i} item={item} index={i} />
+            <QACard key={i} item={item} index={i} onViewDetails={setSelectedQAItem} />
           ))}
         </div>
       )}
+
+      {/* ── Weak Area Drills ── */}
+      <WeakAreaDrills
+        report={report}
+        jobRole={interviewData?.jobRole ?? ''}
+        difficultyLevel={interviewData?.difficultyLevel ?? 'medium'}
+      />
 
       {/* ── Keywords + STAR ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -437,6 +458,17 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
         </div>
       </div>
 
+      {/* ── Entrepreneurship Suite ── */}
+      {report.business_plan && (
+        <BusinessToolsSection
+          businessPlan={report.business_plan}
+          skillsGap={report.skills_gap}
+          budgetEstimate={report.budget_estimate}
+          resources={report.resources || []}
+          jobRole={interviewData?.jobRole ?? ''}
+        />
+      )}
+
       {/* ── Restart ── */}
       <div className="flex flex-wrap justify-center gap-4 pt-4">
         <button
@@ -458,6 +490,8 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
           <RefreshCw className="w-5 h-5" /> Start New Interview
         </button>
       </div>
+
+      <AnswerScoreCard item={selectedQAItem} isOpen={!!selectedQAItem} onClose={() => setSelectedQAItem(null)} />
     </div>
   );
 };

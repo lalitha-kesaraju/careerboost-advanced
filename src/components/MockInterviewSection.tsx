@@ -13,9 +13,10 @@ import InterviewHistoryPanel from './Interview/InterviewHistoryPanel';
 import AnalyticsDashboard from './Interview/AnalyticsDashboard';
 import BadgeDisplay from './Interview/BadgeDisplay';
 import CodingRoundScreen from './Interview/CodingRoundScreen';
+import AchievementNotification from './Interview/AchievementNotification';
 import { InterviewData, AnalysisReport } from '../types';
 import { analyzeInterview } from '../services/interviewAnalysis';
-import { loadBadges, loadStreak, updateStreak, checkAndAwardBadges } from './Interview/services/badgeSystem';
+import { loadBadges, loadStreak, updateStreak, checkAndAwardBadges, Badge } from './Interview/services/badgeSystem';
 
 type StepType = 'setup' | 'ready' | 'interview' | 'analysis' | 'history' | 'analytics' | 'badges' | 'coding';
 
@@ -29,6 +30,7 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
   const [viewedAnalysis, setViewedAnalysis] = useState<{ report: AnalysisReport; data: InterviewData } | null>(null);
   const [badges, setBadges] = useState(loadBadges());
   const [streak, setStreak] = useState(loadStreak());
+  const [newlyEarnedBadges, setNewlyEarnedBadges] = useState<Badge[]>([]);
 
   const { user, refreshUsage } = useAuth();
 
@@ -115,6 +117,7 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
             completedCodingRound: false,
           });
           setBadges(loadBadges());
+          if (earned.length > 0) setNewlyEarnedBadges(earned.map(e => e.badge));
           refreshUsage();
         } else {
           // For local/demo users — save to localStorage and update streak/badges locally
@@ -124,7 +127,7 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
           localStorage.setItem(key, JSON.stringify(existing.slice(0, 20)));
           const newStreak = updateStreak();
           setStreak(newStreak);
-          checkAndAwardBadges({
+          const earned = checkAndAwardBadges({
             totalInterviews: existing.length,
             latestScore: analysis.overall_score ?? 0,
             streak: newStreak,
@@ -134,6 +137,7 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
             completedCodingRound: false,
           });
           setBadges(loadBadges());
+          if (earned.length > 0) setNewlyEarnedBadges(earned.map(e => e.badge));
         }
       }
     } catch (err) {
@@ -147,6 +151,9 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
 
   return (
     <div className="max-w-7xl mx-auto p-4 space-y-8 pb-32 min-h-screen">
+      {newlyEarnedBadges.length > 0 && (
+        <AchievementNotification badges={newlyEarnedBadges} onClose={() => setNewlyEarnedBadges([])} />
+      )}
       {/* Header & Sidebar Actions */}
       <div className="flex flex-col gap-10">
         <div className="flex items-start sm:items-center gap-5 flex-wrap">

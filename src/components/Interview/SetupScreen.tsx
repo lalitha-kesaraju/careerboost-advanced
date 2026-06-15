@@ -3,8 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { InterviewData } from '../../types';
 import SpinnerIcon from './icons/SpinnerIcon';
 import { 
-    Layout, Mic, Sparkles, Target, Users, Building2, Briefcase, ChevronDown, List, Lightbulb, Upload, Plus, Brain, HelpCircle, ChevronRight, CheckCircle2, 
-    Search, User, Loader2
+    Layout, Mic, Sparkles, Target, Users, Building2, Briefcase, ChevronDown, List, Lightbulb, Upload, Plus, Brain, HelpCircle, ChevronRight, CheckCircle2,
+    Search, User, Loader2, Code2, Layers
 } from 'lucide-react';
 import { parseResume } from '../../services/gemini';
 import * as pdfjs from 'pdfjs-dist';
@@ -129,6 +129,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
     roleCategory: 'Software Engineering',
     dreamCompany: '',
     difficultyLevel: 'medium',
+    interviewType: 'technical',
     language: 'English',
     timeLimit: 10,
     resume: '',
@@ -386,10 +387,18 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
     return dynamicQuestions.filter(q => q.type === selectedFilter);
   }, [dynamicQuestions, selectedFilter]);
 
+  const isHrMode = setupData.interviewType === 'hr';
+
   const difficultyLevels = [
-    { value: 'easy', label: 'Easy', icon: <Sparkles className="w-5 h-5 text-emerald-500" />, desc: 'Focus on fundamentals and soft skills' },
-    { value: 'medium', label: 'Medium', icon: <Target className="w-5 h-5 text-blue-600" />, desc: 'Standard professional interview' },
-    { value: 'hard', label: 'Hard', icon: <Brain className="w-5 h-5 text-rose-500" />, desc: 'Deep technical and complex behavioral' }
+    { value: 'easy', label: 'Easy', icon: <Sparkles className="w-5 h-5 text-emerald-500" />, desc: isHrMode ? 'Entry Level — fresh graduate, 0-2 years' : 'Focus on fundamentals and soft skills' },
+    { value: 'medium', label: 'Medium', icon: <Target className="w-5 h-5 text-blue-600" />, desc: isHrMode ? 'Mid/Senior Level — 2-10 years experience' : 'Standard professional interview' },
+    { value: 'hard', label: 'Hard', icon: <Brain className="w-5 h-5 text-rose-500" />, desc: isHrMode ? 'Expert Level — 10+ years, elite behavioral evaluation' : 'Deep technical and complex behavioral' }
+  ];
+
+  const interviewTypes = [
+    { value: 'technical', label: 'Technical', icon: <Code2 className="w-5 h-5 text-blue-600" />, desc: 'Coding and role-specific technical questions' },
+    { value: 'hr', label: 'HR / Behavioral', icon: <Users className="w-5 h-5 text-emerald-500" />, desc: 'Behavioral, culture fit, and STAR-based questions' },
+    { value: 'mixed', label: 'Mixed', icon: <Layers className="w-5 h-5 text-purple-500" />, desc: 'Blend of technical and behavioral questions' }
   ];
 
   return (
@@ -697,6 +706,29 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                         ))}
                       </div>
                     )}
+                </div>
+                <div className="space-y-4">
+                  <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Interview Type</label>
+                  <div className="grid grid-cols-1 gap-4">
+                    {interviewTypes.map((type) => (
+                      <div
+                        key={type.value}
+                        onClick={() => setSetupData({...setupData, interviewType: type.value as any})}
+                        className={`p-4 border-2 rounded-2xl transition-all cursor-pointer flex items-center gap-4 group ${setupData.interviewType === type.value ? 'border-blue-700 bg-blue-50/20' : 'border-gray-100 hover:border-blue-400 bg-gray-50/50'}`}
+                      >
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${setupData.interviewType === type.value ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-blue-100'}`}>
+                          {type.icon}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <h4 className="font-bold text-gray-900">{type.label}</h4>
+                            {setupData.interviewType === type.value && <div className="w-2 h-2 bg-blue-700 rounded-full animate-pulse" />}
+                          </div>
+                          <p className="text-[10px] text-gray-500 font-medium leading-tight">{type.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
                 <div className="space-y-4">
                   <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Interview Difficulty</label>
