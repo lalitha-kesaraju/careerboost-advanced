@@ -34,16 +34,6 @@ export function ProgressSection() {
   useEffect(() => {
     async function fetchData() {
       if (!user) return;
-      const isLocal = !!(user as any)?.isLocal;
-      if (isLocal) {
-        // Load interview history from localStorage for demo/local users
-        try {
-          const saved = localStorage.getItem(`cb_interviews_${user.uid}`);
-          if (saved) setInterviews(JSON.parse(saved).slice(0, 5));
-        } catch {}
-        setLoading(false);
-        return;
-      }
       try {
         // Fetch last 5 resumes
         const resumesRef = collection(db, 'users', user.uid, 'resumes');
@@ -71,16 +61,16 @@ export function ProgressSection() {
         <motion.div 
           animate={{ rotate: 360 }}
           transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}
-          className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full"
+          className="w-10 h-10 border-4 border-cyan-500 border-t-transparent rounded-full"
         />
       </div>
     );
   }
 
   const usageStats = [
-    { label: 'Advices Used', current: userData?.usage.careerAdviceCount || 0, max: userData?.tier === 'premium' ? '\u221E' : (userData?.tier === 'medium' ? 4 : 1) },
-    { label: 'Analyses', current: userData?.usage.resumeAnalyses || 0, max: '\u221E' },
-    { label: 'Interviews', current: userData?.usage.mockInterviews || 0, max: userData?.tier === 'premium' ? '\u221E' : (userData?.tier === 'medium' ? 5 : 1) },
+    { label: 'Advices Used', current: userData?.usage.careerAdviceCount || 0, max: userData?.tier === 'premium' ? '∞' : (userData?.tier === 'medium' ? 4 : 1) },
+    { label: 'Analyses', current: userData?.usage.resumeAnalyses || 0, max: '∞' },
+    { label: 'Interviews', current: userData?.usage.mockInterviews || 0, max: userData?.tier === 'premium' ? '∞' : (userData?.tier === 'medium' ? 5 : 1) },
   ];
 
   return (
@@ -95,8 +85,8 @@ export function ProgressSection() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white border border-gray-100 rounded-[3rem] p-10 shadow-xl shadow-gray-200/40 relative overflow-hidden group">
           <div className="flex items-center justify-between mb-10">
-            <h3 className="text-xl font-black text-gray-900 border-b-4 border-blue-600 pb-1">Usage Quotas</h3>
-            <div className="px-4 py-1 bg-blue-50 text-blue-700 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
+            <h3 className="text-xl font-black text-gray-900 border-b-4 border-cyan-500 pb-1">Usage Quotas</h3>
+            <div className="px-4 py-1 bg-cyan-50 text-cyan-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-cyan-100">
               {userData?.tier} Tier
             </div>
           </div>
@@ -113,7 +103,7 @@ export function ProgressSection() {
                   <motion.div 
                     initial={{ width: 0 }}
                     animate={{ width: typeof stat.max === 'number' ? `${(stat.current / stat.max) * 100}%` : '40%' }}
-                    className="h-full bg-blue-600"
+                    className="h-full bg-cyan-500"
                   />
                 </div>
               </div>
@@ -122,7 +112,7 @@ export function ProgressSection() {
 
           {userData?.tier !== 'premium' && (
             <div className="mt-10 p-6 bg-gray-50 rounded-3xl border border-gray-100 flex items-center gap-6">
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-700 shadow-sm">
+              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-cyan-600 shadow-sm">
                 <Zap className="w-6 h-6" />
               </div>
               <div>
@@ -136,16 +126,16 @@ export function ProgressSection() {
           )}
         </div>
 
-        <div className="bg-gray-900 text-white rounded-[3rem] p-10 flex flex-col justify-between shadow-2xl shadow-blue-950/20 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-40 h-40 bg-blue-600/10 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-blue-600/20 transition-all" />
+        <div className="bg-gray-900 text-white rounded-[3rem] p-10 flex flex-col justify-between shadow-2xl shadow-cyan-900/20 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-40 h-40 bg-cyan-500/10 rounded-full -mr-20 -mt-20 blur-3xl group-hover:bg-cyan-500/20 transition-all" />
           <div className="relative z-10">
-            <Award className="w-10 h-10 text-blue-500 mb-6" />
+            <Award className="w-10 h-10 text-cyan-400 mb-6" />
             <h3 className="text-2xl font-black tracking-tight leading-tight mb-2">Match History Trend</h3>
             <p className="text-gray-400 text-sm font-medium mb-8">Visualizing your career alignment growth over the last few uploads.</p>
             
             <div className="space-y-4">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center font-black text-blue-500 border border-white/5">
+                <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center font-black text-cyan-400 border border-white/5">
                   <TrendingUp className="w-6 h-6" />
                 </div>
                 <div>
@@ -156,7 +146,7 @@ export function ProgressSection() {
             </div>
           </div>
           
-          <button className="mt-10 w-full py-4 bg-white text-gray-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-blue-50 transition-all flex items-center justify-center gap-2">
+          <button className="mt-10 w-full py-4 bg-white text-gray-900 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-cyan-50 transition-all flex items-center justify-center gap-2">
             View Analytics <ChevronRight className="w-4 h-4" />
           </button>
         </div>
@@ -168,7 +158,7 @@ export function ProgressSection() {
         <div className="space-y-6">
           <div className="flex items-center justify-between px-2">
             <h3 className="text-xl font-black text-gray-900 flex items-center gap-3">
-              <FileText className="w-6 h-6 text-blue-700" /> Resume History
+              <FileText className="w-6 h-6 text-cyan-600" /> Resume History
             </h3>
             <button className="text-[10px] font-black uppercase text-gray-400 hover:text-gray-900 tracking-widest transition-colors">View All</button>
           </div>
@@ -180,7 +170,7 @@ export function ProgressSection() {
               </div>
             ) : resumes.map((resume, i) => (
               <div key={i} className="bg-white border border-gray-100 rounded-[2.5rem] p-6 flex items-center gap-5 group hover:shadow-xl hover:shadow-gray-200/40 transition-all">
-                <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-blue-700 group-hover:bg-blue-50 transition-all">
+                <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-cyan-600 group-hover:bg-cyan-50 transition-all">
                   <FileText className="w-6 h-6" />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -190,7 +180,7 @@ export function ProgressSection() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-black text-blue-700">{resume.parsedData?.matchPercentage || 0}% Match</p>
+                  <p className="text-xs font-black text-cyan-600">{resume.parsedData?.matchPercentage || 0}% Match</p>
                   <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">{resume.parsedData?.targetRole || 'Not specified'}</p>
                 </div>
               </div>
@@ -239,7 +229,7 @@ export function ProgressSection() {
             <h3 className="text-3xl font-black text-gray-900 tracking-tight">Active Learning Tracks</h3>
             <p className="text-gray-500 italic serif opacity-80">Skills being mastered based on your current gaps.</p>
           </div>
-          <button className="px-8 py-4 bg-blue-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-100 flex items-center gap-3 active:scale-95 transition-all">
+          <button className="px-8 py-4 bg-cyan-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-cyan-100 flex items-center gap-3 active:scale-95 transition-all">
              <BookOpen className="w-4 h-4" /> Go to Learning Center
           </button>
         </div>
@@ -255,12 +245,12 @@ export function ProgressSection() {
             { name: 'Technical Depth', progress: 40, status: 'Intermediate', weeks: '8 weeks' },
             { name: 'Leadership Logic', progress: 20, status: 'Beginner', weeks: '12 weeks' }
           ]).map((track, i) => (
-            <div key={i} className="p-8 bg-gray-50 rounded-[3rem] border border-gray-50 space-y-6 group hover:bg-white hover:border-blue-100 hover:shadow-xl transition-all">
+            <div key={i} className="p-8 bg-gray-50 rounded-[3rem] border border-gray-50 space-y-6 group hover:bg-white hover:border-cyan-100 hover:shadow-xl transition-all">
               <div className="flex items-center justify-between">
-                 <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-blue-700 shadow-sm border border-gray-100">
+                 <div className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-cyan-600 shadow-sm border border-gray-100">
                     <CheckCircle2 className="w-5 h-5" />
                  </div>
-                 <span className="text-[9px] font-black uppercase text-blue-700 bg-blue-50 px-3 py-1 rounded-full">{track.status}</span>
+                 <span className="text-[9px] font-black uppercase text-cyan-600 bg-cyan-50 px-3 py-1 rounded-full">{track.status}</span>
               </div>
               <div>
                  <h4 className="font-black text-gray-900 text-lg">{track.name}</h4>
@@ -271,7 +261,7 @@ export function ProgressSection() {
                     <motion.div 
                       initial={{ width: 0 }}
                       animate={{ width: `${track.progress}%` }}
-                      className="h-full bg-blue-700" 
+                      className="h-full bg-cyan-600" 
                     />
                  </div>
                  <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest">
@@ -286,7 +276,7 @@ export function ProgressSection() {
 
       {/* Strategic Milestone Timeline */}
       <div className="bg-gray-900 rounded-[4rem] p-16 text-white relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px] -mr-20 -mt-20" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px] -mr-20 -mt-20" />
         <div className="relative z-10">
            <h3 className="text-3xl font-black mb-12 tracking-tight">Deployment Timeline</h3>
            <div className="space-y-12">
@@ -297,20 +287,20 @@ export function ProgressSection() {
               ].map((milestone, i) => (
                 <div key={i} className="flex gap-10 group">
                    <div className="flex flex-col items-center">
-                      <div className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ${milestone.status === 'completed' ? 'border-blue-600 bg-blue-600' : milestone.status === 'active' ? 'border-blue-600 bg-transparent' : 'border-gray-700 bg-transparent'}`}>
+                      <div className={`w-8 h-8 rounded-full border-4 flex items-center justify-center ${milestone.status === 'completed' ? 'border-cyan-500 bg-cyan-500' : milestone.status === 'active' ? 'border-cyan-500 bg-transparent' : 'border-gray-700 bg-transparent'}`}>
                          {milestone.status === 'completed' && <CheckCircle2 className="w-4 h-4 text-gray-900" />}
-                         {milestone.status === 'active' && <div className="w-2 h-2 bg-blue-600 rounded-full animate-ping" />}
+                         {milestone.status === 'active' && <div className="w-2 h-2 bg-cyan-500 rounded-full animate-ping" />}
                       </div>
                       {i < 2 && <div className="w-0.5 flex-1 bg-gray-800 my-4" />}
                    </div>
                    <div className="pb-10">
                       <div className="flex items-center gap-4 mb-2">
-                         <span className="text-blue-600 font-mono text-[10px] font-black tracking-widest">{milestone.date}</span>
-                         <span className={`text-[8px] font-black uppercase tracking-[0.2em] px-3 py-0.5 rounded-full ${milestone.status === 'completed' ? 'bg-emerald-500 text-gray-900' : milestone.status === 'active' ? 'bg-blue-600 text-gray-900' : 'bg-gray-800 text-gray-400'}`}>
+                         <span className="text-cyan-500 font-mono text-[10px] font-black tracking-widest">{milestone.date}</span>
+                         <span className={`text-[8px] font-black uppercase tracking-[0.2em] px-3 py-0.5 rounded-full ${milestone.status === 'completed' ? 'bg-emerald-500 text-gray-900' : milestone.status === 'active' ? 'bg-cyan-500 text-gray-900' : 'bg-gray-800 text-gray-400'}`}>
                            {milestone.status}
                          </span>
                       </div>
-                      <h4 className="text-xl font-bold mb-2 group-hover:text-blue-500 transition-colors">{milestone.title}</h4>
+                      <h4 className="text-xl font-bold mb-2 group-hover:text-cyan-400 transition-colors">{milestone.title}</h4>
                       <p className="text-gray-400 text-sm max-w-xl font-medium leading-relaxed">{milestone.desc}</p>
                    </div>
                 </div>

@@ -1,10 +1,10 @@
-﻿import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InterviewData } from '../../types';
 import SpinnerIcon from './icons/SpinnerIcon';
 import { 
-    Layout, Mic, Sparkles, Target, Users, Building2, Briefcase, ChevronDown, List, Lightbulb, Upload, Plus, Brain, HelpCircle, ChevronRight, CheckCircle2,
-    Search, User, Loader2, Code2, Layers
+    Layout, Mic, Sparkles, Target, Users, Building2, Briefcase, ChevronDown, List, Lightbulb, Upload, Plus, Brain, HelpCircle, ChevronRight, CheckCircle2, 
+    Search, User, Loader2
 } from 'lucide-react';
 import { parseResume } from '../../services/gemini';
 import * as pdfjs from 'pdfjs-dist';
@@ -129,7 +129,6 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
     roleCategory: 'Software Engineering',
     dreamCompany: '',
     difficultyLevel: 'medium',
-    interviewType: 'technical',
     language: 'English',
     timeLimit: 10,
     resume: '',
@@ -138,8 +137,6 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
 
   const [isParsing, setIsParsing] = useState(false);
   const [error, setError] = useState('');
-  const [resumeNameMismatch, setResumeNameMismatch] = useState<string | null>(null);
-  const [resumeParsedName, setResumeParsedName] = useState<string>('');
 
   const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
   const [isQuestionsModalOpen, setIsQuestionsModalOpen] = useState(false);
@@ -255,28 +252,17 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
       if (text.trim().length > 50) {
         setSetupData(prev => ({ ...prev, resumeText: text }));
         const parsedData = await parseResume(text);
-
-        const parsedName = parsedData?.personalInfo?.fullName || '';
-        setResumeParsedName(parsedName);
-
-        if (parsedName) {
-          // Auto-fill name if empty
-          if (!setupData.userName.trim()) {
-            setSetupData(prev => ({ ...prev, userName: parsedName }));
-          } else {
-            // Check if the entered name matches the resume name
-            const enteredNorm = setupData.userName.trim().toLowerCase();
-            const parsedNorm  = parsedName.trim().toLowerCase();
-            if (enteredNorm !== parsedNorm && !parsedNorm.includes(enteredNorm) && !enteredNorm.includes(parsedNorm)) {
-              setResumeNameMismatch(`Resume name is "${parsedName}" but you entered "${setupData.userName}". Please check.`);
-            } else {
-              setResumeNameMismatch(null);
-            }
-          }
+        if (parsedData?.personalInfo?.fullName) {
+          setSetupData(prev => ({
+            ...prev,
+            userName: parsedData.personalInfo.fullName
+          }));
         }
-
         if (parsedData?.targetRole && !roleSearchQuery) {
-          setSetupData(prev => ({ ...prev, jobRole: parsedData.targetRole }));
+          setSetupData(prev => ({
+            ...prev,
+            jobRole: parsedData.targetRole
+          }));
           setRoleSearchQuery(parsedData.targetRole);
         }
       }
@@ -309,12 +295,12 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
   };
 
   const tips = [
-    { title: 'Use the STAR Method', description: 'Structure your answers with Situation, Task, Action, Result. This helps provide clear, concise, and complete responses to behavioral questions.', type: "Do's", icon: "â­" },
-    { title: 'Research the Company', description: "Know the company's mission, values, recent news, and products. Show genuine interest and align your answers with their culture.", type: "Preparation", icon: "ðŸ”" },
-    { title: 'Prepare Questions', description: 'Always have 2-3 thoughtful questions ready to ask the interviewer. It shows interest and engagement.', type: "Preparation", icon: "â�" },
-    { title: 'Practice Active Listening', description: 'Listen carefully to each question before answering. Take a moment to think before you speak.', type: "Do's", icon: "ðŸ‘‚" },
-    { title: 'Maintain Good Posture', description: 'Sit up straight, maintain eye contact (look at the camera), and use natural gestures. Body language matters!', type: "Do's", icon: "ðŸª‘" },
-    { title: 'Show Enthusiasm', description: 'Let your passion and energy show. Smile, be positive, and demonstrate genuine interest in the role.', type: "Do's", icon: "ðŸ˜Š" }
+    { title: 'Use the STAR Method', description: 'Structure your answers with Situation, Task, Action, Result. This helps provide clear, concise, and complete responses to behavioral questions.', type: "Do's", icon: "⭐" },
+    { title: 'Research the Company', description: "Know the company's mission, values, recent news, and products. Show genuine interest and align your answers with their culture.", type: "Preparation", icon: "🔍" },
+    { title: 'Prepare Questions', description: 'Always have 2-3 thoughtful questions ready to ask the interviewer. It shows interest and engagement.', type: "Preparation", icon: "❓" },
+    { title: 'Practice Active Listening', description: 'Listen carefully to each question before answering. Take a moment to think before you speak.', type: "Do's", icon: "👂" },
+    { title: 'Maintain Good Posture', description: 'Sit up straight, maintain eye contact (look at the camera), and use natural gestures. Body language matters!', type: "Do's", icon: "🪑" },
+    { title: 'Show Enthusiasm', description: 'Let your passion and energy show. Smile, be positive, and demonstrate genuine interest in the role.', type: "Do's", icon: "😊" }
   ];
 
   const practiceQuestions = {
@@ -387,18 +373,10 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
     return dynamicQuestions.filter(q => q.type === selectedFilter);
   }, [dynamicQuestions, selectedFilter]);
 
-  const isHrMode = setupData.interviewType === 'hr';
-
   const difficultyLevels = [
-    { value: 'easy', label: 'Easy', icon: <Sparkles className="w-5 h-5 text-emerald-500" />, desc: isHrMode ? 'Entry Level — fresh graduate, 0-2 years' : 'Focus on fundamentals and soft skills' },
-    { value: 'medium', label: 'Medium', icon: <Target className="w-5 h-5 text-blue-600" />, desc: isHrMode ? 'Mid/Senior Level — 2-10 years experience' : 'Standard professional interview' },
-    { value: 'hard', label: 'Hard', icon: <Brain className="w-5 h-5 text-rose-500" />, desc: isHrMode ? 'Expert Level — 10+ years, elite behavioral evaluation' : 'Deep technical and complex behavioral' }
-  ];
-
-  const interviewTypes = [
-    { value: 'technical', label: 'Technical', icon: <Code2 className="w-5 h-5 text-blue-600" />, desc: 'Coding and role-specific technical questions' },
-    { value: 'hr', label: 'HR / Behavioral', icon: <Users className="w-5 h-5 text-emerald-500" />, desc: 'Behavioral, culture fit, and STAR-based questions' },
-    { value: 'mixed', label: 'Mixed', icon: <Layers className="w-5 h-5 text-purple-500" />, desc: 'Blend of technical and behavioral questions' }
+    { value: 'easy', label: 'Easy', icon: <Sparkles className="w-5 h-5 text-emerald-500" />, desc: 'Focus on fundamentals and soft skills' },
+    { value: 'medium', label: 'Medium', icon: <Target className="w-5 h-5 text-cyan-500" />, desc: 'Standard professional interview' },
+    { value: 'hard', label: 'Hard', icon: <Brain className="w-5 h-5 text-rose-500" />, desc: 'Deep technical and complex behavioral' }
   ];
 
   return (
@@ -407,7 +385,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div 
             onClick={() => setIsQuestionsModalOpen(true)}
-            className="p-8 bg-gradient-to-br from-blue-700 to-blue-900 rounded-[2.5rem] text-white shadow-xl shadow-blue-100 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all group overflow-hidden relative"
+            className="p-8 bg-gradient-to-br from-cyan-600 to-cyan-800 rounded-[2.5rem] text-white shadow-xl shadow-cyan-100 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all group overflow-hidden relative"
           >
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-white/20 transition-all" />
             <div className="relative z-10 space-y-4">
@@ -416,19 +394,19 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
               </div>
               <div>
                 <h3 className="text-2xl font-black tracking-tight">Practice Questions</h3>
-                <p className="text-blue-100 text-sm font-medium">Browse 500+ role-specific questions</p>
+                <p className="text-cyan-100 text-sm font-medium">Browse 500+ role-specific questions</p>
               </div>
             </div>
           </div>
 
           <div 
             onClick={() => setIsTipsModalOpen(true)}
-            className="p-8 bg-white border border-gray-100 rounded-[2.5rem] shadow-xl hover:shadow-2xl hover:border-blue-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all group overflow-hidden relative"
+            className="p-8 bg-white border border-gray-100 rounded-[2.5rem] shadow-xl hover:shadow-2xl hover:border-cyan-200 cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all group overflow-hidden relative"
           >
-            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-blue-100 transition-all" />
+            <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-50 rounded-full -mr-16 -mt-16 blur-2xl group-hover:bg-cyan-100 transition-all" />
             <div className="relative z-10 space-y-4">
-              <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
-                <Lightbulb className="w-6 h-6 text-blue-700" />
+              <div className="w-12 h-12 bg-cyan-50 rounded-2xl flex items-center justify-center">
+                <Lightbulb className="w-6 h-6 text-cyan-600" />
               </div>
               <div>
                 <h3 className="text-2xl font-black text-gray-900 tracking-tight">Quick Tips</h3>
@@ -452,9 +430,9 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                 <div className="grid grid-cols-2 gap-4">
                   <div 
                     onClick={() => setSetupData({...setupData, isPracticeMode: true})}
-                    className={`p-6 border-2 rounded-[2rem] transition-all cursor-pointer group ${setupData.isPracticeMode ? 'border-blue-700 bg-blue-50/20' : 'border-gray-100 hover:border-blue-400'}`}
+                    className={`p-6 border-2 rounded-[2rem] transition-all cursor-pointer group ${setupData.isPracticeMode ? 'border-cyan-600 bg-cyan-50/20' : 'border-gray-100 hover:border-cyan-300'}`}
                   >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${setupData.isPracticeMode ? 'bg-blue-700 text-white' : 'bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-700'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${setupData.isPracticeMode ? 'bg-cyan-600 text-white' : 'bg-gray-50 text-gray-400 group-hover:bg-cyan-50 group-hover:text-cyan-600'}`}>
                       <Layout className="w-5 h-5" />
                     </div>
                     <h4 className="font-bold text-gray-900 mb-1">Practice Mode</h4>
@@ -462,9 +440,9 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                   </div>
                   <div 
                     onClick={() => setSetupData({...setupData, isPracticeMode: false})}
-                    className={`p-6 border-2 rounded-[2rem] transition-all cursor-pointer group ${!setupData.isPracticeMode ? 'border-blue-700 bg-blue-50/20' : 'border-gray-100 hover:border-blue-400'}`}
+                    className={`p-6 border-2 rounded-[2rem] transition-all cursor-pointer group ${!setupData.isPracticeMode ? 'border-cyan-600 bg-cyan-50/20' : 'border-gray-100 hover:border-cyan-300'}`}
                   >
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${!setupData.isPracticeMode ? 'bg-blue-700 text-white' : 'bg-gray-50 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-700'}`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-4 ${!setupData.isPracticeMode ? 'bg-cyan-600 text-white' : 'bg-gray-50 text-gray-400 group-hover:bg-cyan-50 group-hover:text-cyan-600'}`}>
                       <Mic className="w-5 h-5" />
                     </div>
                     <h4 className="font-bold text-gray-900 mb-1">Mock Interview</h4>
@@ -476,36 +454,13 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
               <div className="space-y-6">
                 <div className="space-y-2">
                   <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Your Name *</label>
-                  <input
-                    type="text"
+                  <input 
+                    type="text" 
                     placeholder="e.g., Jane Doe"
                     value={setupData.userName}
-                    onChange={(e) => {
-                      setSetupData({...setupData, userName: e.target.value});
-                      if (resumeParsedName) {
-                        const entered = e.target.value.trim().toLowerCase();
-                        const parsed  = resumeParsedName.trim().toLowerCase();
-                        setResumeNameMismatch(
-                          entered && parsed && !entered.includes(parsed.split(' ')[0]) && !parsed.includes(entered.split(' ')[0])
-                            ? `Resume says "${resumeParsedName}" — make sure this matches your actual name.`
-                            : null
-                        );
-                      }
-                    }}
-                    className={`w-full px-6 py-4 bg-gray-50 border rounded-2xl font-bold focus:ring-2 focus:ring-blue-600/20 outline-none transition-all ${resumeNameMismatch ? 'border-amber-300 bg-amber-50/30' : 'border-gray-100'}`}
+                    onChange={(e) => setSetupData({...setupData, userName: e.target.value})}
+                    className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all"
                   />
-                  {resumeNameMismatch && (
-                    <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
-                      <span className="text-amber-500 text-sm shrink-0">âš ï¸</span>
-                      <p className="text-xs font-bold text-amber-700 leading-relaxed">{resumeNameMismatch}</p>
-                    </div>
-                  )}
-                  {resumeParsedName && !resumeNameMismatch && setupData.resumeText && (
-                    <div className="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
-                      <p className="text-xs font-bold text-emerald-700">Resume name matches âœ�</p>
-                    </div>
-                  )}
                 </div>
                 <div className="space-y-2">
                     <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Job Role *</label>
@@ -526,9 +481,9 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                                 handleCustomRole();
                             }
                           }}
-                          className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold focus:ring-2 focus:ring-blue-600/20 outline-none transition-all pl-12"
+                          className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all pl-12"
                         />
-                        <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600" />
+                        <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-500" />
                       </div>
 
                       <AnimatePresence>
@@ -546,14 +501,14 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                                     key={role.id}
                                     type="button"
                                     onClick={() => handleRoleSelect(role.title, role.category, role.isCustom)}
-                                    className="w-full text-left px-6 py-4 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-b-0 flex justify-between items-center group/item"
+                                    className="w-full text-left px-6 py-4 hover:bg-cyan-50 transition-colors border-b border-gray-50 last:border-b-0 flex justify-between items-center group/item"
                                   >
                                     <div className="flex flex-col">
-                                      <span className="font-bold text-gray-900 group-hover/item:text-blue-700 transition-colors">{role.title}</span>
+                                      <span className="font-bold text-gray-900 group-hover/item:text-cyan-600 transition-colors">{role.title}</span>
                                       <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{role.category}</span>
                                     </div>
                                     {role.isCustom && (
-                                      <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-md text-[8px] font-black uppercase tracking-tighter">Saved Custom</span>
+                                      <span className="px-2 py-0.5 bg-cyan-100 text-cyan-600 rounded-md text-[8px] font-black uppercase tracking-tighter">Saved Custom</span>
                                     )}
                                   </button>
                                 ))}
@@ -561,12 +516,12 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                                   <button
                                     type="button"
                                     onClick={handleCustomRole}
-                                    className="w-full text-left px-6 py-4 bg-blue-50/50 hover:bg-blue-50 transition-colors border-t border-blue-100 flex items-center gap-3"
+                                    className="w-full text-left px-6 py-4 bg-cyan-50/50 hover:bg-cyan-50 transition-colors border-t border-cyan-100 flex items-center gap-3"
                                   >
-                                    <span className="text-xl">âœ¨</span>
+                                    <span className="text-xl">✨</span>
                                     <div className="flex flex-col">
-                                      <span className="font-bold text-blue-800 underline text-sm">Use custom role: "{roleSearchQuery}"</span>
-                                      <span className="text-[10px] text-blue-500 font-black tracking-widest uppercase">Click to confirm</span>
+                                      <span className="font-bold text-cyan-700 underline text-sm">Use custom role: "{roleSearchQuery}"</span>
+                                      <span className="text-[10px] text-cyan-400 font-black tracking-widest uppercase">Click to confirm</span>
                                     </div>
                                   </button>
                                 )}
@@ -575,10 +530,10 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                               <button
                                 type="button"
                                 onClick={handleCustomRole}
-                                className="w-full text-left px-6 py-4 bg-blue-50/50 hover:bg-blue-50 transition-colors flex items-center gap-3"
+                                className="w-full text-left px-6 py-4 bg-cyan-50/50 hover:bg-cyan-50 transition-colors flex items-center gap-3"
                               >
-                                <span className="text-xl">Ã¢Å“Â¨</span>
-                                <span className="font-bold text-blue-800 underline">Use custom role: "{roleSearchQuery}"</span>
+                                <span className="text-xl">✨</span>
+                                <span className="font-bold text-cyan-700 underline">Use custom role: "{roleSearchQuery}"</span>
                               </button>
                             ) : (
                               <div className="px-6 py-4 text-gray-400 text-sm font-bold text-center">Start typing to search...</div>
@@ -637,9 +592,9 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                             setShowCompanyDropdown(true);
                           }}
                           onFocus={() => setShowCompanyDropdown(true)}
-                          className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold focus:ring-2 focus:ring-blue-600/20 outline-none transition-all pl-12"
+                          className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all pl-12"
                         />
-                        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-600" />
+                        <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-500" />
                       </div>
 
                       <AnimatePresence>
@@ -656,7 +611,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                                   key={company.id}
                                   type="button"
                                   onClick={() => handleCompanySelect(company.name)}
-                                  className="w-full text-left px-6 py-4 hover:bg-blue-50 transition-colors border-b border-gray-50 last:border-b-0 flex flex-col"
+                                  className="w-full text-left px-6 py-4 hover:bg-cyan-50 transition-colors border-b border-gray-50 last:border-b-0 flex flex-col"
                                 >
                                   <span className="font-bold text-gray-900">{company.name}</span>
                                   <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">{company.category}</span>
@@ -702,33 +657,10 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                       <div className="mt-2 flex flex-wrap gap-2">
                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Categories:</span>
                         {['Tech Giants', 'Indian Tech', 'Consulting & Finance', 'Startups'].map(c => (
-                          <span key={c} className="text-[10px] font-bold text-gray-400 hover:text-blue-500 transition-colors cursor-default">{c}</span>
+                          <span key={c} className="text-[10px] font-bold text-gray-400 hover:text-cyan-400 transition-colors cursor-default">{c}</span>
                         ))}
                       </div>
                     )}
-                </div>
-                <div className="space-y-4">
-                  <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Interview Type</label>
-                  <div className="grid grid-cols-1 gap-4">
-                    {interviewTypes.map((type) => (
-                      <div
-                        key={type.value}
-                        onClick={() => setSetupData({...setupData, interviewType: type.value as any})}
-                        className={`p-4 border-2 rounded-2xl transition-all cursor-pointer flex items-center gap-4 group ${setupData.interviewType === type.value ? 'border-blue-700 bg-blue-50/20' : 'border-gray-100 hover:border-blue-400 bg-gray-50/50'}`}
-                      >
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${setupData.interviewType === type.value ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-blue-100'}`}>
-                          {type.icon}
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-bold text-gray-900">{type.label}</h4>
-                            {setupData.interviewType === type.value && <div className="w-2 h-2 bg-blue-700 rounded-full animate-pulse" />}
-                          </div>
-                          <p className="text-[10px] text-gray-500 font-medium leading-tight">{type.desc}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </div>
                 <div className="space-y-4">
                   <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Interview Difficulty</label>
@@ -737,15 +669,15 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                       <div 
                         key={level.value}
                         onClick={() => setSetupData({...setupData, difficultyLevel: level.value as any})}
-                        className={`p-4 border-2 rounded-2xl transition-all cursor-pointer flex items-center gap-4 group ${setupData.difficultyLevel === level.value ? 'border-blue-700 bg-blue-50/20' : 'border-gray-100 hover:border-blue-400 bg-gray-50/50'}`}
+                        className={`p-4 border-2 rounded-2xl transition-all cursor-pointer flex items-center gap-4 group ${setupData.difficultyLevel === level.value ? 'border-cyan-600 bg-cyan-50/20' : 'border-gray-100 hover:border-cyan-300 bg-gray-50/50'}`}
                       >
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${setupData.difficultyLevel === level.value ? 'bg-blue-700 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-blue-100'}`}>
+                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${setupData.difficultyLevel === level.value ? 'bg-cyan-600 text-white' : 'bg-gray-100 text-gray-400 group-hover:bg-cyan-100'}`}>
                           {level.icon}
                         </div>
                         <div className="flex-1">
                           <div className="flex items-center justify-between">
                             <h4 className="font-bold text-gray-900">{level.label}</h4>
-                            {setupData.difficultyLevel === level.value && <div className="w-2 h-2 bg-blue-700 rounded-full animate-pulse" />}
+                            {setupData.difficultyLevel === level.value && <div className="w-2 h-2 bg-cyan-600 rounded-full animate-pulse" />}
                           </div>
                           <p className="text-[10px] text-gray-500 font-medium leading-tight">{level.desc}</p>
                         </div>
@@ -763,11 +695,11 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                   <select 
                     value={setupData.language}
                     onChange={(e) => setSetupData({...setupData, language: e.target.value})}
-                    className="w-full px-12 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold focus:ring-2 focus:ring-blue-600/20 outline-none appearance-none cursor-pointer"
+                    className="w-full px-12 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold focus:ring-2 focus:ring-cyan-500/20 outline-none appearance-none cursor-pointer"
                   >
                     {ALL_LANGUAGES.map(lang => <option key={lang} value={lang}>{lang}</option>)}
                   </select>
-                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-600" />
+                  <Users className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-cyan-500" />
                   <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 </div>
               </div>
@@ -775,7 +707,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Interview Duration</label>
-                  <span className="text-blue-700 font-black text-sm bg-blue-50 px-3 py-1 rounded-full">{setupData.timeLimit} min</span>
+                  <span className="text-cyan-600 font-black text-sm bg-cyan-50 px-3 py-1 rounded-full">{setupData.timeLimit} min</span>
                 </div>
                 <input 
                   type="range" 
@@ -783,7 +715,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                   max="30"
                   value={setupData.timeLimit}
                   onChange={(e) => setSetupData({...setupData, timeLimit: parseInt(e.target.value)})}
-                  className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-blue-700"
+                  className="w-full h-2 bg-gray-100 rounded-lg appearance-none cursor-pointer accent-cyan-600"
                 />
                 <div className="flex justify-between text-[10px] font-black text-gray-400 tracking-widest">
                    <span>1 MIN</span>
@@ -793,7 +725,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
 
               <div className="space-y-2">
                 <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Resume Upload (Optional)</label>
-                <div className="border-2 border-dashed border-gray-100 rounded-[2rem] p-10 flex flex-col items-center gap-4 hover:border-blue-200 transition-all cursor-pointer group relative overflow-hidden">
+                <div className="border-2 border-dashed border-gray-100 rounded-[2rem] p-10 flex flex-col items-center gap-4 hover:border-cyan-200 transition-all cursor-pointer group relative overflow-hidden">
                   <input 
                     type="file" 
                     className="absolute inset-0 opacity-0 cursor-pointer z-10"
@@ -803,11 +735,11 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                       }
                     }}
                   />
-                  <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center group-hover:bg-blue-50">
+                  <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center group-hover:bg-cyan-50">
                     {isParsing ? (
-                      <Loader2 className="w-6 h-6 text-blue-700 animate-spin" />
+                      <Loader2 className="w-6 h-6 text-cyan-600 animate-spin" />
                     ) : (
-                      <Upload className="w-6 h-6 text-gray-400 group-hover:text-blue-700" />
+                      <Upload className="w-6 h-6 text-gray-400 group-hover:text-cyan-600" />
                     )}
                   </div>
                   <div className="text-center">
@@ -860,7 +792,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                 <div className="flex flex-col gap-6">
                   <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
                     {['All Tips', "Do's", "Don'ts", 'Strategy', 'Preparation'].map(tab => (
-                      <button key={tab} className={`px-6 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all ${tab === 'All Tips' ? 'bg-blue-700 text-white shadow-lg shadow-blue-100' : 'bg-gray-50 text-gray-400 hover:bg-blue-50 hover:text-blue-700'}`}>
+                      <button key={tab} className={`px-6 py-2.5 rounded-full text-xs font-black whitespace-nowrap transition-all ${tab === 'All Tips' ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-100' : 'bg-gray-50 text-gray-400 hover:bg-cyan-50 hover:text-cyan-600'}`}>
                         {tab}
                       </button>
                     ))}
@@ -871,13 +803,13 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                 <div className="grid grid-cols-1 gap-10">
                   {tips.map((tip, i) => (
                     <div key={i} className="flex gap-8 items-start group">
-                      <div className="w-16 h-16 bg-gray-50 rounded-[1.5rem] flex items-center justify-center text-3xl group-hover:bg-blue-50 transition-all shrink-0 shadow-sm">
+                      <div className="w-16 h-16 bg-gray-50 rounded-[1.5rem] flex items-center justify-center text-3xl group-hover:bg-cyan-50 transition-all shrink-0 shadow-sm">
                         {tip.icon}
                       </div>
                       <div className="space-y-2">
                          <div className="flex flex-col">
-                            <h4 className="text-xl font-black text-gray-900 group-hover:text-blue-700 transition-colors">{tip.title}</h4>
-                            <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-0.5">{tip.type}</span>
+                            <h4 className="text-xl font-black text-gray-900 group-hover:text-cyan-600 transition-colors">{tip.title}</h4>
+                            <span className="text-[10px] font-black text-cyan-500 uppercase tracking-widest mt-0.5">{tip.type}</span>
                          </div>
                          <p className="text-sm text-gray-500 font-medium leading-relaxed italic serif opacity-80">{tip.description}</p>
                       </div>
@@ -909,7 +841,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="bg-white rounded-[2.5rem] w-full max-w-4xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col font-sans border-4 border-white"
             >
-              <div className="p-8 bg-gradient-to-r from-blue-500 via-blue-700 to-blue-700 text-white flex justify-between items-center relative overflow-hidden">
+              <div className="p-8 bg-gradient-to-r from-blue-500 via-cyan-600 to-purple-600 text-white flex justify-between items-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl" />
                 <div className="flex items-center gap-4 relative z-10">
                    <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white/30">
@@ -917,7 +849,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                    </div>
                    <div>
                     <h2 className="text-3xl font-black tracking-tight">Practice Questions Library</h2>
-                    <p className="text-blue-100 text-sm font-medium opacity-90">Browse and prepare for common interview questions</p>
+                    <p className="text-cyan-100 text-sm font-medium opacity-90">Browse and prepare for common interview questions</p>
                    </div>
                 </div>
                 <button 
@@ -933,11 +865,11 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                   <select 
                     value={selectedRole}
                     onChange={(e) => fetchDynamicQuestions(e.target.value)}
-                    className="w-full pl-4 pr-10 py-3 bg-blue-50 border border-blue-100 rounded-xl font-bold text-blue-800 outline-none appearance-none cursor-pointer hover:bg-blue-100/50 transition-all"
+                    className="w-full pl-4 pr-10 py-3 bg-cyan-50 border border-cyan-100 rounded-xl font-bold text-cyan-700 outline-none appearance-none cursor-pointer hover:bg-cyan-100/50 transition-all"
                   >
                     {ROLES.map(role => <option key={role} value={role}>{role}</option>)}
                   </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-blue-500 pointer-events-none" />
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-400 pointer-events-none" />
                 </div>
 
                 <div className="flex bg-gray-100 p-1.5 rounded-2xl gap-1">
@@ -945,7 +877,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                     <button 
                       key={tab} 
                       onClick={() => setSelectedFilter(tab)}
-                      className={`px-6 py-2 rounded-xl text-sm font-black transition-all ${selectedFilter === tab ? 'bg-white text-blue-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+                      className={`px-6 py-2 rounded-xl text-sm font-black transition-all ${selectedFilter === tab ? 'bg-white text-cyan-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                     >
                       {tab}
                     </button>
@@ -953,7 +885,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                 </div>
                 
                 {isLoadingDynamic && (
-                  <div className="flex items-center gap-2 text-blue-700 ml-auto">
+                  <div className="flex items-center gap-2 text-cyan-600 ml-auto">
                     <SpinnerIcon className="w-5 h-5 animate-spin" />
                     <span className="text-xs font-black uppercase tracking-widest">Generating...</span>
                   </div>
@@ -984,7 +916,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                         
                         <button 
                           onClick={() => setExpandedQuestionId(expandedQuestionId === i ? null : i)}
-                          className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all ${expandedQuestionId === i ? 'text-rose-500' : 'text-blue-700 hover:translate-x-1'}`}
+                          className={`flex items-center gap-2 text-xs font-black uppercase tracking-widest transition-all ${expandedQuestionId === i ? 'text-rose-500' : 'text-cyan-600 hover:translate-x-1'}`}
                         >
                           {expandedQuestionId === i ? 'Hide Answer Guide' : 'View Answer Guide'}
                         </button>
@@ -1000,7 +932,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                           >
                             <div className="p-8 space-y-8">
                               <div className="space-y-6">
-                                <h5 className="text-sm font-black text-gray-900 uppercase tracking-widest border-b-2 border-blue-700 pb-2 inline-block">Technical Response Structure</h5>
+                                <h5 className="text-sm font-black text-gray-900 uppercase tracking-widest border-b-2 border-cyan-600 pb-2 inline-block">Technical Response Structure</h5>
                                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                   {[
                                     { step: 1, title: 'Definition', desc: 'Start with a clear, concise explanation of the concept.' },
@@ -1010,7 +942,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                                   ].map((s) => (
                                     <div key={s.step} className="space-y-2">
                                       <div className="flex items-center gap-2">
-                                         <span className="w-6 h-6 bg-blue-700 text-white rounded-lg flex items-center justify-center text-xs font-black">{s.step}</span>
+                                         <span className="w-6 h-6 bg-cyan-600 text-white rounded-lg flex items-center justify-center text-xs font-black">{s.step}</span>
                                          <h6 className="font-black text-gray-900 text-xs">{s.title}</h6>
                                       </div>
                                       <p className="text-[10px] text-gray-500 font-medium leading-relaxed">{s.desc}</p>
@@ -1021,7 +953,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
 
                               <div className="space-y-4">
                                 <div className="flex items-center gap-2">
-                                  <h5 className="text-sm font-black text-gray-900">Sample Answer for: <span className="text-blue-700 italic">"{q.text}"</span></h5>
+                                  <h5 className="text-sm font-black text-gray-900">Sample Answer for: <span className="text-cyan-600 italic">"{q.text}"</span></h5>
                                 </div>
                                 <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm italic serif text-gray-700 leading-relaxed">
                                   {q.sampleAnswer || q.answerGuide}
@@ -1029,7 +961,7 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                               </div>
 
                               <div className="bg-white/50 p-6 rounded-2xl border border-gray-100">
-                                <span className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">Ã°Å¸’Â¡ Pro Tips:</span>
+                                <span className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4">💡 Pro Tips:</span>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   {[
                                     'Start simple, then go deeper if asked',
@@ -1075,5 +1007,3 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
 };
 
 export default SetupScreen;
-
-

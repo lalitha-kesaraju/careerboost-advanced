@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { Upload, FileText, CheckCircle2, History, X, ArrowRight, ShieldCheck, Zap, BarChart3, Clock, TrendingUp } from 'lucide-react';
 import { useAuth } from '../App';
@@ -58,9 +58,9 @@ export function ResumeUploadSection({ onNext }: ResumeUploadSectionProps) {
       value: (userData?.usage?.resumeAnalyses || 0) > 0 ? '1' : '-', 
       sub: 'Active sessions', 
       icon: Clock, 
-      color: 'text-blue-700', 
-      bg: 'bg-blue-50', 
-      border: 'border-blue-200' 
+      color: 'text-purple-600', 
+      bg: 'bg-purple-50', 
+      border: 'border-purple-200' 
     },
     { 
       label: 'Success Rate', 
@@ -221,10 +221,10 @@ You can also try using the "Paste Text" tab to manually provide your resume cont
       <div className="max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-2">
            <div className="flex flex-col items-center">
-             <div className="w-10 h-10 rounded-full bg-blue-700 flex items-center justify-center text-white shadow-lg shadow-blue-100 z-10">
+             <div className="w-10 h-10 rounded-full bg-cyan-600 flex items-center justify-center text-white shadow-lg shadow-cyan-100 z-10">
                <span className="font-bold">1</span>
              </div>
-             <span className="text-xs font-bold text-blue-700 mt-2 uppercase tracking-widest">Upload</span>
+             <span className="text-xs font-bold text-cyan-600 mt-2 uppercase tracking-widest">Upload</span>
            </div>
            <div className="flex-1 h-1 bg-gray-200 mx-4 -mt-6" />
            <div className="flex flex-col items-center">
@@ -252,13 +252,13 @@ You can also try using the "Paste Text" tab to manually provide your resume cont
         <div className="flex gap-4 mb-8">
           <button 
             onClick={() => setUseRawText(false)}
-            className={`flex-1 py-4 rounded-xl font-bold text-sm transition-all ${!useRawText ? 'bg-blue-700 text-white shadow-lg shadow-blue-100' : 'bg-white text-gray-600 border border-gray-100'}`}
+            className={`flex-1 py-4 rounded-xl font-bold text-sm transition-all ${!useRawText ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-100' : 'bg-white text-gray-600 border border-gray-100'}`}
           >
             File Upload
           </button>
           <button 
             onClick={() => setUseRawText(true)}
-            className={`flex-1 py-4 rounded-xl font-bold text-sm transition-all ${useRawText ? 'bg-blue-700 text-white shadow-lg shadow-blue-100' : 'bg-white text-gray-600 border border-gray-100'}`}
+            className={`flex-1 py-4 rounded-xl font-bold text-sm transition-all ${useRawText ? 'bg-cyan-600 text-white shadow-lg shadow-cyan-100' : 'bg-white text-gray-600 border border-gray-100'}`}
           >
             Paste Text
           </button>
@@ -272,11 +272,11 @@ You can also try using the "Paste Text" tab to manually provide your resume cont
             onDrop={handleDrop}
             className={`relative border-2 border-dashed rounded-[2.5rem] p-16 transition-all duration-300 flex flex-col items-center justify-center gap-6 ${
               dragActive 
-                ? 'border-blue-700 bg-blue-50/50 scale-[1.02]' 
-                : 'border-gray-200 bg-white hover:border-blue-300 hover:bg-gray-50/30'
+                ? 'border-indigo-600 bg-indigo-50/50 scale-[1.02]' 
+                : 'border-gray-200 bg-white hover:border-indigo-300 hover:bg-gray-50/30'
             }`}
           >
-            <div className="w-24 h-24 bg-blue-700 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-blue-200 mb-2">
+            <div className="w-24 h-24 bg-indigo-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-indigo-200 mb-2">
               {file ? <FileText className="w-10 h-10" /> : <Upload className="w-10 h-10" />}
             </div>
             
@@ -299,7 +299,7 @@ You can also try using the "Paste Text" tab to manually provide your resume cont
             value={rawText}
             onChange={(e) => setRawText(e.target.value)}
             placeholder="Paste your resume text here..."
-            className="w-full h-64 bg-white border border-gray-100 rounded-[2rem] p-8 text-sm font-medium focus:ring-4 focus:ring-blue-500/5 focus:border-blue-500 outline-none transition-all resize-none shadow-sm"
+            className="w-full h-64 bg-white border border-gray-100 rounded-[2rem] p-8 text-sm font-medium focus:ring-4 focus:ring-indigo-500/5 focus:border-indigo-500 outline-none transition-all resize-none shadow-sm"
           />
         )}
 
@@ -363,5 +363,4 @@ You can also try using the "Paste Text" tab to manually provide your resume cont
     </div>
   );
 }
-
 

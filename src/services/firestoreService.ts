@@ -1,3 +1,5 @@
+import { auth } from '../firebase';
+
 export enum OperationType {
   CREATE = 'create',
   UPDATE = 'update',
@@ -7,14 +9,45 @@ export enum OperationType {
   WRITE = 'write',
 }
 
-export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
-  const message = error instanceof Error ? error.message : String(error);
-
-  if (message.includes('Missing or insufficient permissions')) {
-    // Log only the minimal context — never log user credentials or PII
-    console.error(`Firestore permission denied: ${operationType} on ${path}`);
-    throw new Error(`Permission denied performing ${operationType} on ${path}.`);
+export interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId?: string | null;
+    email?: string | null;
+    emailVerified?: boolean | null;
+    isAnonymous?: boolean | null;
+    tenantId?: string | null;
+    providerInfo?: {
+      providerId?: string | null;
+      email?: string | null;
+    }[];
   }
+}
 
+export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
+      providerInfo: auth.currentUser?.providerData?.map(provider => ({
+        providerId: provider.providerId,
+        email: provider.email,
+      })) || []
+    },
+    operationType,
+    path
+  }
+  
+  if (errInfo.error.includes('Missing or insufficient permissions')) {
+    console.error('Firestore Permission Error: ', JSON.stringify(errInfo, null, 2));
+    throw new Error(JSON.stringify(errInfo));
+  }
+  
   throw error;
 }

@@ -89,24 +89,20 @@ export function SettingsSection() {
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    const isLocal = !!(user as any)?.isLocal;
 
     setIsSaving(true);
     setMessage(null);
 
     try {
-      if (isLocal) {
-        // Persist to localStorage for local/demo users
-        const key = `cb_userdata_${user.uid}`;
-        const existing = JSON.parse(localStorage.getItem(key) || '{}');
-        localStorage.setItem(key, JSON.stringify({ ...existing, displayName, photoURL, targetRole }));
-      } else {
-        const userRef = doc(db, 'users', user.uid);
-        await updateDoc(userRef, { displayName, photoURL, targetRole });
-      }
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        displayName,
+        photoURL,
+        targetRole
+      });
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
     } catch (error) {
-      if (!isLocal) handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}`);
+      handleFirestoreError(error, OperationType.WRITE, `users/${user.uid}`);
       setMessage({ type: 'error', text: 'Failed to update profile. Please try again.' });
     } finally {
       setIsSaving(false);
@@ -175,7 +171,7 @@ export function SettingsSection() {
            <div className="bg-white border border-gray-100 rounded-[3rem] p-8 text-center shadow-xl shadow-gray-200/40 relative overflow-hidden group">
               <div className="relative z-10">
                  <div className="relative inline-block mb-6">
-                    <div className="w-32 h-32 bg-blue-50 rounded-[2.5rem] flex items-center justify-center text-blue-700 font-bold border-4 border-white shadow-2xl overflow-hidden">
+                    <div className="w-32 h-32 bg-cyan-50 rounded-[2.5rem] flex items-center justify-center text-cyan-600 font-bold border-4 border-white shadow-2xl overflow-hidden">
                        {photoURL ? (
                          <img src={photoURL} alt="Profile" className="w-full h-full object-cover" />
                        ) : (
@@ -184,7 +180,7 @@ export function SettingsSection() {
                     </div>
                     <button 
                       onClick={startCamera}
-                      className="absolute -bottom-2 -right-2 w-10 h-10 bg-blue-700 hover:bg-blue-800 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-blue-100 transition-colors"
+                      className="absolute -bottom-2 -right-2 w-10 h-10 bg-cyan-600 hover:bg-cyan-700 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-cyan-100 transition-colors"
                     >
                        <Camera className="w-5 h-5" />
                     </button>
@@ -203,14 +199,14 @@ export function SettingsSection() {
                     />
                  </div>
                  <h3 className="text-xl font-black text-gray-900 mb-1">{userData?.displayName}</h3>
-                 <p className="text-[10px] font-black text-blue-700 border border-blue-100 bg-blue-50/50 px-3 py-1 rounded-full uppercase tracking-widest inline-block">{userData?.tier} Plan</p>
+                 <p className="text-[10px] font-black text-cyan-600 border border-cyan-100 bg-cyan-50/50 px-3 py-1 rounded-full uppercase tracking-widest inline-block">{userData?.tier} Plan</p>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
            </div>
 
             <div className="bg-gray-900 text-white rounded-[3rem] p-8 space-y-6">
               <div className="flex items-center gap-3">
-                 <Shield className="w-5 h-5 text-blue-500" />
+                 <Shield className="w-5 h-5 text-cyan-400" />
                  <h4 className="font-black text-sm uppercase tracking-widest">Account Security</h4>
               </div>
               <div className="space-y-4">
@@ -236,7 +232,7 @@ export function SettingsSection() {
                        value={displayName}
                        onChange={(e) => setDisplayName(e.target.value)}
                        placeholder="Enter your full name"
-                       className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:bg-white transition-all"
+                       className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-cyan-500/5 focus:bg-white transition-all"
                     />
                  </div>
 
@@ -254,7 +250,7 @@ export function SettingsSection() {
                           }}
                           onFocus={() => setShowRoleDocs(true)}
                           placeholder="e.g. Senior Software Engineer"
-                          className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:bg-white transition-all"
+                          className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-cyan-500/5 focus:bg-white transition-all"
                        />
                        {showRoleDocs && filteredRoles.length > 0 && (
                          <motion.div 
@@ -271,7 +267,7 @@ export function SettingsSection() {
                                   setRoleSearch(role);
                                   setShowRoleDocs(false);
                                 }}
-                                className="w-full text-left px-6 py-3 text-sm font-bold hover:bg-blue-50 transition-colors flex items-center gap-3"
+                                className="w-full text-left px-6 py-3 text-sm font-bold hover:bg-cyan-50 transition-colors flex items-center gap-3"
                               >
                                 <Search className="w-3 h-3 text-gray-500" />
                                 {role}
@@ -295,7 +291,7 @@ export function SettingsSection() {
                          <button 
                             type="button" 
                             onClick={startCamera}
-                            className="text-[9px] font-black uppercase text-blue-700 hover:text-blue-800 flex items-center gap-1"
+                            className="text-[9px] font-black uppercase text-cyan-600 hover:text-cyan-700 flex items-center gap-1"
                          >
                             <Camera className="w-3 h-3" /> Live Capture
                          </button>
@@ -307,11 +303,11 @@ export function SettingsSection() {
                             key={i}
                             type="button"
                             onClick={() => setPhotoURL(url)}
-                            className={`relative rounded-2xl overflow-hidden aspect-square border-4 transition-all hover:scale-105 active:scale-95 ${photoURL === url ? 'border-blue-700 shadow-xl' : 'border-white hover:border-gray-100'}`}
+                            className={`relative rounded-2xl overflow-hidden aspect-square border-4 transition-all hover:scale-105 active:scale-95 ${photoURL === url ? 'border-cyan-600 shadow-xl' : 'border-white hover:border-gray-100'}`}
                          >
                             <img src={url} alt={`Avatar ${i}`} className="w-full h-full object-cover" />
                             {photoURL === url && (
-                              <div className="absolute inset-0 bg-blue-700/20 flex items-center justify-center">
+                              <div className="absolute inset-0 bg-cyan-600/20 flex items-center justify-center">
                                  <CheckCircle2 className="w-6 h-6 text-white" />
                               </div>
                             )}
@@ -330,7 +326,7 @@ export function SettingsSection() {
                              value={photoURL}
                              onChange={(e) => setPhotoURL(e.target.value)}
                              placeholder="https://example.com/photo.jpg"
-                             className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:bg-white transition-all"
+                             className="w-full bg-gray-50 border border-gray-100 rounded-2xl pl-14 pr-6 py-4 text-sm font-bold focus:outline-none focus:ring-4 focus:ring-cyan-500/5 focus:bg-white transition-all"
                           />
                        </div>
                     </div>
@@ -350,7 +346,7 @@ export function SettingsSection() {
                     initial={{ opacity: 0, height: 0, scale: 0.95 }}
                     animate={{ opacity: 1, height: 'auto', scale: 1 }}
                     exit={{ opacity: 0, height: 0, scale: 0.95 }}
-                    className="p-8 bg-blue-700 rounded-[2.5rem] text-white space-y-6 shadow-2xl shadow-blue-200 overflow-hidden relative"
+                    className="p-8 bg-cyan-600 rounded-[2.5rem] text-white space-y-6 shadow-2xl shadow-cyan-200 overflow-hidden relative"
                   >
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl" />
                     <div className="flex items-center gap-4 relative z-10">
@@ -359,7 +355,7 @@ export function SettingsSection() {
                       </div>
                       <div>
                         <p className="text-sm font-black uppercase tracking-widest">New Identity Detected</p>
-                        <p className="text-xs text-blue-100 font-bold opacity-80 mt-0.5">Would you like to set this as your permanent profile photo?</p>
+                        <p className="text-xs text-cyan-100 font-bold opacity-80 mt-0.5">Would you like to set this as your permanent profile photo?</p>
                       </div>
                     </div>
                     <div className="flex gap-3 relative z-10">
@@ -379,7 +375,7 @@ export function SettingsSection() {
                           handleUpdateProfile({ preventDefault: () => {} } as any);
                           setShowConfirmSave(false);
                         }}
-                        className="flex-1 py-4 bg-white text-blue-700 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-950/20 active:scale-95 transition-all"
+                        className="flex-1 py-4 bg-white text-cyan-600 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-cyan-900/20 active:scale-95 transition-all"
                       >
                         Set as Permanent
                       </button>
@@ -391,7 +387,7 @@ export function SettingsSection() {
               <button 
                  type="submit"
                  disabled={isSaving}
-                 className="w-full py-5 bg-blue-700 hover:bg-blue-800 disabled:opacity-50 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-blue-100 transition-all transform active:scale-95"
+                 className="w-full py-5 bg-cyan-600 hover:bg-cyan-700 disabled:opacity-50 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-cyan-100 transition-all transform active:scale-95"
               >
                  {isSaving ? (
                     <motion.div 
@@ -429,16 +425,7 @@ export function SettingsSection() {
                         if (confirm) {
                           setIsResetting(true);
                           setMessage(null);
-                          const isLocalUser = !!(user as any)?.isLocal;
                           try {
-                            if (isLocalUser) {
-                              // For local/demo users, just clear their localStorage data
-                              localStorage.removeItem(`cb_userdata_${user.uid}`);
-                              localStorage.removeItem(`cb_snippets_${user.uid}`);
-                              setMessage({ type: 'success', text: 'Local data cleared.' });
-                              setTimeout(() => window.location.reload(), 1000);
-                              return;
-                            }
                             const collectionsToWipe = ['resumes', 'interviews', 'learningPlans', 'applications', 'portfolio', 'achievements', 'logs', 'personalityAnalyses'];
                             let deletedCount = 0;
                             
@@ -512,7 +499,7 @@ export function SettingsSection() {
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
               className="bg-zinc-900 border border-zinc-800 rounded-[3rem] w-full max-w-lg p-10 relative overflow-hidden"
             >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600/10 rounded-full -mr-32 -mt-32 blur-3xl" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full -mr-32 -mt-32 blur-3xl" />
               
               <button 
                 onClick={stopCamera}
@@ -547,7 +534,7 @@ export function SettingsSection() {
                     </button>
                     <button 
                        onClick={capturePhoto}
-                       className="flex-1 py-4 bg-blue-700 hover:bg-blue-800 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-xl shadow-blue-950/40 transition-all flex items-center justify-center gap-2"
+                       className="flex-1 py-4 bg-cyan-600 hover:bg-cyan-700 text-white font-black rounded-2xl text-[10px] uppercase tracking-widest shadow-xl shadow-cyan-900/40 transition-all flex items-center justify-center gap-2"
                     >
                        <Zap className="w-4 h-4" /> Capture Photo
                     </button>

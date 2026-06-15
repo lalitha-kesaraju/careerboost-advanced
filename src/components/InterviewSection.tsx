@@ -66,12 +66,12 @@ export function InterviewSection() {
              <input 
               value={role} onChange={(e) => setRole(e.target.value)}
               placeholder="Target Role (e.g. Senior Product Manager)"
-              className="px-6 py-3 bg-white border border-gray-100 rounded-2xl text-sm min-w-[300px] shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+              className="px-6 py-3 bg-white border border-gray-100 rounded-2xl text-sm min-w-[300px] shadow-sm focus:outline-none focus:ring-2 focus:ring-cyan-100"
              />
              <button 
               onClick={startSession}
               disabled={!role}
-              className="bg-blue-700 text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-blue-800 transition-all disabled:opacity-50"
+              className="bg-cyan-600 text-white px-8 py-3 rounded-2xl font-bold flex items-center gap-2 hover:bg-cyan-700 transition-all disabled:opacity-50"
              >
                <Play className="w-4 h-4 fill-current" /> Start Session
              </button>
@@ -82,7 +82,7 @@ export function InterviewSection() {
       <div className="flex-1 min-h-[500px] bg-white rounded-[3rem] border border-gray-100 shadow-sm relative overflow-hidden flex flex-col">
         {!isActive && !feedback && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-10 space-y-6">
-             <div className="w-20 h-20 bg-blue-50 text-blue-700 rounded-3xl flex items-center justify-center animate-pulse">
+             <div className="w-20 h-20 bg-cyan-50 text-cyan-600 rounded-3xl flex items-center justify-center animate-pulse">
                 <Mic2 className="w-10 h-10" />
              </div>
              <div>
@@ -104,12 +104,12 @@ export function InterviewSection() {
                 {transcript.map((msg, i) => (
                    <div key={i} className={`flex gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}>
                       <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                         msg.role === 'user' ? 'bg-gray-100 text-gray-400' : 'bg-blue-700 text-white shadow-lg shadow-blue-100'
+                         msg.role === 'user' ? 'bg-gray-100 text-gray-400' : 'bg-cyan-600 text-white shadow-lg shadow-cyan-100'
                       }`}>
                          {msg.role === 'user' ? <UserIcon className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
                       </div>
                       <div className={`p-5 rounded-[1.5rem] max-w-[70%] text-sm ${
-                         msg.role === 'user' ? 'bg-blue-50 text-blue-950 rounded-tr-none' : 'bg-gray-50 text-gray-700 rounded-tl-none italic serif'
+                         msg.role === 'user' ? 'bg-cyan-50 text-cyan-900 rounded-tr-none' : 'bg-gray-50 text-gray-700 rounded-tl-none italic serif'
                       }`}>
                          {msg.content}
                       </div>
@@ -140,7 +140,7 @@ export function InterviewSection() {
         )}
 
         {feedback && !isActive && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center p-20 text-center bg-blue-950 text-white">
+          <div className="absolute inset-0 flex flex-col items-center justify-center p-20 text-center bg-cyan-900 text-white">
              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
                 <Sparkles className="w-16 h-16 text-amber-400 mx-auto mb-8" />
                 <h3 className="text-3xl font-bold mb-4 tracking-tight">Session Complete</h3>
@@ -151,11 +151,11 @@ export function InterviewSection() {
                    <div className="pt-10 flex flex-col md:flex-row items-center justify-center gap-6">
                       <button 
                         onClick={() => setFeedback(null)}
-                        className="bg-white text-blue-950 px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:scale-105 transition-all text-sm uppercase tracking-widest"
+                        className="bg-white text-cyan-900 px-8 py-4 rounded-2xl font-bold flex items-center gap-2 hover:scale-105 transition-all text-sm uppercase tracking-widest"
                       >
                          New Session <ArrowRight className="w-4 h-4" />
                       </button>
-                      <span className="text-xs text-blue-400 font-mono uppercase tracking-tighter">Usage Recorded: 1 Session</span>
+                      <span className="text-xs text-cyan-300 font-mono uppercase tracking-tighter">Usage Recorded: 1 Session</span>
                    </div>
                 </div>
              </motion.div>
@@ -165,5 +165,3 @@ export function InterviewSection() {
     </div>
   );
 }
-
-

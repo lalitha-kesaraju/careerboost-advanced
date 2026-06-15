@@ -9,7 +9,7 @@
 
 @layer base {
   body {
-    @apply bg-[#FDFDFD] text-zinc-900 selection:bg-blue-100 selection:text-blue-950;
+    @apply bg-[#FDFDFD] text-zinc-900 selection:bg-cyan-100 selection:text-cyan-900;
   }
 }
 
@@ -44,4 +44,3 @@
     @apply bg-zinc-300;
   }
 }
-

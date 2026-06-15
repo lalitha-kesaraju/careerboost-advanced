@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, Clock, ChevronRight, CheckCircle2, GraduationCap, Zap, Loader2, Calendar, Target, Brain, Star, ArrowLeft } from 'lucide-react';
 import { getDetailedLearningPath } from '../services/gemini';
@@ -56,13 +56,13 @@ export function LearningPlanSection({ goal, missingSkills, onBack, data, onDataU
         <div className="flex items-center gap-4">
            <button 
              onClick={onBack}
-             className="w-10 h-10 flex items-center justify-center bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-blue-700 transition-colors"
+             className="w-10 h-10 flex items-center justify-center bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-indigo-600 transition-colors"
            >
               <ArrowLeft className="w-5 h-5" />
            </button>
            <div>
               <h2 className="text-3xl font-black text-gray-900 mb-1">Mastery Path</h2>
-              <p className="text-gray-500 italic serif text-sm opacity-80">Forging your path to <span className="text-blue-700 font-bold">{goal}</span></p>
+              <p className="text-gray-500 italic serif text-sm opacity-80">Forging your path to <span className="text-indigo-600 font-bold">{goal}</span></p>
            </div>
         </div>
         
@@ -71,7 +71,7 @@ export function LearningPlanSection({ goal, missingSkills, onBack, data, onDataU
              <button 
                key={d}
                onClick={() => setDuration(d)}
-               className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${duration === d ? 'bg-blue-700 text-white shadow-lg shadow-blue-100' : 'text-gray-400 hover:text-gray-600'}`}
+               className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all ${duration === d ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' : 'text-gray-400 hover:text-gray-600'}`}
              >
                 {d} Months
              </button>
@@ -84,9 +84,9 @@ export function LearningPlanSection({ goal, missingSkills, onBack, data, onDataU
            <motion.div 
              animate={{ rotate: 360 }}
              transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-             className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto"
+             className="w-20 h-20 bg-indigo-50 rounded-full flex items-center justify-center mx-auto"
            >
-              <Loader2 className="w-10 h-10 text-blue-700" />
+              <Loader2 className="w-10 h-10 text-indigo-600" />
            </motion.div>
            <div>
               <h3 className="text-2xl font-black text-gray-900">Architecting Your Curriculum</h3>
@@ -143,20 +143,20 @@ export function LearningPlanSection({ goal, missingSkills, onBack, data, onDataU
                    initial={{ opacity: 0, x: 20 }}
                    animate={{ opacity: 1, x: 0 }}
                    transition={{ delay: idx * 0.1 }}
-                   className="group bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-gray-200/50 transition-all border-l-8 border-l-blue-700"
+                   className="group bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden shadow-sm hover:shadow-xl hover:shadow-gray-200/50 transition-all border-l-8 border-l-indigo-600"
                 >
                    <div className="p-10">
                       <div className="flex items-start justify-between mb-8">
                          <div>
                             <div className="flex items-center gap-3 mb-2">
-                               <span className="text-[10px] bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-black uppercase tracking-widest">
+                               <span className="text-[10px] bg-indigo-50 text-indigo-600 px-3 py-1 rounded-full font-black uppercase tracking-widest">
                                   Phase {idx + 1}
                                </span>
                                <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">• {phase.duration}</span>
                             </div>
                             <h4 className="text-2xl font-black text-gray-900 tracking-tight">{phase.title}</h4>
                          </div>
-                         <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-blue-700 transition-colors">
+                         <div className="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 group-hover:text-indigo-600 transition-colors">
                             <Calendar className="w-5 h-5" />
                          </div>
                       </div>
@@ -165,18 +165,18 @@ export function LearningPlanSection({ goal, missingSkills, onBack, data, onDataU
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {(phase.topics || []).map((topic: string, tidx: number) => (
                                <div key={tidx} className="flex items-center gap-3 p-4 bg-gray-50 rounded-2xl border border-gray-100 group-hover:bg-white transition-all">
-                                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                                  <div className="w-2 h-2 rounded-full bg-indigo-400" />
                                   <span className="text-sm font-bold text-gray-700">{topic}</span>
                                </div>
                             ))}
                          </div>
                          
-                         <div className="p-5 bg-blue-50/50 rounded-3xl border border-dashed border-blue-100">
-                            <p className="text-[10px] text-blue-700 font-black uppercase tracking-widest mb-2 flex items-center gap-2">
+                         <div className="p-5 bg-indigo-50/50 rounded-3xl border border-dashed border-indigo-100">
+                            <p className="text-[10px] text-indigo-600 font-black uppercase tracking-widest mb-2 flex items-center gap-2">
                                <Target className="w-3 h-3" />
                                Capstone Project
                             </p>
-                            <p className="text-sm text-blue-950 font-bold italic serif">"{phase.project}"</p>
+                            <p className="text-sm text-indigo-900 font-bold italic serif">"{phase.project}"</p>
                          </div>
                       </div>
                    </div>

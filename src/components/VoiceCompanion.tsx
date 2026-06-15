@@ -58,15 +58,12 @@ export function VoiceCompanion({ isOpen, onToggle }: { isOpen: boolean, onToggle
 
   const fetchFullContext = async () => {
     if (!user) return;
-    const isLocal = !!(user as any)?.isLocal;
+    const collections = ['resumes', 'applications', 'achievements', 'portfolio'];
     const results: any = { usage: userData?.usage };
-    if (!isLocal) {
-      const collections = ['resumes', 'applications', 'achievements', 'portfolio'];
-      for (const coll of collections) {
-        const q = query(collection(db, 'users', user.uid, coll), limit(5));
-        const snap = await getDocs(q);
-        results[coll] = snap.docs.map(d => ({ ...d.data(), id: d.id }));
-      }
+    for (const coll of collections) {
+      const q = query(collection(db, 'users', user.uid, coll), limit(5));
+      const snap = await getDocs(q);
+      results[coll] = snap.docs.map(d => ({ ...d.data(), id: d.id }));
     }
     setContextData(results);
     return results;
@@ -145,7 +142,7 @@ export function VoiceCompanion({ isOpen, onToggle }: { isOpen: boolean, onToggle
                 animate={{ scale: 1.2, opacity: 0.2 }}
                 exit={{ scale: 1.5, opacity: 0 }}
                 transition={{ repeat: Infinity, duration: 2 }}
-                className="absolute inset-0 bg-blue-600 rounded-full blur-3xl"
+                className="absolute inset-0 bg-cyan-500 rounded-full blur-3xl"
               />
             )}
             {isSpeaking && (
@@ -166,7 +163,7 @@ export function VoiceCompanion({ isOpen, onToggle }: { isOpen: boolean, onToggle
             } : {}}
             transition={{ repeat: Infinity, duration: 2 }}
             className={`w-40 h-40 bg-gradient-to-tr ${
-              isListening ? 'from-blue-700 to-teal-600' : 
+              isListening ? 'from-cyan-600 to-teal-600' : 
               isSpeaking ? 'from-emerald-500 to-teal-500' : 
               'from-gray-700 to-gray-800'
             } rounded-[40%] flex items-center justify-center shadow-2xl relative z-10 transition-colors duration-500`}
@@ -194,7 +191,7 @@ export function VoiceCompanion({ isOpen, onToggle }: { isOpen: boolean, onToggle
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-2"
               >
-                <p className="text-blue-500 font-mono text-xs uppercase tracking-widest font-bold">Boost AI is Listening</p>
+                <p className="text-cyan-400 font-mono text-xs uppercase tracking-widest font-bold">Boost AI is Listening</p>
                 <h3 className="text-3xl font-medium text-white/90 italic serif px-10">
                    {interimTranscript || transcript || "Speak to Boost AI..."}
                 </h3>
@@ -238,7 +235,7 @@ export function VoiceCompanion({ isOpen, onToggle }: { isOpen: boolean, onToggle
            <button 
              onClick={toggleListening}
              className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
-               isListening ? 'bg-red-500 scale-110 shadow-red-500/20 shadow-2xl' : 'bg-blue-700 hover:scale-105 active:scale-95'
+               isListening ? 'bg-red-500 scale-110 shadow-red-500/20 shadow-2xl' : 'bg-cyan-600 hover:scale-105 active:scale-95'
              }`}
            >
               {isListening ? <MicOff className="w-8 h-8 text-white" /> : <Mic className="w-8 h-8 text-white" />}
@@ -253,4 +250,3 @@ export function VoiceCompanion({ isOpen, onToggle }: { isOpen: boolean, onToggle
     </motion.div>
   );
 }
-

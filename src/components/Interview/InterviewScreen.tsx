@@ -1,24 +1,12 @@
-﻿import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { InterviewData } from '../../types';
-import { GoogleGenAI, Chat } from '@google/genai';
 import { useAudioRecorder } from './hooks/useAudioRecorder';
-import { Mic, MicOff, Brain, User as UserIcon, Volume2, X } from 'lucide-react';
+import { 
+  Mic, MicOff, Terminal, Brain, User as UserIcon, Volume2, Loader2, Maximize, Minimize 
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import RealTimeFeedbackPanel from './RealTimeFeedbackPanel';
-import { realTimeFeedbackAnalyzer, SpeechMetrics, FeedbackIndicator } from './services/realTimeFeedbackService';
 
-// Language name → BCP-47 code
-const LANGUAGE_CODE_MAP: Record<string, string> = {
-  'English': 'en-US', 'Hindi': 'hi-IN', 'Spanish': 'es-ES', 'French': 'fr-FR',
-  'German': 'de-DE', 'Japanese': 'ja-JP', 'Mandarin': 'zh-CN', 'Telugu': 'te-IN',
-  'Tamil': 'ta-IN', 'Kannada': 'kn-IN', 'Malayalam': 'ml-IN', 'Bengali': 'bn-IN',
-  'Marathi': 'mr-IN', 'Gujarati': 'gu-IN', 'Punjabi': 'pa-IN', 'Korean': 'ko-KR',
-  'Russian': 'ru-RU', 'Arabic': 'ar-SA', 'Portuguese': 'pt-BR', 'Italian': 'it-IT',
-  'Turkish': 'tr-TR', 'Vietnamese': 'vi-VN', 'Thai': 'th-TH', 'Dutch': 'nl-NL',
-  'Greek': 'el-GR', 'Hebrew': 'he-IL', 'Indonesian': 'id-ID', 'Malay': 'ms-MY',
-  'Polish': 'pl-PL', 'Swedish': 'sv-SE', 'Norwegian': 'nb-NO',
-};
-
+// Simple polyfill/check for Speech Recognition
 const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
 
 interface InterviewScreenProps {
@@ -27,497 +15,426 @@ interface InterviewScreenProps {
 }
 
 const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFinish }) => {
-  const [timeLeft, setTimeLeft]             = useState(interviewData.timeLimit * 60);
-  const [status, setStatus]                 = useState('Initializing...');
-  const [conversation, setConversation]     = useState<{ speaker: 'user' | 'agent'; text: string; isFinal?: boolean }[]>([]);
+  const [timeLeft, setTimeLeft] = useState(interviewData.timeLimit * 60);
+  const [status, setStatus] = useState('Initializing...');
+  const [conversation, setConversation] = useState<{ speaker: 'user' | 'agent'; text: string; isFinal?: boolean }[]>([]);
   const [isAgentSpeaking, setIsAgentSpeaking] = useState(false);
-  const [isListening, setIsListening]       = useState(false);
-  const [error, setError]                   = useState<string | null>(null);
-  const [hasCamera, setHasCamera]           = useState(false);
-  const [speechMetrics, setSpeechMetrics]   = useState<SpeechMetrics>({
-    wordsPerMinute: 0, fillerWordsCount: 0, pauseCount: 0,
-    sentimentScore: 50, confidence: 0, clarity: 0,
-  });
-  const [feedbackIndicators, setFeedbackIndicators] = useState<FeedbackIndicator[]>([]);
+  const [isPaused, setIsPaused] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [currentTranscript, setCurrentTranscript] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
-  const chatRef                  = useRef<Chat | null>(null);
-  const recognitionRef           = useRef<any>(null);
-  const utteranceQueueRef        = useRef<string[]>([]);
-  const finalTranscriptRef       = useRef<string[]>([]);
+  const { isRecording, startRecording, stopRecording, audioUrl: recordedUrl, stream } = useAudioRecorder();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const chatRef = useRef<any>(null);
+  const recognitionRef = useRef<any>(null);
+  const utteranceQueueRef = useRef<string[]>([]);
+  const finalTranscriptRef = useRef<string[]>([]);
   const currentUserTranscriptRef = useRef('');
-  const endOfSpeechTimerRef      = useRef<number | null>(null);
-  const videoRef                 = useRef<HTMLVideoElement>(null);
-  const conversationEndRef       = useRef<HTMLDivElement>(null);
-  const selectedVoiceRef         = useRef<SpeechSynthesisVoice | null>(null);
-  const isEndingRef              = useRef(false);
-  const isProcessingRef          = useRef(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
-  const { startRecording, stopRecording, audioUrl, stream } = useAudioRecorder();
-
-  // Attach camera if available
   useEffect(() => {
     if (videoRef.current && stream) {
-      const videoTracks = stream.getVideoTracks();
-      if (videoTracks.length > 0) {
-        videoRef.current.srcObject = stream;
-        setHasCamera(true);
-      }
+      videoRef.current.srcObject = stream;
     }
   }, [stream]);
 
-  // Scroll conversation to bottom
   useEffect(() => {
-    conversationEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [conversation]);
-
-  // Pass recording to parent when done
-  useEffect(() => {
-    if (audioUrl) {
-      setTimeout(() => onFinish(finalTranscriptRef.current.join('\n'), audioUrl), 500);
-    }
-  }, [audioUrl, onFinish]);
-
-  // Load TTS voice (language-aware)
-  useEffect(() => {
-    const langCode = LANGUAGE_CODE_MAP[interviewData.language] ?? 'en-US';
-    const load = () => {
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        selectedVoiceRef.current =
-          voices.find(v => v.lang === langCode) ||
-          voices.find(v => v.lang.startsWith(langCode.split('-')[0])) ||
-          voices.find(v => v.lang === 'en-US') ||
-          null;
-      }
+    const loadVoices = () => {
+        const availableVoices = window.speechSynthesis.getVoices();
+        if (availableVoices.length > 0) {
+            const targetLang = interviewData.language === 'English' ? 'en-US' : 'en-US'; // Simplified
+            const preferredVoice = availableVoices.find(v => v.lang.includes(targetLang));
+            selectedVoiceRef.current = preferredVoice || null;
+        }
     };
-    window.speechSynthesis.onvoiceschanged = load;
-    load();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
     return () => { window.speechSynthesis.onvoiceschanged = null; };
   }, [interviewData.language]);
 
-  const formatTime = (s: number) =>
-    `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
-
-  // ── End interview ────────────────────────────────────────────────────────
-  const handleEndInterview = useCallback(() => {
-    if (isEndingRef.current) return;
-    isEndingRef.current = true;
-
-    setStatus('Finishing up...');
-    if (recognitionRef.current) {
-      recognitionRef.current.onresult = null;
-      recognitionRef.current.onend    = null;
-      recognitionRef.current.onerror  = null;
-      try { recognitionRef.current.stop(); } catch {}
-    }
-    setIsListening(false);
-    if (endOfSpeechTimerRef.current) clearTimeout(endOfSpeechTimerRef.current);
-    window.speechSynthesis.cancel();
-
-    const closing = "Time is up. Thank you for the interview. Your analysis will be ready shortly.";
-    const utterance = new SpeechSynthesisUtterance(closing);
-    utterance.lang = LANGUAGE_CODE_MAP[interviewData.language] ?? 'en-US';
-    if (selectedVoiceRef.current) utterance.voice = selectedVoiceRef.current;
-    finalTranscriptRef.current.push(`Agent: ${closing}`);
-    setConversation(prev => [...prev, { speaker: 'agent', text: closing, isFinal: true }]);
-    utterance.onend   = () => stopRecording();
-    utterance.onerror = () => stopRecording();
-    window.speechSynthesis.speak(utterance);
-  }, [stopRecording]);
-
-  // Timer
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) { clearInterval(timer); handleEndInterview(); return 0; }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(timer);
-  }, [handleEndInterview]);
-
-  // ── TTS queue ────────────────────────────────────────────────────────────
-  const processUtteranceQueue = useCallback(() => {
-    if (utteranceQueueRef.current.length === 0 || window.speechSynthesis.speaking) return;
-    setIsAgentSpeaking(true);
-    const text = utteranceQueueRef.current.shift();
-    if (!text) { setIsAgentSpeaking(false); return; }
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = LANGUAGE_CODE_MAP[interviewData.language] ?? 'en-US';
-    if (selectedVoiceRef.current) utterance.voice = selectedVoiceRef.current;
-    utterance.onend = () => {
-      if (utteranceQueueRef.current.length > 0) {
-        processUtteranceQueue();
-      } else {
-        setIsAgentSpeaking(false);
-        // eslint-disable-next-line @typescript-eslint/no-use-before-define
-        startListening();
-      }
-    };
-    utterance.onerror = () => {
-      setIsAgentSpeaking(false);
-      // eslint-disable-next-line @typescript-eslint/no-use-before-define
-      startListening();
-    };
-    window.speechSynthesis.speak(utterance);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ── Mic / speech recognition ─────────────────────────────────────────────
-  const startListening = () => {
-    if (!recognitionRef.current || isEndingRef.current || isProcessingRef.current) return;
-
-    setIsListening(true);
-    currentUserTranscriptRef.current = '';
-
-    setConversation(prev => {
-      const last = prev[prev.length - 1];
-      if (last?.speaker === 'user' && !last.isFinal) return prev;
-      return [...prev, { speaker: 'user', text: '', isFinal: false }];
-    });
-
-    recognitionRef.current.onend = async () => {
-      setIsListening(false);
-      if (endOfSpeechTimerRef.current) clearTimeout(endOfSpeechTimerRef.current);
-      if (isEndingRef.current || isProcessingRef.current) return;
-
-      const lastUserMessage = currentUserTranscriptRef.current.trim();
-
-      setConversation(prev => {
-        const updated = [...prev];
-        const last = updated[updated.length - 1];
-        if (last?.speaker === 'user' && !last.isFinal) {
-          last.isFinal = true;
-          last.text = lastUserMessage || last.text || '(No response)';
-        }
-        return updated;
-      });
-
-      if (!lastUserMessage) {
-        utteranceQueueRef.current.push("I didn't catch that. Could you please say that again?");
-        processUtteranceQueue();
-        return;
-      }
-
-      if (!chatRef.current) return;
-      isProcessingRef.current = true;
-      finalTranscriptRef.current.push(`User: ${lastUserMessage}`);
-      setStatus('Thinking...');
-
-      try {
-        const aiStream = await chatRef.current.sendMessageStream({ message: lastUserMessage });
-        let buffer = '';
-        let fullResponse = '';
-
-        setConversation(prev => [...prev, { speaker: 'agent', text: '' }]);
-
-        for await (const chunk of aiStream) {
-          const t = chunk.text ?? '';
-          buffer += t;
-          fullResponse += t;
-
-          setConversation(prev => {
-            const updated = [...prev];
-            const last = updated[updated.length - 1];
-            if (last?.speaker === 'agent') last.text = fullResponse;
-            return updated;
-          });
-
-          const sentences = buffer.match(/[^.!?]+[.!?\n]+/g);
-          if (sentences) {
-            buffer = buffer.slice(sentences.join('').length);
-            sentences.forEach(s => utteranceQueueRef.current.push(s.trim()));
-            processUtteranceQueue();
-          }
-        }
-        if (buffer.trim()) {
-          utteranceQueueRef.current.push(buffer.trim());
-          processUtteranceQueue();
-        }
-
-        finalTranscriptRef.current.push(`Agent: ${fullResponse.trim()}`);
-        setStatus('Listening...');
-      } catch (e: any) {
-        console.error(e);
-        setStatus('Error. Retrying...');
-        setTimeout(() => startListening(), 1000);
-      } finally {
-        isProcessingRef.current = false;
-      }
-    };
-
-    recognitionRef.current.onresult = (event: any) => {
-      if (endOfSpeechTimerRef.current) clearTimeout(endOfSpeechTimerRef.current);
-
-      let interim = '', final = '';
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        if (event.results[i].isFinal) final += event.results[i][0].transcript;
-        else interim += event.results[i][0].transcript;
-      }
-
-      const current = (currentUserTranscriptRef.current + ' ' + final + interim).trim();
-      currentUserTranscriptRef.current = (currentUserTranscriptRef.current + ' ' + final).trim() + (interim ? '' : '');
-      if (final) currentUserTranscriptRef.current = (currentUserTranscriptRef.current + ' ' + final).trim();
-
-      // simpler: just accumulate
-      const display = (currentUserTranscriptRef.current + ' ' + interim).trim();
-
-      // Real-time feedback analysis
-      if (display.length > 10) {
-        const allUserText = finalTranscriptRef.current.filter(l => l.startsWith('User:')).join(' ') + ' ' + display;
-        const metrics = realTimeFeedbackAnalyzer.analyzeSpeech(allUserText);
-        const fb = realTimeFeedbackAnalyzer.generateFeedback(metrics);
-        setSpeechMetrics(metrics);
-        setFeedbackIndicators(fb);
-      }
-
-      setConversation(prev => {
-        const updated = [...prev];
-        const last = updated[updated.length - 1];
-        if (last?.speaker === 'user' && !last.isFinal) last.text = display || current;
-        return updated;
-      });
-
-      // 1.5s silence → stop → onend fires
-      endOfSpeechTimerRef.current = window.setTimeout(() => {
-        try { recognitionRef.current?.stop(); } catch {}
-      }, 1500);
-    };
-
-    recognitionRef.current.onerror = (e: any) => {
-      console.error('Speech recognition error:', e.error);
-      if (e.error === 'not-allowed') {
-        setError('Microphone permission denied. Please allow mic access and refresh.');
-        return;
-      }
-      // no-speech / network / aborted → restart silently
-      if (!isEndingRef.current && !isProcessingRef.current) {
-        setTimeout(() => startListening(), 500);
-      }
-    };
-
-    try { recognitionRef.current.start(); } catch (e) {
-      console.error('Recognition start failed:', e);
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+        containerRef.current?.requestFullscreen();
+        setIsFullscreen(true);
+    } else {
+        document.exitFullscreen();
+        setIsFullscreen(false);
     }
   };
 
-  // ── Init ─────────────────────────────────────────────────────────────────
+  const handleEndInterview = useCallback(() => {
+    setStatus('Interview ended. Finishing up...');
+    window.speechSynthesis.cancel();
+    if (recognitionRef.current) {
+        recognitionRef.current.stop();
+    }
+    stopRecording();
+  }, [stopRecording]);
+
   useEffect(() => {
-    const init = async () => {
-      if (!SpeechRecognitionAPI) {
-        setError('Speech Recognition not supported. Please use Chrome on desktop.');
+    if (recordedUrl) {
+      onFinish(finalTranscriptRef.current.join('\n'), recordedUrl);
+    }
+  }, [recordedUrl, onFinish]);
+
+  const startListening = useCallback(() => {
+    if (!recognitionRef.current || isListening) return;
+    setIsListening(true);
+    currentUserTranscriptRef.current = '';
+    
+    try {
+        recognitionRef.current.start();
+    } catch (e) {
+        console.warn("Recognition already started or error:", e);
+    }
+  }, [isListening]);
+
+  const processUtteranceQueue = useCallback(() => {
+    if (utteranceQueueRef.current.length === 0 || window.speechSynthesis.speaking) return;
+    setIsAgentSpeaking(true);
+    const textToSpeak = utteranceQueueRef.current.shift();
+    if (!textToSpeak) {
+        setIsAgentSpeaking(false);
+        startListening();
         return;
-      }
-
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) {
-        setError('Gemini API key not configured.');
-        return;
-      }
-
-      await startRecording();
-      setStatus('Connecting to AI...');
-      window.speechSynthesis.cancel();
-
-      const ai = new GoogleGenAI({ apiKey });
-      const companyContext = interviewData.dreamCompany
-        ? ` You are interviewing on behalf of ${interviewData.dreamCompany}. Tailor your questions to reflect ${interviewData.dreamCompany}'s known interview style, culture, and values. Ask company-specific questions such as "Why do you want to work at ${interviewData.dreamCompany}?" and questions that reflect their engineering/work culture.`
-        : '';
-
-      const resumeContext = interviewData.resumeText
-        ? ` The candidate's resume:\n"""\n${interviewData.resumeText}\n"""\nTailor your technical and experience-based questions directly to projects, skills, and roles mentioned in this resume. Ask follow-up questions about specific things they listed.`
-        : interviewData.resume
-        ? ` The candidate uploaded a resume named "${interviewData.resume}". Ask relevant experience-based questions.`
-        : '';
-
-      const questionFocus = interviewData.interviewType === 'hr'
-        ? `Ask a smart mix of:
-- Motivation and career goal questions (why this role, why this company, where they see themselves growing)
-- Teamwork and conflict-resolution questions
-- Leadership and ownership examples
-- Culture-fit questions${interviewData.dreamCompany ? ` relevant to ${interviewData.dreamCompany}` : ''}
-- STAR-structured behavioral questions (Situation, Task, Action, Result)
-- At most one or two light questions about their role or background for context — avoid deep technical or coding questions
-- Follow-up questions based on the candidate's answers`
-        : `Ask a smart mix of:
-- Technical questions specific to the ${interviewData.jobRole} role
-- Behavioral questions using STAR method prompts
-- HR/cultural fit questions${interviewData.dreamCompany ? ` relevant to ${interviewData.dreamCompany}` : ''}
-- Follow-up questions based on the candidate's answers`;
-
-      const systemPrompt = `You are a voice-based AI interviewer conducting a ${interviewData.difficultyLevel ?? 'medium'}-level mock interview with ${interviewData.userName ?? 'the candidate'} for the role of '${interviewData.jobRole}'.${companyContext}${resumeContext}
-
-Duration: ${interviewData.timeLimit} minutes. Keep all responses concise and conversational — optimized for text-to-speech (no markdown, no bullet points, speak in natural sentences).
-
-${questionFocus}
-
-Start by introducing yourself as an AI interviewer, mention the role and company${interviewData.dreamCompany ? ` (${interviewData.dreamCompany})` : ''}, and ask the first question.`;
-
-      chatRef.current = ai.chats.create({
-        model: 'gemini-3.5-flash',
-        config: { systemInstruction: systemPrompt },
-      });
-
-      finalTranscriptRef.current.push(`SYSTEM: ${systemPrompt}`);
-
-      const rec = new SpeechRecognitionAPI();
-      rec.continuous     = true;
-      rec.interimResults = true;
-      rec.lang           = LANGUAGE_CODE_MAP[interviewData.language] ?? 'en-US';
-      recognitionRef.current = rec;
-      realTimeFeedbackAnalyzer.startTracking();
-
-      setStatus('Waiting for AI...');
-      try {
-        const initStream = await chatRef.current.sendMessageStream({ message: 'Hello, please begin the interview.' });
-        let buffer = '';
-        let fullResponse = '';
-        setConversation([{ speaker: 'agent', text: '' }]);
-
-        for await (const chunk of initStream) {
-          const t = chunk.text ?? '';
-          buffer += t;
-          fullResponse += t;
-          setConversation([{ speaker: 'agent', text: fullResponse }]);
-
-          const sentences = buffer.match(/[^.!?]+[.!?\n]+/g);
-          if (sentences) {
-            buffer = buffer.slice(sentences.join('').length);
-            sentences.forEach(s => utteranceQueueRef.current.push(s.trim()));
-            processUtteranceQueue();
-          }
-        }
-        if (buffer.trim()) {
-          utteranceQueueRef.current.push(buffer.trim());
-          processUtteranceQueue();
-        }
-        finalTranscriptRef.current.push(`Agent: ${fullResponse}`);
-        setStatus('AI is speaking...');
-      } catch (e: any) {
-        setError(`Failed to connect to AI: ${e.message}`);
-      }
+    }
+    const utterance = new SpeechSynthesisUtterance(textToSpeak);
+    if (selectedVoiceRef.current) utterance.voice = selectedVoiceRef.current;
+    
+    utterance.onstart = () => {
+        setIsAgentSpeaking(true);
     };
 
-    init();
+    utterance.onend = () => {
+        if (utteranceQueueRef.current.length > 0) {
+            processUtteranceQueue();
+        } else {
+            setIsAgentSpeaking(false);
+            startListening();
+        }
+    };
+
+    utterance.onerror = (e) => {
+        console.error("Speech synthesis error:", e);
+        setIsAgentSpeaking(false);
+        startListening();
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }, [startListening]);
+
+  useEffect(() => {
+    const initSession = async () => {
+        try {
+            await startRecording();
+        } catch (err) {
+            setError("Microphone and Camera permission are required for the interview. Please enable them in your browser settings.");
+            setStatus('Permission Denied');
+            return;
+        }
+        setStatus('Connecting to AI agent...');
+        
+        // Use proxy instead of direct SDK to protect API key
+        const systemInstruction = `You are a world-class, adaptive interviewer conducting a ${interviewData.difficultyLevel} level interview for a ${interviewData.jobRole} position at ${interviewData.dreamCompany || 'a top-tier firm'}.
+        
+        ${interviewData.resumeText ? `CANDIDATE BACKGROUND (Extracted from Resume):
+        ${interviewData.resumeText.substring(0, 2000)} ... [End of Snippet]` : ''}
+        
+        INTERVIEWER PROTOCOL (ADAPTIVE FLOW):
+        1. DYNAMIC BRANCHING: Do not stick to a rigid list of questions. If the candidate mentions a project, Technology (especially those from their resume), or challenge, ask relevant follow-up questions to probe their depth.
+        2. RESUME FIRST: If a resume is provided, prioritize asking about specific technologies, roles, or achievements mentioned there. Do not give generic feedback; be specific about the data in the resume.
+        3. REFERENCE BACKGROUND: Use the candidate's resume content provided above to ask specific questions about their past experiences, projects, or achievements.
+        4. SENSE DEPTH: If the candidate gives a shallow answer, probe for details using the STAR method (Situation, Task, Action, Result). 
+        5. CHALLENGE ADAPTATION (Level: ${interviewData.difficultyLevel.toUpperCase()}): 
+           - EASY: Focus on core concepts, clear definitions, and enthusiastic behavioral responses. Be encouraging.
+           - MEDIUM: Standard professional depth. Mix architectural questions with implementation details. Expected high-quality rationale.
+           - HARD: Intense technical probing. Expect optimization talk, edge-case handling, and systemic thinking. Be more critical and push the candidate to their limit.
+        6. CONTEXT AWARENESS: Reference previous parts of their current conversation in your next questions.
+        7. TRANSITIONS: Make transitions between topics smooth and justified.
+        
+        INTERVIEWER RULES:
+        - STYLE: Professional, observant, and slightly challenging.
+        - CONCISION: Keep your responses to 1-2 sentences. You are the listener.
+        - IDENTITY: Candidate is ${interviewData.userName}.
+        
+        Start by introducing yourself and asking a highly specific opening question derived directly from a detail in the candidate's background (if provided), otherwise tailored to the ${interviewData.jobRole} role.`;
+
+        // We will store history in a ref to send with each proxy call
+        const chatHistoryRef: { role: string; parts: { text: string }[] }[] = [];
+
+        chatRef.current = {
+            sendMessage: async ({ message }: { message: string }) => {
+                const response = await fetch('/api/gemini/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        payload: {
+                            message,
+                            history: [...chatHistoryRef],
+                            systemInstruction,
+                            config: { maxOutputTokens: 256 }
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    const err = await response.json();
+                    throw new Error(err.error || 'Chat proxy failed');
+                }
+                
+                const data = await response.json();
+                
+                // Update local history
+                chatHistoryRef.push({ role: 'user', parts: [{ text: message }] });
+                chatHistoryRef.push({ role: 'model', parts: [{ text: data.text }] });
+                
+                return data;
+            }
+        };
+
+        if (SpeechRecognitionAPI) {
+            recognitionRef.current = new SpeechRecognitionAPI();
+            recognitionRef.current.continuous = true;
+            recognitionRef.current.interimResults = true;
+            
+            recognitionRef.current.onresult = (event: any) => {
+                let interimTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        const text = event.results[i][0].transcript;
+                        handleUserResponseComplete(text);
+                        setCurrentTranscript('');
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+                setCurrentTranscript(interimTranscript);
+            };
+
+            recognitionRef.current.onend = () => {
+                setIsListening(false);
+            };
+
+            recognitionRef.current.onerror = (event: any) => {
+                console.error("Speech recognition error:", event.error);
+                setIsListening(false);
+            };
+        }
+
+        // Initial Greeting - just trigger the model to start based on the system instructions
+        handleUserResponseComplete("Please start the interview.", true);
+    };
+
+    const handleUserResponseComplete = async (text: string, isInternalInitial: boolean = false) => {
+        if (!isInternalInitial) {
+            setConversation(prev => [...prev, { speaker: 'user', text, isFinal: true }]);
+            finalTranscriptRef.current.push(`User: ${text}`);
+            if (recognitionRef.current) recognitionRef.current.stop();
+        }
+
+        setStatus('AI is thinking...');
+        try {
+            const result = await chatRef.current.sendMessage({ message: text });
+            const response = result.text;
+            
+            setConversation(prev => [...prev, { speaker: 'agent', text: response }]);
+            finalTranscriptRef.current.push(`Agent: ${response}`);
+            
+            utteranceQueueRef.current.push(response);
+            processUtteranceQueue();
+            setStatus('Waiting for response...');
+        } catch (err) {
+            console.error(err);
+            setStatus('AI connection error.');
+            setIsAgentSpeaking(false);
+            startListening();
+        }
+    };
+
+    initSession();
 
     return () => {
-      isEndingRef.current = true;
-      if (recognitionRef.current) {
-        recognitionRef.current.onresult = null;
-        recognitionRef.current.onend    = null;
-        recognitionRef.current.onerror  = null;
-        try { recognitionRef.current.stop(); } catch {}
-      }
-      if (endOfSpeechTimerRef.current) clearTimeout(endOfSpeechTimerRef.current);
-      window.speechSynthesis.cancel();
+        window.speechSynthesis.cancel();
+        if (recognitionRef.current) recognitionRef.current.stop();
+        stopRecording();
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── UI ───────────────────────────────────────────────────────────────────
-  if (error) {
-    return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0D0D0D] text-white p-8 text-center">
-        <div className="text-red-400 text-lg font-bold mb-3">Error</div>
-        <div className="text-gray-400 text-sm max-w-sm">{error}</div>
-      </div>
-    );
-  }
+  const formatTime = (s: number) => {
+    const m = Math.floor(s / 60);
+    const rs = s % 60;
+    return `${m}:${rs < 10 ? '0' : ''}${rs}`;
+  };
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+        if (!isPaused) setTimeLeft(prev => Math.max(0, prev - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [isPaused]);
 
   return (
-    // Fixed fullscreen overlay — works on both mobile and desktop
-    <div className="fixed inset-0 z-50 flex flex-col bg-[#0D0D0D] text-white overflow-hidden">
-      <RealTimeFeedbackPanel metrics={speechMetrics} feedback={feedbackIndicators} isActive={isListening} />
-      {/* Top bar */}
-      <div className="flex items-center justify-between px-4 sm:px-8 py-4 border-b border-white/5 shrink-0">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-          <span className="text-xs font-mono text-white/50 uppercase tracking-widest">Live Interview</span>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className={`font-mono text-lg font-bold tabular-nums ${timeLeft < 60 ? 'text-red-400' : 'text-white'}`}>
-            {formatTime(timeLeft)}
-          </span>
-          <button
-            onClick={handleEndInterview}
-            className="flex items-center gap-2 px-4 py-2 bg-red-500/20 hover:bg-red-500/30 border border-red-500/40 text-red-400 rounded-xl text-xs font-bold uppercase tracking-wider transition-all"
-          >
-            <X className="w-3.5 h-3.5" />
-            End
-          </button>
-        </div>
-      </div>
-
-      {/* Body */}
-      <div className="flex flex-1 overflow-hidden flex-col sm:flex-row">
-        {/* Sidebar — stacks on top on mobile */}
-        <div className="sm:w-56 shrink-0 border-b sm:border-b-0 sm:border-r border-white/5 flex sm:flex-col flex-row items-center sm:items-start gap-4 px-4 py-3 sm:p-5 sm:pt-6">
-          {/* Camera */}
-          <div className="relative w-28 sm:w-full aspect-video rounded-2xl overflow-hidden bg-black/40 shrink-0">
-            {hasCamera
-              ? <video ref={videoRef} autoPlay muted playsInline className="w-full h-full object-cover scale-x-[-1]" />
-              : <div className="w-full h-full flex items-center justify-center">
-                  <UserIcon className="w-8 h-8 text-white/20" />
+    <div ref={containerRef} className="flex flex-col bg-gray-900 rounded-[3.5rem] overflow-hidden shadow-2xl relative min-h-[85vh] text-white">
+        {error && (
+            <div className="absolute inset-0 z-50 bg-gray-900/90 backdrop-blur-md flex items-center justify-center p-8">
+                <div className="bg-gray-800 p-10 rounded-[2.5rem] border border-rose-500/30 max-w-md text-center space-y-6">
+                    <div className="w-20 h-20 bg-rose-500/20 rounded-full flex items-center justify-center mx-auto">
+                        <MicOff className="w-10 h-10 text-rose-500" />
+                    </div>
+                    <h3 className="text-2xl font-bold">Permissions Required</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed">{error}</p>
+                    <button 
+                        onClick={() => window.location.reload()}
+                        className="w-full py-4 bg-indigo-600 hover:bg-indigo-700 rounded-2xl font-black transition-all"
+                    >
+                        Try Again
+                    </button>
+                    <button 
+                        onClick={() => onFinish('', null)}
+                        className="w-full py-4 text-gray-500 hover:text-gray-300 text-xs font-black uppercase tracking-widest"
+                    >
+                        Exit Interview
+                    </button>
                 </div>
-            }
-            <div className="absolute bottom-1 left-2 text-[9px] bg-black/60 text-white/50 px-1.5 py-0.5 rounded font-mono">YOU</div>
-          </div>
-
-          {/* AI avatar + voice bars */}
-          <div className="flex sm:flex-col flex-row items-center gap-3 sm:gap-4 sm:w-full sm:mt-4">
-            <div className={`w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all duration-300 ${isAgentSpeaking ? 'bg-blue-500 shadow-2xl shadow-blue-500/40 scale-110' : 'bg-white/5'}`}>
-              <Brain className={`w-7 h-7 sm:w-8 sm:h-8 transition-colors ${isAgentSpeaking ? 'text-white' : 'text-white/20'}`} />
             </div>
-            <div className="flex items-end gap-1 h-7">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <motion.div
-                  key={i}
-                  className="w-1 rounded-full bg-blue-500"
-                  animate={isAgentSpeaking
-                    ? { height: [4, 16 + i * 3, 4], opacity: [0.3, 1, 0.3] }
-                    : { height: 3, opacity: 0.15 }}
-                  transition={{ duration: 0.5 + i * 0.05, repeat: Infinity, ease: 'easeInOut' }}
-                />
-              ))}
+        )}
+        {/* Header */}
+        <div className="p-8 bg-gray-800/50 backdrop-blur-xl flex items-center justify-between border-b border-white/5">
+            <div className="flex items-center gap-4">
+            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center text-white">
+                <Terminal className="w-6 h-6" />
             </div>
-          </div>
-
-          {/* Status */}
-          <div className="sm:mt-auto flex items-center gap-2 px-3 py-2 bg-white/5 rounded-xl sm:w-full min-w-0">
-            {isListening
-              ? <Mic className="w-3 h-3 text-emerald-400 animate-pulse shrink-0" />
-              : isAgentSpeaking
-              ? <Volume2 className="w-3 h-3 text-blue-500 animate-pulse shrink-0" />
-              : <MicOff className="w-3 h-3 text-white/20 shrink-0" />}
-            <span className="text-[9px] sm:text-[10px] font-mono text-white/40 uppercase tracking-wider truncate">{status}</span>
-          </div>
+            <div>
+                <h3 className="text-white font-bold tracking-tight">{interviewData.jobRole} Round</h3>
+                <p className="text-[10px] text-gray-400 font-black uppercase tracking-widest">{interviewData.difficultyLevel} • {formatTime(timeLeft)} REMAINING</p>
+            </div>
+            </div>
+            <div className="flex items-center gap-3">
+                <button 
+                    onClick={toggleFullscreen}
+                    className="p-3 bg-white/5 hover:bg-white/10 rounded-xl transition-all"
+                >
+                    {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                </button>
+                <div className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-2">
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Live AI Session</span>
+                </div>
+                <button 
+                    onClick={handleEndInterview}
+                    className="px-6 py-2 bg-rose-600 hover:bg-rose-700 rounded-xl transition-all text-white font-black text-[10px] uppercase tracking-widest"
+                >
+                    End Interview
+                </button>
+            </div>
         </div>
 
-        {/* Conversation */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
-          <AnimatePresence initial={false}>
-            {conversation.map((entry, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`flex gap-2 sm:gap-3 ${entry.speaker === 'user' ? 'flex-row-reverse' : ''}`}
-              >
-                <div className={`w-7 h-7 sm:w-8 sm:h-8 rounded-xl flex items-center justify-center shrink-0 ${entry.speaker === 'agent' ? 'bg-blue-500' : 'bg-white/10'}`}>
-                  {entry.speaker === 'agent'
-                    ? <Brain className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
-                    : <UserIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white/60" />}
+        {/* Content Area */}
+        <div className="flex-1 flex gap-8 p-10 overflow-hidden">
+            {/* Left: Chat & Voice Visualization */}
+            <div className="flex-1 flex flex-col gap-8">
+                <div className="flex-1 bg-gray-800/30 rounded-[2.5rem] p-10 overflow-y-auto space-y-8 scroll-smooth overflow-x-hidden">
+                    <AnimatePresence>
+                        {conversation.map((msg, i) => (
+                            <motion.div 
+                                key={i}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className={`flex gap-6 ${msg.speaker === 'user' ? 'flex-row-reverse' : ''}`}
+                            >
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 ${
+                                    msg.speaker === 'agent' ? 'bg-indigo-600' : 'bg-gray-700'
+                                }`}>
+                                    {msg.speaker === 'agent' ? <Brain className="w-6 h-6" /> : <UserIcon className="w-6 h-6" />}
+                                </div>
+                                <div className={`max-w-[85%] p-8 rounded-[2rem] ${
+                                    msg.speaker === 'agent' ? 'bg-gray-800 text-gray-100 rounded-tl-none border border-white/5' : 'bg-white text-gray-900 rounded-tr-none'
+                                }`}>
+                                    <p className="text-sm font-medium leading-relaxed italic serif">{msg.text}</p>
+                                </div>
+                            </motion.div>
+                        ))}
+                        {currentTranscript && (
+                             <motion.div 
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                className="flex gap-6 flex-row-reverse"
+                            >
+                                <div className="w-12 h-12 rounded-2xl flex items-center justify-center flex-shrink-0 bg-emerald-600 animate-pulse">
+                                    <UserIcon className="w-6 h-6 text-white" />
+                                </div>
+                                <div className="max-w-[85%] p-8 rounded-[2rem] bg-indigo-50 text-indigo-900 rounded-tr-none border border-indigo-100 shadow-lg">
+                                    <p className="text-sm font-medium leading-relaxed">{currentTranscript}<span className="inline-block w-1 h-4 bg-indigo-400 ml-1 animate-blink" /></p>
+                                    <span className="text-[8px] font-black uppercase tracking-tighter text-indigo-400 mt-2 block">Live Transcript...</span>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
-                <div className={`max-w-[80%] px-4 py-2.5 rounded-2xl text-sm leading-relaxed ${entry.speaker === 'agent' ? 'bg-white/5 text-white rounded-tl-none' : 'bg-blue-700/30 text-blue-100 rounded-tr-none'}`}>
-                  {entry.text || <span className="opacity-40 text-lg">● ● ●</span>}
+
+                {/* Voice Indicators */}
+                <div className="h-32 bg-gray-800/50 rounded-[2.5rem] flex items-center justify-center gap-12">
+                    <div className="flex flex-col items-center gap-3">
+                        <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${isAgentSpeaking ? 'bg-indigo-600 shadow-[0_0_30px_rgba(79,70,229,0.4)] scale-110' : 'bg-white/5'}`}>
+                            <Volume2 className={`w-8 h-8 ${isAgentSpeaking ? 'text-white' : 'text-gray-600'}`} />
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Interviewer</span>
+                    </div>
+
+                    <div className="flex gap-1 items-center h-12">
+                        {[...Array(12)].map((_, i) => (
+                            <motion.div
+                                key={i}
+                                animate={{ height: isListening ? [8, 32, 12, 24, 8] : 4 }}
+                                transition={{ repeat: Infinity, duration: 0.8, delay: i * 0.05 }}
+                                className={`w-1 rounded-full ${isListening ? 'bg-emerald-500' : 'bg-gray-700'}`}
+                            />
+                        ))}
+                    </div>
+
+                    <div className="flex flex-col items-center gap-3">
+                        <div className={`w-16 h-16 rounded-full flex items-center justify-center transition-all ${isListening ? 'bg-emerald-600 shadow-[0_0_30px_rgba(16,185,129,0.4)] scale-110' : 'bg-white/5'}`}>
+                            {isListening ? <Mic className="w-8 h-8 text-white" /> : <MicOff className="w-8 h-8 text-gray-600" />}
+                        </div>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
+                            {isListening ? (currentTranscript ? 'Listening...' : 'Speak Now') : 'Mic Off'}
+                        </span>
+                    </div>
                 </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          <div ref={conversationEndRef} />
+            </div>
+
+            {/* Right: Camera Preview & Status */}
+            <div className="w-96 flex flex-col gap-8">
+                <div className="aspect-video bg-gray-800 rounded-[2.5rem] overflow-hidden relative shadow-2xl border border-white/5">
+                    <video ref={videoRef} autoPlay muted className="w-full h-full object-cover transform -scale-x-100" />
+                    <div className="absolute top-6 left-6 px-3 py-1 bg-black/40 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Live Feed</span>
+                    </div>
+                </div>
+
+                <div className="flex-1 bg-white/[0.03] rounded-[2.5rem] p-10 border border-white/5 space-y-6">
+                    <h4 className="text-xs font-black text-indigo-400 uppercase tracking-widest">Session Status</h4>
+                    <div className="space-y-4">
+                        {[
+                            { label: 'Network Info', value: 'Optimized Latency', color: 'text-emerald-400' },
+                            { label: 'Voice Processor', value: 'Active (v2.1)', color: 'text-emerald-400' },
+                            { label: 'Live Transcript', value: SpeechRecognitionAPI ? 'Ready' : 'Not Supported', color: SpeechRecognitionAPI ? 'text-emerald-400' : 'text-rose-400' },
+                            { label: 'State', value: status, color: 'text-indigo-400' },
+                        ].map((item, i) => (
+                            <div key={i} className="flex justify-between items-center py-3 border-b border-white/5 last:border-0">
+                                <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{item.label}</span>
+                                <span className={`text-[10px] font-black uppercase tracking-widest ${item.color}`}>{item.value}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
     </div>
   );
 };

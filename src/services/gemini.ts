@@ -1,46 +1,43 @@
 import { safeParseJson } from "../lib/aiUtils";
 import { callGemini } from "../lib/geminiApi";
-import { COURSES_CATALOG } from "../data/coursesCatalog";
 
-const DEFAULT_MODEL = "gemini-3.5-flash";
+const DEFAULT_MODEL = "gemini-flash-latest";
 
 export async function parseResume(rawText: string) {
-  // Use SDK directly — no proxy auth needed for setup screen
-  const { GoogleGenAI } = await import('@google/genai');
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!apiKey) throw new Error('VITE_GEMINI_API_KEY not set');
-  const ai = new GoogleGenAI({ apiKey });
+  const result = await callGemini(
+    `You are an expert ATS (Applicant Tracking System) parser. Analyze the input text carefully.
+    
+    CRITICAL: If the input text is not a resume, CV, or professional profile (e.g., if it's random notes, binary garbage, or unrelated content), set "isNotResume": true in the output.
+    
+    Text to parse: 
+    ${rawText}
+    
+    Return JSON structure:
+    {
+      "isNotResume": boolean,
+      "personalInfo": { "fullName": "string", "email": "string", "phone": "string", "location": "string", "website": "string" },
+      "summary": "string",
+      "skills": ["string"],
+      "experience": [{ "title": "string", "company": "string", "duration": "string", "description": "string" }],
+      "projects": [{ "title": "string", "description": "string", "link": "string" }],
+      "education": [{ "degree": "string", "school": "string", "year": "string" }]
+    }`,
+    { responseMimeType: "application/json" }
+  );
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-3.5-flash',
-    contents: `You are an expert ATS parser. Analyze the resume text below.
-CRITICAL: If it is not a resume/CV, set "isNotResume": true.
-
-Text:
-${rawText}
-
-Return ONLY valid JSON:
-{
-  "isNotResume": false,
-  "personalInfo": { "fullName": "", "email": "", "phone": "", "location": "", "website": "" },
-  "targetRole": "",
-  "summary": "",
-  "skills": [],
-  "experience": [{ "title": "", "company": "", "duration": "", "description": "" }],
-  "projects": [{ "title": "", "description": "", "link": "" }],
-  "education": [{ "degree": "", "school": "", "year": "" }]
-}`,
-    config: { responseMimeType: 'application/json' },
-  });
-
-  const parsed = safeParseJson(response.text ?? '{}', {
-    personalInfo: { fullName: '', email: '', phone: '', location: '', website: '' },
-    summary: '', skills: [], experience: [], projects: [], education: []
+  const parsed = safeParseJson(result.text, {
+    personalInfo: { fullName: 'No Name Found', email: '', phone: '', location: '', website: '' },
+    summary: '',
+    skills: [],
+    experience: [],
+    projects: [],
+    education: []
   });
 
   if (parsed.isNotResume) {
-    throw new Error('The uploaded file does not look like a resume. Please upload a valid CV or resume.');
+    throw new Error("The uploaded file does not look like a resume. Please upload a valid professional CV or resume.");
   }
+
   return parsed;
 }
 
@@ -258,52 +255,24 @@ export async function getRecommendedCourses(targetRole: string, missingSkills: s
 import { HARDCODED_COURSES } from '../constants/courseContent';
 
 export async function getCourseContent(courseTitle: string, topic: string, phase: 'understand' | 'apply' | 'evaluate' | 'master') {
-  // 1. Check hardcoded content first (instant, no API call)
+  // Check hardcoded first
   if (HARDCODED_COURSES[courseTitle] && HARDCODED_COURSES[courseTitle][topic]) {
     const hardcoded = HARDCODED_COURSES[courseTitle][topic][phase];
-    if (hardcoded) return hardcoded;
+    if (hardcoded) {
+        return hardcoded;
+    }
   }
 
-  // 2. Check localStorage cache (generated previously, no API call)
-  const cacheKey = `cb_course_${courseTitle}__${topic}__${phase}`;
-  try {
-    const cached = localStorage.getItem(cacheKey);
-    if (cached) return JSON.parse(cached);
-  } catch { /* ignore parse errors */ }
-
-  // 3. Determine if this is a coding course or a general/conceptual course
-  const courseDef = COURSES_CATALOG.find(c => c.title === courseTitle);
-  const isCoding = courseDef?.type === 'coding';
-
-  const applyPrompt = isCoding
-    ? `Generate 3 coding problems for the topic "${topic}" in the course "${courseTitle}". Range: Easy, Medium, Hard.
-       Each problem must have: prompt (clear task description), starterCode (boilerplate to help student begin), testCases (array of {input, expected}), hints (array of 3 hints).
-       Return JSON: {"problems": [...]}`
-    : `Generate 3 real-world scenario tasks for the topic "${topic}" in the course "${courseTitle}".
-       Each scenario must test practical application of "${topic}" — NOT coding. Use domain-appropriate tasks (e.g. case analysis, document drafting, strategy design, calculation, review).
-       Each must have: title (short task name), scenario (2-sentence context/situation), task (clear instruction of what to produce), guidance (3 practical tips).
-       Return JSON: {"scenarios": [...]}`;
-
   const prompts = {
-    understand: `Provide detailed theory, examples, and conceptual overview for the topic "${topic}" in the course "${courseTitle}".
-      Return JSON: { "theory": "markdown string with headings and code/examples", "examples": [{"title","code","language","explanation"}], "keyPoints": ["3-5 key takeaways"] }`,
-    apply: applyPrompt,
-    evaluate: `Generate a 10-question multiple-choice quiz for the topic "${topic}" in the course "${courseTitle}".
-      Questions should test real understanding, not trivia. Mix difficulty.
-      Return JSON: {"questions": [{"question","options":["A","B","C","D"],"correctIndex":0,"explanation":"why correct"}]}`,
-    master: `Generate a mastery summary for "${topic}" in "${courseTitle}": what the student now knows, how it connects to the broader course, and 5 concrete "What's Next" action items.
-      Return JSON: {"summary":"markdown paragraph","nextSteps":["5 action items"]}`
+    understand: `Provide detailed theory, code examples, and a conceptual overview for the topic "${topic}" in the course "${courseTitle}". Format as JSON with: theory (markdown), examples (array of {title, code, language, explanation}), and keyPoints (array).`,
+    apply: `Generate 3 coding problems for "${topic}" in "${courseTitle}". Range: Easy, Medium, Hard. Each with: prompt, starterCode, testCases (array of {input, expected}), and hints (array).`,
+    evaluate: `Generate a 10-question quiz for "${topic}" in "${courseTitle}". Each question: question, options (array), correctIndex (number), explanation.`,
+    master: `Generate a final mastery summary and a list of 5 "What's Next" recommendations for "${topic}" in "${courseTitle}".`
   };
 
   const result = await callGemini(prompts[phase], { responseMimeType: "application/json" });
-  const parsed = safeParseJson(result.text);
 
-  // 4. Cache the AI result so it's instant next time
-  try {
-    localStorage.setItem(cacheKey, JSON.stringify(parsed));
-  } catch { /* quota full — ignore */ }
-
-  return parsed;
+  return safeParseJson(result.text);
 }
 
 export async function getIDEAgentAdvice(task: string, currentCode: string, language: string, context: any) {

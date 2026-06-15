@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../App';
 import { db } from '../firebase';
 import { collection, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
@@ -35,8 +35,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
   const [recentApps, setRecentApps] = useState<any[]>([]);
 
   useEffect(() => {
-    const isLocal = !!(user as any)?.isLocal;
-    if (!user || isLocal) return;
+    if (!user) return;
     const q = query(
       collection(db, 'users', user.uid, 'applications'),
       orderBy('appliedDate', 'desc'),
@@ -54,7 +53,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     { 
       label: 'TOTAL RESUMES', 
       value: stats?.totalResumes || 0, 
-      color: 'bg-blue-700',
+      color: 'bg-cyan-600',
       icon: FileText
     },
     { 
@@ -78,7 +77,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     { 
       label: 'SUCCESS RATE', 
       value: stats?.totalResumes ? `${Math.min(100, Math.round(((stats?.successful || 0) / (stats?.totalResumes || 1)) * 100))}%` : '0%', 
-      color: 'bg-blue-700',
+      color: 'bg-purple-600',
       icon: Flame
     },
   ];
@@ -90,7 +89,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           <h1 className="text-4xl font-bold tracking-tight text-zinc-900 font-display">Welcome, {userData?.displayName?.split(' ')?.[0] || 'User'}</h1>
           <div className="flex items-center gap-4">
             {userData?.targetRole ? (
-              <div className="flex items-center gap-2 text-blue-700">
+              <div className="flex items-center gap-2 text-cyan-600">
                  <Target className="w-4 h-4" />
                  <p className="text-sm font-black uppercase tracking-widest">{userData.targetRole} Trajectory</p>
               </div>
@@ -99,11 +98,16 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                 Your career trajectory is currently being mapped and optimized.
               </p>
             )}
-
+            <button 
+              onClick={() => onNavigate('settings')}
+              className="text-[10px] font-black uppercase tracking-tighter text-rose-400 hover:text-rose-600 transition-colors"
+            >
+              [ Reset History ]
+            </button>
           </div>
         </div>
         <div className="flex items-center gap-2 px-5 py-3.5 bg-white rounded-2xl shadow-sm border border-zinc-200 font-bold text-zinc-600 text-[11px] uppercase tracking-widest">
-          <Clock className="w-4 h-4 text-blue-700" />
+          <Clock className="w-4 h-4 text-cyan-600" />
           Next Reset: 12 Days
         </div>
       </header>
@@ -118,10 +122,10 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
-              className="glass-card p-7 rounded-[2.5rem] hover:border-blue-200 transition-all group hover:scale-[1.02]"
+              className="glass-card p-7 rounded-[2.5rem] hover:border-cyan-200 transition-all group hover:scale-[1.02]"
             >
               <div className="space-y-6">
-                <div className={`w-11 h-11 rounded-2xl ${stat.color} text-white flex items-center justify-center shadow-xl shadow-blue-100 group-hover:scale-110 transition-transform`}>
+                <div className={`w-11 h-11 rounded-2xl ${stat.color} text-white flex items-center justify-center shadow-xl shadow-cyan-100 group-hover:scale-110 transition-transform`}>
                   <Icon className="w-5.5 h-5.5" />
                 </div>
                 <div>
@@ -141,7 +145,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
               <h3 className="text-lg font-bold text-zinc-900 font-display">Active Applications</h3>
               <button 
                 onClick={() => onNavigate('job-tracker')} 
-                className="text-blue-700 text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 hover:underline group"
+                className="text-cyan-600 text-[11px] font-bold uppercase tracking-widest flex items-center gap-2 hover:underline group"
               >
                 Tracker Console <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </button>
@@ -162,7 +166,7 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   <div className="flex items-center gap-10 text-right">
                     <span className={`text-[10px] font-bold uppercase tracking-widest px-4 py-2 rounded-xl transition-colors ${
                       app.status === 'offered' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : 
-                      app.status === 'interviewing' ? 'bg-blue-50 text-blue-700 border border-blue-100' : 
+                      app.status === 'interviewing' ? 'bg-cyan-50 text-cyan-600 border border-cyan-100' : 
                       'bg-zinc-100 text-zinc-700'
                     }`}>
                       {app.status}
@@ -184,18 +188,18 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           </section>
 
           <section>
-            <div className="bg-blue-700 rounded-[3rem] p-14 text-white relative flex flex-col md:flex-row items-center justify-between gap-12 overflow-hidden shadow-2xl shadow-blue-200">
+            <div className="bg-cyan-600 rounded-[3rem] p-14 text-white relative flex flex-col md:flex-row items-center justify-between gap-12 overflow-hidden shadow-2xl shadow-cyan-200">
                <div className="absolute top-0 right-0 w-1/2 h-full bg-white/[0.05] -skew-x-12 translate-x-1/2" />
                <div className="relative z-10 space-y-8">
                  <h2 className="text-4xl lg:text-5xl font-bold font-display tracking-tight leading-[0.95]">
                    Calibrate your<br/>Market Success.
                  </h2>
-                 <p className="text-blue-100 font-medium max-w-sm leading-relaxed text-lg">
+                 <p className="text-cyan-100 font-medium max-w-sm leading-relaxed text-lg">
                    Launch high-fidelity AI simulations to optimize your interview success probability.
                  </p>
                  <button 
                   onClick={() => onNavigate('mock-interview')}
-                  className="px-10 py-5 bg-white text-blue-700 font-bold text-sm rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-blue-950/20 uppercase tracking-widest"
+                  className="px-10 py-5 bg-white text-cyan-600 font-bold text-sm rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-cyan-900/20 uppercase tracking-widest"
                  >
                    Start Calibration
                  </button>
@@ -219,15 +223,15 @@ export function Dashboard({ onNavigate }: DashboardProps) {
                   <button 
                     key={action.id}
                     onClick={() => onNavigate(action.id)}
-                    className="w-full p-5 bg-white border border-zinc-200 rounded-[2rem] text-left hover:border-blue-700 hover:shadow-xl hover:shadow-blue-100 transition-all flex items-center justify-between group"
+                    className="w-full p-5 bg-white border border-zinc-200 rounded-[2rem] text-left hover:border-cyan-600 hover:shadow-xl hover:shadow-cyan-100 transition-all flex items-center justify-between group"
                   >
                     <div className="flex items-center gap-4">
-                       <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                          <action.icon className="w-4.5 h-4.5 text-zinc-600 group-hover:text-blue-700 transition-colors" />
+                       <div className="w-10 h-10 rounded-xl bg-zinc-50 flex items-center justify-center group-hover:bg-cyan-50 transition-colors">
+                          <action.icon className="w-4.5 h-4.5 text-zinc-600 group-hover:text-cyan-600 transition-colors" />
                        </div>
                        <span className="text-sm font-bold text-zinc-700 group-hover:text-zinc-900 tracking-tight">{action.label}</span>
                     </div>
-                    <ArrowRight className="w-4.5 h-4.5 text-zinc-300 group-hover:text-blue-700 transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-1" />
+                    <ArrowRight className="w-4.5 h-4.5 text-zinc-300 group-hover:text-cyan-600 transition-all opacity-0 group-hover:opacity-100 group-hover:translate-x-1" />
                   </button>
                 ))}
               </div>
@@ -237,14 +241,14 @@ export function Dashboard({ onNavigate }: DashboardProps) {
 
            <AchievementPanel />
 
-           <div className="p-10 bg-blue-50 border border-blue-100 rounded-[2.5rem] space-y-5 relative overflow-hidden group">
+           <div className="p-10 bg-cyan-50 border border-cyan-100 rounded-[2.5rem] space-y-5 relative overflow-hidden group">
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-150 transition-transform duration-700">
-                 <Bot className="w-24 h-24 text-blue-600" />
+                 <Bot className="w-24 h-24 text-cyan-500" />
               </div>
-              <div className="w-10 h-10 bg-white shadow-sm border border-blue-100 text-blue-600 rounded-xl flex items-center justify-center font-black relative z-10">
+              <div className="w-10 h-10 bg-white shadow-sm border border-cyan-100 text-cyan-500 rounded-xl flex items-center justify-center font-black relative z-10">
                  <Sparkles className="w-5 h-5" />
               </div>
-              <p className="text-base font-bold text-blue-950 leading-[1.4] relative z-10">
+              <p className="text-base font-bold text-cyan-900 leading-[1.4] relative z-10">
                 "Precision matters. AI-optimized resumes see a 3.4x higher response rate in high-tier technical deployments."
               </p>
            </div>

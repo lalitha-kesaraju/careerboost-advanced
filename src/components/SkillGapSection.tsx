@@ -75,7 +75,7 @@ export function SkillGapSection({ resumeData, targetRole, onNavigate, onDataUpda
            <div className="text-center relative">
               <button 
                 onClick={() => onNavigate('resume-analysis')}
-                className="absolute left-0 top-0 w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-blue-700 transition-all hover:border-blue-100 hover:shadow-lg hover:shadow-blue-50"
+                className="absolute left-0 top-0 w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-400 hover:text-cyan-600 transition-all hover:border-cyan-100 hover:shadow-lg hover:shadow-cyan-50"
                 title="Back to Analysis"
               >
                  <ArrowRight className="w-5 h-5 rotate-180" />
@@ -93,16 +93,16 @@ export function SkillGapSection({ resumeData, targetRole, onNavigate, onDataUpda
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search roles (e.g. AI Engineer, Product Manager...)"
-                className="w-full bg-white border border-slate-200 rounded-[3rem] pl-20 pr-10 py-7 text-xl font-bold shadow-2xl shadow-slate-200/40 outline-none focus:ring-8 focus:ring-blue-600/5 focus:border-blue-600 transition-all placeholder:text-slate-200 text-slate-900"
+                className="w-full bg-white border border-slate-200 rounded-[3rem] pl-20 pr-10 py-7 text-xl font-bold shadow-2xl shadow-slate-200/40 outline-none focus:ring-8 focus:ring-cyan-500/5 focus:border-cyan-500 transition-all placeholder:text-slate-200 text-slate-900"
               />
            </div>
 
            {isAnalyzing ? (
              <div className="py-24 text-center space-y-8">
                 <motion.div 
-                  className="w-24 h-24 bg-blue-50 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner"
+                  className="w-24 h-24 bg-cyan-50 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner"
                 >
-                   <Loader2 className="w-10 h-10 text-blue-700 animate-spin" />
+                   <Loader2 className="w-10 h-10 text-cyan-600 animate-spin" />
                 </motion.div>
                 <div>
                    <h3 className="text-2xl font-bold text-slate-900 font-display tracking-tight mb-2">Analyzing Structural Gaps</h3>
@@ -118,9 +118,9 @@ export function SkillGapSection({ resumeData, targetRole, onNavigate, onDataUpda
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: idx * 0.01 }}
                     onClick={() => handleAnalyze(role)}
-                    className="p-8 bg-white border border-slate-200 rounded-[2rem] text-left hover:border-blue-700 hover:shadow-xl hover:shadow-blue-100 transition-all group"
+                    className="p-8 bg-white border border-slate-200 rounded-[2rem] text-left hover:border-cyan-600 hover:shadow-xl hover:shadow-cyan-100 transition-all group"
                   >
-                     <p className="text-base font-bold text-slate-900 group-hover:text-blue-700 mb-2 transition-colors">{role}</p>
+                     <p className="text-base font-bold text-slate-900 group-hover:text-cyan-600 mb-2 transition-colors">{role}</p>
                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] group-hover:text-slate-500 transition-colors">OS PATH</p>
                   </motion.button>
                 ))}
@@ -133,7 +133,7 @@ export function SkillGapSection({ resumeData, targetRole, onNavigate, onDataUpda
               <div className="flex items-center gap-6">
                  <button 
                    onClick={() => setSelectedRole(null)}
-                   className="w-12 h-12 bg-white border border-zinc-100 rounded-2xl flex items-center justify-center text-zinc-400 hover:text-blue-700 transition-colors shadow-sm"
+                   className="w-12 h-12 bg-white border border-zinc-100 rounded-2xl flex items-center justify-center text-zinc-400 hover:text-cyan-600 transition-colors shadow-sm"
                  >
                     <ArrowRight className="w-5 h-5 rotate-180" />
                  </button>
@@ -144,7 +144,7 @@ export function SkillGapSection({ resumeData, targetRole, onNavigate, onDataUpda
               </div>
               <button 
                 onClick={() => onNavigate('career-advice')}
-                className="px-8 py-4 bg-blue-700 text-white rounded-2xl font-bold shadow-xl shadow-blue-100 hover:bg-blue-800 transition-all flex items-center gap-2 uppercase text-xs tracking-widest"
+                className="px-8 py-4 bg-cyan-600 text-white rounded-2xl font-bold shadow-xl shadow-cyan-100 hover:bg-cyan-700 transition-all flex items-center gap-2 uppercase text-xs tracking-widest"
               >
                  Get Career Strategy <ArrowRight className="w-5 h-5" />
               </button>
@@ -165,12 +165,12 @@ export function SkillGapSection({ resumeData, targetRole, onNavigate, onDataUpda
 
                  <div className="space-y-4">
                     {(gapData?.missingSkills || []).map((skill: any, idx: number) => (
-                      <div key={idx} className="p-6 bg-zinc-50 border border-zinc-100 rounded-3xl space-y-3 hover:border-blue-700 transition-all group hover:bg-white hover:shadow-lg hover:shadow-zinc-100">
+                      <div key={idx} className="p-6 bg-zinc-50 border border-zinc-100 rounded-3xl space-y-3 hover:border-cyan-600 transition-all group hover:bg-white hover:shadow-lg hover:shadow-zinc-100">
                          <div className="flex items-center justify-between">
                             <h4 className="text-lg font-bold text-zinc-900">{typeof skill === 'string' ? skill : skill.name}</h4>
                             <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest ${
                               skill.priority === 'Critical' ? 'bg-rose-50 text-rose-600' :
-                              skill.priority === 'High' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-700'
+                              skill.priority === 'High' ? 'bg-orange-50 text-orange-600' : 'bg-cyan-50 text-cyan-600'
                             }`}>
                                {skill.priority || 'High'} Priority
                             </span>
@@ -229,9 +229,9 @@ export function SkillGapSection({ resumeData, targetRole, onNavigate, onDataUpda
 
                  <button 
                     onClick={() => onNavigate('career-advice')}
-                    className="w-full py-6 bg-blue-700 text-white rounded-[2rem] font-bold hover:bg-blue-800 transition-all shadow-xl shadow-blue-100 uppercase text-xs tracking-widest"
+                    className="w-full py-6 bg-cyan-600 text-white rounded-[2rem] font-bold hover:bg-cyan-700 transition-all shadow-xl shadow-cyan-100 uppercase text-xs tracking-widest"
                   >
-                    Get Strategic Career Roadmap â†’
+                    Get Strategic Career Roadmap →
                   </button>
               </div>
            </div>
@@ -240,4 +240,3 @@ export function SkillGapSection({ resumeData, targetRole, onNavigate, onDataUpda
     </div>
   );
 }
-

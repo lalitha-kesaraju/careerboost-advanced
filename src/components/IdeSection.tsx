@@ -1,13 +1,13 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import Editor from '@monaco-editor/react';
 import { 
-  Code, Save, Play, RefreshCw, Trash2,
-  Settings, Download, Copy, Zap, Crown, Sparkles, BrainCircuit
+  Code, Save, Play, RefreshCw, Trash2, ChevronDown, 
+  Settings, Share2, Download, Copy, AlertCircle, CheckCircle2,
+  Lock, Zap, Crown
 } from 'lucide-react';
 import { useAuth } from '../App';
 import { recordActivity } from '../services/statsService';
-import { doc, collection, addDoc, getDocs, deleteDoc, query, orderBy, limit } from 'firebase/firestore';
+import { doc, collection, addDoc, getDocs, deleteDoc, updateDoc, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../services/firestoreService';
 
@@ -26,8 +26,6 @@ const LANGUAGES = [
   { label: 'HTML/CSS', value: 'html' }
 ];
 
-const LOCAL_SNIPPETS_KEY = (uid: string) => `cb_snippets_${uid}`;
-
 export function IdeSection() {
   const { user, userData } = useAuth();
   const [code, setCode] = useState('// Your elite logic here...\nconsole.log("Hello, Talent Master!");');
@@ -37,16 +35,10 @@ export function IdeSection() {
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'editor' | 'history'>('editor');
-  const [output, setOutput] = useState<string>('');
-  const [isRunning, setIsRunning] = useState(false);
-  const [aiReview, setAiReview] = useState<string>('');
-  const [isReviewing, setIsReviewing] = useState(false);
 
   const tier = userData?.tier || 'basic';
-  const isLocal = !!(user as any)?.isLocal;
-  const canSave = tier === 'medium' || tier === 'premium' || isLocal;
-  const isPremium = tier === 'premium' || isLocal; // demo/local users get full access
-  const SNIPPET_LIMIT = isPremium ? 50 : tier === 'medium' ? 5 : 0;
+  const canSave = tier === 'medium' || tier === 'premium';
+  const isPremium = tier === 'premium';
 
   useEffect(() => {
     if (user && canSave) {
@@ -60,88 +52,39 @@ export function IdeSection() {
     if (!user) return;
     setIsLoading(true);
     try {
-      if (isLocal) {
-        // localStorage path for demo/local accounts
-        const raw = localStorage.getItem(LOCAL_SNIPPETS_KEY(user.uid));
-        const saved: Snippet[] = raw ? JSON.parse(raw) : [];
-        setSnippets(saved.slice(0, SNIPPET_LIMIT || 50));
-      } else {
-        const q = query(
-          collection(db, 'users', user.uid, 'portfolio'),
-          orderBy('createdAt', 'desc'),
-          limit(SNIPPET_LIMIT || 5)
-        );
-        const snap = await getDocs(q);
-        setSnippets(snap.docs.map(d => ({ id: d.id, ...d.data() } as Snippet)));
-      }
+      const q = query(
+        collection(db, 'users', user.uid, 'portfolio'),
+        orderBy('createdAt', 'desc'),
+        limit(isPremium ? 50 : 5)
+      );
+      const snap = await getDocs(q);
+      const loaded: Snippet[] = snap.docs.map(d => ({ id: d.id, ...d.data() } as Snippet));
+      setSnippets(loaded);
     } catch (err) {
-      if (!isLocal) handleFirestoreError(err, OperationType.GET, `users/${user.uid}/portfolio`);
+      handleFirestoreError(err, OperationType.GET, `users/${user.uid}/portfolio`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRun = () => {
-    setOutput('');
-    if (language === 'python') {
-      setOutput('âš ï¸  Python requires a server-side runtime.\nSwitch to JavaScript to execute code in-browser.');
-      return;
-    }
-    if (language === 'html') {
-      setOutput('âš ï¸  HTML preview not supported in this editor.\nPaste your markup in a browser tab directly.');
-      return;
-    }
-    setIsRunning(true);
-    const logs: string[] = [];
-    const _log = console.log;
-    const _error = console.error;
-    const _warn = console.warn;
-    console.log = (...args: any[]) => {
-      logs.push(args.map((x: any) => typeof x === 'object' ? JSON.stringify(x, null, 2) : String(x)).join(' '));
-    };
-    console.error = (...args: any[]) => { logs.push('âŒ ' + args.map(String).join(' ')); };
-    console.warn  = (...args: any[]) => { logs.push('âš ï¸  ' + args.map(String).join(' ')); };
-    try {
-      // eslint-disable-next-line no-new-func
-      new Function(code)();
-    } catch (e: any) {
-      logs.push(`âŒ ${e.name}: ${e.message}`);
-    } finally {
-      console.log = _log;
-      console.error = _error;
-      console.warn = _warn;
-    }
-    setOutput(logs.length > 0 ? logs.join('\n') : '// (No output)');
-    setIsRunning(false);
-  };
-
   const handleSave = async () => {
     if (!user || !canSave) return;
-    if (SNIPPET_LIMIT > 0 && snippets.length >= SNIPPET_LIMIT) {
-      alert(`Limit reached: ${SNIPPET_LIMIT} snippets on ${tier} plan. Delete one or upgrade.`);
-      return;
-    }
     setIsSaving(true);
     try {
-      const snippetData: Omit<Snippet, 'id'> = {
+      const snippetData = {
         title,
         code,
         language,
         createdAt: new Date().toISOString()
       };
-      const newSnippet: Snippet = { id: crypto.randomUUID(), ...snippetData };
-
-      if (isLocal) {
-        const updated = [newSnippet, ...snippets];
-        localStorage.setItem(LOCAL_SNIPPETS_KEY(user.uid), JSON.stringify(updated));
-        setSnippets(updated);
-      } else {
-        const docRef = await addDoc(collection(db, 'users', user.uid, 'portfolio'), snippetData);
-        setSnippets([{ id: docRef.id, ...snippetData }, ...snippets]);
-        recordActivity(user.uid, 'code', 'Logic Snippet Saved', `Saved: ${title} (${language})`);
-      }
+      const docRef = await addDoc(collection(db, 'users', user.uid, 'portfolio'), snippetData);
+      setSnippets([{ id: docRef.id, ...snippetData }, ...snippets]);
+      
+      recordActivity(user.uid, 'code', 'Logic Snippet Saved', `New engineering component saved: ${title} (${language})`);
+      
+      alert("Snippet synchronized to Cloud");
     } catch (err) {
-      if (!isLocal) handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/portfolio`);
+      handleFirestoreError(err, OperationType.WRITE, `users/${user.uid}/portfolio`);
     } finally {
       setIsSaving(false);
     }
@@ -149,53 +92,13 @@ export function IdeSection() {
 
   const handleDelete = async (id: string) => {
     if (!user) return;
-    if (window.confirm('Delete this snippet forever?')) {
+    if (window.confirm("Delete this logic forever?")) {
       try {
-        if (isLocal) {
-          const updated = snippets.filter(s => s.id !== id);
-          localStorage.setItem(LOCAL_SNIPPETS_KEY(user.uid), JSON.stringify(updated));
-          setSnippets(updated);
-        } else {
-          await deleteDoc(doc(db, 'users', user.uid, 'portfolio', id));
-          setSnippets(snippets.filter(s => s.id !== id));
-        }
+        await deleteDoc(doc(db, 'users', user.uid, 'portfolio', id));
+        setSnippets(snippets.filter(s => s.id !== id));
       } catch (err) {
-        if (!isLocal) handleFirestoreError(err, OperationType.DELETE, `users/${user.uid}/portfolio/${id}`);
+        handleFirestoreError(err, OperationType.DELETE, `users/${user.uid}/portfolio/${id}`);
       }
-    }
-  };
-
-  // AI Review — uses gemini-3.1-pro-preview for deep code analysis
-  const handleAiReview = async () => {
-    if (!code.trim()) return;
-    setIsReviewing(true);
-    setAiReview('');
-    try {
-      const { GoogleGenAI } = await import('@google/genai');
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      if (!apiKey) throw new Error('VITE_GEMINI_API_KEY not set');
-      const ai = new GoogleGenAI({ apiKey });
-      const resp = await ai.models.generateContent({
-        model: 'gemini-3.1-pro-preview',
-        contents: `You are a senior software engineer doing a concise code review. Review this ${language} code:
-
-\`\`\`${language}
-${code}
-\`\`\`
-
-Give a structured review in 4 sections:
-1. **Correctness** — Does it work? Any bugs?
-2. **Performance** — Big-O complexity, bottlenecks
-3. **Code Quality** — Naming, structure, best practices
-4. **Suggestions** — 2–3 concrete improvements
-
-Keep it concise and actionable. No fluff.`,
-      });
-      setAiReview(resp.text ?? 'No response.');
-    } catch (e: any) {
-      setAiReview(`Review failed: ${e.message}`);
-    } finally {
-      setIsReviewing(false);
     }
   };
 
@@ -204,7 +107,7 @@ Keep it concise and actionable. No fluff.`,
        {/* Header */}
        <div className="flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex items-center gap-4">
-             <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center text-blue-500 shadow-xl">
+             <div className="w-12 h-12 bg-gray-900 rounded-2xl flex items-center justify-center text-cyan-400 shadow-xl">
                 <Code className="w-6 h-6" />
              </div>
              <div>
@@ -257,29 +160,12 @@ Keep it concise and actionable. No fluff.`,
                   </div>
                </div>
 
-               <Editor
-                 height="500px"
-                 theme="vs-dark"
-                 language={language === 'html' ? 'html' : language}
+               <textarea 
                  value={code}
-                 onChange={(val) => setCode(val || '')}
-                 options={{
-                   fontSize: 14,
-                   minimap: { enabled: false },
-                   scrollbar: { vertical: 'auto', horizontal: 'auto' },
-                   inlineSuggest: { enabled: true },
-                   wordWrap: 'on',
-                   padding: { top: 24, bottom: 24 },
-                   renderLineHighlight: 'gutter',
-                 }}
+                 onChange={(e) => setCode(e.target.value)}
+                 spellCheck={false}
+                 className="flex-1 bg-transparent text-emerald-400 p-8 font-mono text-sm resize-none focus:outline-none custom-scrollbar"
                />
-
-               {output && (
-                 <div className="border-t border-zinc-700/50 bg-zinc-950 p-6 max-h-48 overflow-y-auto">
-                   <p className="text-[10px] font-black text-zinc-500 uppercase tracking-widest mb-3">Output</p>
-                   <pre className="text-emerald-400 font-mono text-sm whitespace-pre-wrap leading-relaxed">{output}</pre>
-                 </div>
-               )}
 
                <div className="bg-zinc-800/80 p-4 border-t border-zinc-700/50 flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -302,15 +188,9 @@ Keep it concise and actionable. No fluff.`,
                <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-xl shadow-gray-200/20 space-y-8">
                   <div className="space-y-4">
                      <h3 className="text-xl font-black text-gray-900 tracking-tight">Execution Control</h3>
-                     <button
-                       onClick={handleRun}
-                       disabled={isRunning}
-                       className="w-full py-5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-800 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-emerald-100 transition-all transform active:scale-95 group"
-                     >
-                        {isRunning
-                          ? <RefreshCw className="w-5 h-5 animate-spin" />
-                          : <Play className="w-5 h-5 fill-current group-hover:scale-110 transition-transform" />}
-                        {isRunning ? 'Running...' : 'Run Script'}
+                     <button className="w-full py-5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-emerald-100 transition-all transform active:scale-95 group">
+                        <Play className="w-5 h-5 fill-current group-hover:scale-110 transition-transform" />
+                        Run Script
                      </button>
                      
                      <button 
@@ -319,19 +199,7 @@ Keep it concise and actionable. No fluff.`,
                        className="w-full py-5 bg-gray-900 hover:bg-black disabled:bg-gray-200 disabled:text-gray-400 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl transition-all transform active:scale-95"
                      >
                         {isSaving ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                        {canSave ? (isLocal ? 'Save Locally' : 'Sync to Cloud') : 'Upgrade to Sync'}
-                     </button>
-
-                     {/* AI Review — gemini-3.1-pro-preview */}
-                     <button
-                       onClick={handleAiReview}
-                       disabled={isReviewing}
-                       className="w-full py-5 bg-blue-700 hover:bg-blue-800 disabled:opacity-60 text-white rounded-2xl font-black flex items-center justify-center gap-3 shadow-xl shadow-blue-100 transition-all transform active:scale-95"
-                     >
-                       {isReviewing
-                         ? <RefreshCw className="w-5 h-5 animate-spin" />
-                         : <BrainCircuit className="w-5 h-5" />}
-                       {isReviewing ? 'Reviewing...' : 'AI Code Review'}
+                        {canSave ? 'Sync to Cloud' : 'Upgrade to Sync'}
                      </button>
                   </div>
 
@@ -352,29 +220,11 @@ Keep it concise and actionable. No fluff.`,
                         <div className={`w-2 h-2 rounded-full ${user ? 'bg-emerald-500' : 'bg-rose-500'} animate-pulse`} />
                         <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{user ? 'System Online' : 'Offline'}</span>
                      </div>
-                     <span className="text-[10px] font-black text-blue-700 uppercase tracking-widest">{tier} PLAN</span>
+                     <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">{tier} PLAN</span>
                   </div>
                </div>
 
-               {/* AI Review Output */}
-               {(aiReview || isReviewing) && (
-                 <div className="bg-zinc-900 rounded-[2.5rem] p-8 space-y-4">
-                   <div className="flex items-center gap-3">
-                     <BrainCircuit className="w-5 h-5 text-blue-500" />
-                     <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">AI Review Â· gemini-3.1-pro</h4>
-                   </div>
-                   {isReviewing ? (
-                     <div className="flex items-center gap-3 text-zinc-500">
-                       <RefreshCw className="w-4 h-4 animate-spin" />
-                       <span className="text-sm font-bold">Analyzing with deep reasoning...</span>
-                     </div>
-                   ) : (
-                     <pre className="text-zinc-300 font-mono text-xs whitespace-pre-wrap leading-relaxed max-h-64 overflow-y-auto">{aiReview}</pre>
-                   )}
-                 </div>
-               )}
-
-               <div className="bg-blue-700 rounded-[2.5rem] p-8 text-white relative overflow-hidden">
+               <div className="bg-indigo-600 rounded-[2.5rem] p-8 text-white relative overflow-hidden">
                   <div className="relative z-10 space-y-4">
                      <div className="flex items-center gap-3">
                         <Zap className="w-5 h-5" />
@@ -437,7 +287,7 @@ Keep it concise and actionable. No fluff.`,
                           >
                              Load Editor
                           </button>
-                          <button className="px-4 py-3 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-blue-700 hover:border-blue-100 transition-all">
+                          <button className="px-4 py-3 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-indigo-600 hover:border-indigo-100 transition-all">
                              <Copy className="w-4 h-4" />
                           </button>
                        </div>
@@ -447,12 +297,12 @@ Keep it concise and actionable. No fluff.`,
             )}
 
             {!isPremium && snippets.length >= 5 && (
-              <div className="p-8 bg-blue-700 text-white rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
+              <div className="p-8 bg-indigo-600 text-white rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6 text-center md:text-left">
                  <div>
                     <h4 className="text-xl font-black tracking-tight">History Limit Approaching</h4>
                     <p className="text-sm opacity-80 font-bold">Medium plan is capped at 5 snippets. Upgrade for unlimited storage.</p>
                  </div>
-                 <button className="px-8 py-4 bg-white text-gray-900 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-950/40">
+                 <button className="px-8 py-4 bg-white text-gray-900 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-indigo-900/40">
                     Go Premium
                  </button>
               </div>

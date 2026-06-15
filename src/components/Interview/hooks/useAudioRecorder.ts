@@ -9,45 +9,42 @@ export function useAudioRecorder() {
 
   const startRecording = useCallback(async () => {
     try {
-      // Try video+audio first; fall back to audio-only (camera blocked on HTTP mobile)
-      let mediaStream: MediaStream;
-      try {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-      } catch {
-        mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-      }
+      const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
       setStream(mediaStream);
-
+      
       const mediaRecorder = new MediaRecorder(mediaStream);
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
       mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
+        if (e.data.size > 0) {
+          chunksRef.current.push(e.data);
+        }
       };
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        setAudioUrl(URL.createObjectURL(blob));
+        const url = URL.createObjectURL(blob);
+        setAudioUrl(url);
       };
 
       mediaRecorder.start();
       setIsRecording(true);
     } catch (err) {
-      console.error('Failed to start recording:', err);
+      console.error("Failed to start recording:", err);
     }
   }, []);
 
   const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+    if (mediaRecorderRef.current && isRecording) {
       mediaRecorderRef.current.stop();
+      setIsRecording(false);
     }
-    setIsRecording(false);
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
-  }, [stream]);
+  }, [isRecording, stream]);
 
   return { isRecording, startRecording, stopRecording, audioUrl, stream };
 }
