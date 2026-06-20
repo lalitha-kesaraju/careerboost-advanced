@@ -86,12 +86,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     let unsubscribeSnapshot: (() => void) | null = null;
+    let isLocalSessionResolved = false;
+
+    // Check for local auth session first (offline simulation fallback)
+    const savedLocalSession = localStorage.getItem('local_auth_session');
+    if (savedLocalSession) {
+      try {
+        const { user: savedUser, userData: savedUserData } = JSON.parse(savedLocalSession);
+        setUser(savedUser);
+        setUserData(savedUserData);
+        setLoading(false);
+        isLocalSessionResolved = true;
+        fetchUserStats(savedUser.uid).then(setStats).catch(console.error);
+      } catch (e) {
+        console.error("Failed to restore saved local session", e);
+      }
+    }
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (u) => {
       // Clean up previous snapshot listener
       if (unsubscribeSnapshot) {
         unsubscribeSnapshot();
         unsubscribeSnapshot = null;
+      }
+
+      // If we recovered a local session and u is null, keep the local session!
+      if (!u && isLocalSessionResolved) {
+        return;
+      }
+
+      // if we have a real user logged in via firebase, clear local simulation
+      if (u) {
+        localStorage.removeItem('local_auth_session');
       }
 
       setUser(u);
@@ -180,6 +206,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         await signInWithEmailAndPassword(auth, email, pass);
       } catch (signInError: any) {
+        const isNetworkOrConnectionError = 
+          signInError.code === 'auth/network-request-failed' || 
+          signInError.code === 'auth/internal-error' ||
+          signInError.message?.toLowerCase().includes('network') ||
+          signInError.message?.toLowerCase().includes('failed-request') ||
+          signInError.message?.toLowerCase().includes('fetch');
+
+        if (isNetworkOrConnectionError) {
+          console.warn("Firebase Auth network error. Falling back to local offline simulation.");
+          // Initialize local simulated auth state
+          const demoUser = DEMO_USERS.find(du => du.email.toLowerCase() === email.toLowerCase());
+          const mockUid = "local_uid_" + (demoUser?.email.split('@')[0] || email.replace(/[^a-zA-Z0-9]/g, '_'));
+          const mockUser = {
+            uid: mockUid,
+            email: email,
+            displayName: demoUser?.email.split('@')[0] || email.split('@')[0],
+            photoURL: null,
+            emailVerified: true
+          } as any;
+          
+          setUser(mockUser);
+          
+          // Set up local user data
+          const newData: UserData = {
+            userId: mockUid,
+            email: email,
+            displayName: mockUser.displayName,
+            tier: (demoUser?.tier.toLowerCase() as any) || 'premium',
+            role: email === 'admin@careerboost.ai' || email === 'kesarajulalitha@gmail.com' ? 'Platform Admin' : (demoUser?.role || 'User'),
+            usage: {
+              resumeAnalyses: 0,
+              skillGaps: 0,
+              careerAdviceCount: 0,
+              mockInterviews: 0,
+              jobApplicationsCount: 0,
+              learningPlans: 0
+            }
+          };
+          setUserData(newData);
+          // Set simulated stats
+          const s = await fetchUserStats(mockUid);
+          setStats(s);
+          
+          // Save session to localStorage so that refresh persists local auth
+          localStorage.setItem('local_auth_session', JSON.stringify({ user: mockUser, userData: newData }));
+          setIsLoggingIn(false);
+          return;
+        }
+
         // If user doesn't exist, try creating account (simplified for this "afterwards Supabase" request)
         if (signInError.code === 'auth/user-not-found' || signInError.code === 'auth/invalid-credential') {
           await createUserWithEmailAndPassword(auth, email, pass);
@@ -205,7 +280,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const logout = async () => {
-    await signOut(auth);
+    localStorage.removeItem('local_auth_session');
+    try {
+      await signOut(auth);
+    } catch (e) {
+      console.error("SignOut error:", e);
+    }
+    setUser(null);
+    setUserData(null);
   };
 
   const refreshStats = async () => {
