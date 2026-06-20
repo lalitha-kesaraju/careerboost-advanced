@@ -6,3 +6,10 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Large nested repos and archives
+careerboost/
+careerboost-basic-main/
+careerboost.zip
+*.pptx
+~$*.pptx

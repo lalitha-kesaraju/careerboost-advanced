@@ -3,8 +3,9 @@ import { AnalysisReport, InterviewData, QuestionAnswerSuggestion } from '../../t
 import SpinnerIcon from './icons/SpinnerIcon';
 import ScoreBreakdown from './ScoreBreakdown';
 import BusinessToolsSection from './BusinessToolsSection';
-import { 
-  BarChart, Target, Brain, Lightbulb, TrendingUp, ArrowRight, MessageSquare, ShieldCheck, HelpCircle, Sparkles
+import {
+  BarChart, Target, Brain, Lightbulb, TrendingUp, ArrowRight, MessageSquare, ShieldCheck, Sparkles,
+  Activity, Zap, Users, CheckCircle, XCircle, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getDetailedAnswerSuggestions } from '../../services/gemini';
@@ -157,6 +158,141 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
                 </div>
             </div>
         </div>
+
+        {/* Hire Probability + Behavioral Metrics */}
+        {(report.hireProbability !== undefined || report.behavioralMetrics) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {report.hireProbability !== undefined && (
+              <div className="bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-xl space-y-6">
+                <h3 className="text-lg font-black text-gray-900 flex items-center gap-3">
+                  <Users className="w-5 h-5 text-indigo-600" />
+                  Hiring Assessment
+                </h3>
+                <div className="flex items-center gap-6">
+                  <div className="relative w-28 h-28 flex-shrink-0">
+                    <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="#f3f4f6" strokeWidth="10" />
+                      <circle cx="50" cy="50" r="40" fill="none"
+                        stroke={report.hireProbability >= 70 ? '#10b981' : report.hireProbability >= 45 ? '#f59e0b' : '#ef4444'}
+                        strokeWidth="10"
+                        strokeDasharray={`${report.hireProbability * 2.513} 251.3`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-black text-gray-900">{report.hireProbability}%</span>
+                    </div>
+                  </div>
+                  <div className="space-y-3">
+                    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl font-black text-sm border ${
+                      report.hiringVerdict === 'Strong Hire' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
+                      report.hiringVerdict === 'Hire' ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                      report.hiringVerdict === 'Maybe' ? 'bg-amber-50 text-amber-700 border-amber-200' :
+                      'bg-rose-50 text-rose-700 border-rose-200'
+                    }`}>
+                      {report.hiringVerdict === 'Strong Hire' || report.hiringVerdict === 'Hire'
+                        ? <CheckCircle className="w-4 h-4" />
+                        : report.hiringVerdict === 'Maybe' ? <AlertCircle className="w-4 h-4" />
+                        : <XCircle className="w-4 h-4" />}
+                      {report.hiringVerdict}
+                    </div>
+                    <p className="text-xs text-gray-500 font-medium">Based on AI analysis of your responses, communication style, and technical depth.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {report.behavioralMetrics && (
+              <div className="bg-white rounded-[2.5rem] p-10 border border-gray-100 shadow-xl space-y-6">
+                <h3 className="text-lg font-black text-gray-900 flex items-center gap-3">
+                  <Activity className="w-5 h-5 text-cyan-600" />
+                  Behavioral Metrics
+                </h3>
+                <div className="space-y-4">
+                  {[
+                    { label: 'Words Spoken', value: report.behavioralMetrics.wordsPerMinute, unit: '', max: 300, color: 'bg-indigo-500' },
+                    { label: 'Filler Words', value: report.behavioralMetrics.fillerWordCount, unit: '', max: 20, color: 'bg-rose-400', invert: true },
+                    { label: 'Sentiment', value: report.behavioralMetrics.sentimentScore, unit: '%', max: 100, color: 'bg-emerald-500' },
+                    { label: 'Clarity', value: report.behavioralMetrics.clarityScore, unit: '%', max: 100, color: 'bg-cyan-500' },
+                  ].map((m, i) => (
+                    <div key={i} className="space-y-1">
+                      <div className="flex justify-between">
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">{m.label}</span>
+                        <span className={`text-[10px] font-black ${m.invert && m.value > 5 ? 'text-rose-500' : 'text-gray-700'}`}>{m.value}{m.unit}</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${m.color}`} style={{ width: `${Math.min((m.value / m.max) * 100, 100)}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Big Five Personality Traits */}
+        {report.bigFiveTraits && (
+          <div className="bg-white rounded-[2.5rem] p-12 border border-gray-100 shadow-xl space-y-8">
+            <div className="flex items-center gap-4 pb-6 border-b border-gray-100">
+              <div className="w-14 h-14 bg-purple-600 rounded-[1.5rem] flex items-center justify-center text-white">
+                <Brain className="w-7 h-7" />
+              </div>
+              <div>
+                <h3 className="text-xl font-black text-gray-900">Big Five Personality Calibration</h3>
+                <p className="text-gray-500 text-sm font-medium">Inferred from your interview language patterns by Gemini 2.5 Pro</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="space-y-5">
+                {([
+                  { key: 'openness', label: 'Openness', desc: 'Curiosity & creativity', color: 'bg-purple-500' },
+                  { key: 'conscientiousness', label: 'Conscientiousness', desc: 'Reliability & precision', color: 'bg-indigo-500' },
+                  { key: 'extraversion', label: 'Extraversion', desc: 'Energy & assertiveness', color: 'bg-cyan-500' },
+                  { key: 'agreeableness', label: 'Agreeableness', desc: 'Warmth & cooperation', color: 'bg-emerald-500' },
+                  { key: 'neuroticism', label: 'Neuroticism', desc: 'Emotional volatility', color: 'bg-rose-400' },
+                ] as const).map(trait => {
+                  const score = (report.bigFiveTraits as any)[trait.key] as number;
+                  return (
+                    <div key={trait.key} className="space-y-1.5">
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="text-xs font-black text-gray-800">{trait.label}</span>
+                          <span className="text-[10px] text-gray-400 font-medium ml-2 italic">{trait.desc}</span>
+                        </div>
+                        <span className="text-xs font-black text-gray-700">{score}</span>
+                      </div>
+                      <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${score}%` }}
+                          transition={{ duration: 0.8, delay: 0.1 }}
+                          className={`h-full rounded-full ${trait.color}`}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="flex flex-col justify-center gap-6">
+                <div className="p-8 bg-purple-50 rounded-[2rem] border border-purple-100">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Zap className="w-4 h-4 text-purple-600" />
+                    <span className="text-[10px] font-black text-purple-600 uppercase tracking-widest">Dominant Trait</span>
+                  </div>
+                  <p className="text-2xl font-black text-purple-900">{report.bigFiveTraits.dominant_trait}</p>
+                </div>
+                <div className="p-8 bg-indigo-50 rounded-[2rem] border border-indigo-100">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Target className="w-4 h-4 text-indigo-600" />
+                    <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">Career Fit</span>
+                  </div>
+                  <p className="text-sm font-bold text-indigo-900 italic serif leading-relaxed">{report.bigFiveTraits.career_fit}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Detailed Improvements Section */}
         <div className="bg-gray-900 rounded-[3rem] p-12 text-white shadow-2xl relative overflow-hidden">

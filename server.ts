@@ -6,7 +6,9 @@ import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 import { GoogleGenAI } from "@google/genai";
-import "dotenv/config";
+import dotenv from "dotenv";
+dotenv.config({ path: ".env.local", override: true });
+dotenv.config({ path: ".env", override: false });
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,26 +17,25 @@ const __dirname = path.dirname(__filename);
 let genAI: GoogleGenAI | null = null;
 function getGenAI() {
   if (!genAI) {
+    // Explicitly use GEMINI_API_KEY. Clear GOOGLE_API_KEY so the SDK
+    // doesn't auto-detect a stale or leaked system env var instead.
+    delete process.env.GOOGLE_API_KEY;
+
     const apiKey = process.env.GEMINI_API_KEY?.trim();
     if (!apiKey) {
       console.error("GEMINI_API_KEY is missing from process.env");
       throw new Error("GEMINI_API_KEY not configured on server");
     }
-    
-    // Log key metadata (safe)
-    console.log(`Initializing Gemini with key: ${apiKey.substring(0, 4)}... (length: ${apiKey.length})`);
-    
+
+    console.log(`Initializing Gemini with key prefix: ${apiKey.substring(0, 6)}... (length: ${apiKey.length})`);
+
     if (apiKey.length < 10 || apiKey.includes("REPLACE_ME")) {
-      throw new Error("GEMINI_API_KEY appears to be a placeholder or invalid. Please check Settings > Secrets.");
+      throw new Error("GEMINI_API_KEY appears to be a placeholder or invalid.");
     }
 
-    genAI = new GoogleGenAI({ 
+    genAI = new GoogleGenAI({
       apiKey,
-      httpOptions: {
-        headers: {
-          'User-Agent': 'aistudio-build',
-        }
-      }
+      httpOptions: { headers: { 'User-Agent': 'aistudio-build' } }
     });
   }
   return genAI;
@@ -61,7 +62,17 @@ if (firebaseConfig) {
 
 const db = (appAdmin && firebaseConfig) ? getFirestore(appAdmin, firebaseConfig.firestoreDatabaseId) : null;
 
-const DEFAULT_MODEL = "gemini-flash-latest";
+const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEEP_MODEL = "gemini-2.5-pro";
+
+// gemini-2.5-flash/pro are thinking models — response.text can be empty when
+// the model outputs thought parts first. Extract the real text from candidates.
+function extractText(response: any): string {
+  if (response.text) return response.text;
+  const parts = response.candidates?.[0]?.content?.parts ?? [];
+  const textPart = parts.find((p: any) => p.text && !p.thought);
+  return textPart?.text ?? parts.find((p: any) => p.text)?.text ?? "";
+}
 
 async function startServer() {
   const app = express();
@@ -173,13 +184,81 @@ async function startServer() {
         }
       });
       
-      console.log("[Gemini Proxy] Success");
-      res.json({ text: response.text });
+      res.json({ text: extractText(response) });
     } catch (error: any) {
       console.error("[Gemini Proxy Error]", error);
       res.status(500).json({ 
         error: error.message || "An unexpected error occurred during AI generation",
         stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+      });
+    }
+  });
+
+  // Multi-turn chat endpoint (used by InterviewScreen)
+  app.post("/api/gemini/chat", async (req, res) => {
+    console.log("[Gemini Chat] Received request");
+    try {
+      const { payload } = req.body;
+      if (!payload || !payload.message) {
+        return res.status(400).json({ error: "Missing 'payload.message'" });
+      }
+
+      const { message, history = [], systemInstruction, config = {} } = payload;
+      const genAIClient = getGenAI();
+      const modelName = config.model || DEFAULT_MODEL;
+      console.log(`[Gemini Chat] Model: ${modelName}, history length: ${history.length}`);
+
+      const contents = [
+        ...history,
+        { role: "user", parts: [{ text: message }] }
+      ];
+
+      const response = await genAIClient.models.generateContent({
+        model: modelName,
+        contents,
+        config: {
+          maxOutputTokens: config.maxOutputTokens || 512,
+          systemInstruction
+        }
+      });
+
+      console.log("[Gemini Chat] Success");
+      res.json({ text: extractText(response) });
+    } catch (error: any) {
+      console.error("[Gemini Chat Error]", error);
+      res.status(500).json({
+        error: error.message || "Chat generation failed",
+        stack: process.env.NODE_ENV !== "production" ? error.stack : undefined
+      });
+    }
+  });
+
+  // Deep analysis endpoint — uses gemini-2.5-pro for psychometric & session analysis
+  app.post("/api/gemini/deep", async (req, res) => {
+    console.log("[Gemini Deep] Received request");
+    try {
+      const { contents, config, systemInstruction } = req.body;
+      if (!contents) {
+        return res.status(400).json({ error: "Missing 'contents'" });
+      }
+
+      const genAIClient = getGenAI();
+      const modelName = config?.model || DEEP_MODEL;
+      console.log(`[Gemini Deep] Using model: ${modelName}`);
+
+      const response = await genAIClient.models.generateContent({
+        model: modelName,
+        contents: Array.isArray(contents) ? contents : [{ role: "user", parts: [{ text: String(contents) }] }],
+        config: { ...config, systemInstruction }
+      });
+
+      console.log("[Gemini Deep] Success");
+      res.json({ text: extractText(response) });
+    } catch (error: any) {
+      console.error("[Gemini Deep Error]", error);
+      res.status(500).json({
+        error: error.message || "Deep analysis failed",
+        stack: process.env.NODE_ENV !== "production" ? error.stack : undefined
       });
     }
   });

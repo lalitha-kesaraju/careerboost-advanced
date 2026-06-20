@@ -8,31 +8,24 @@ export function useAudioRecorder() {
   const chunksRef = useRef<Blob[]>([]);
 
   const startRecording = useCallback(async () => {
-    try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
-      setStream(mediaStream);
-      
-      const mediaRecorder = new MediaRecorder(mediaStream);
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
+    const mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: true });
+    setStream(mediaStream);
 
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) {
-          chunksRef.current.push(e.data);
-        }
-      };
+    const mediaRecorder = new MediaRecorder(mediaStream);
+    mediaRecorderRef.current = mediaRecorder;
+    chunksRef.current = [];
 
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        const url = URL.createObjectURL(blob);
-        setAudioUrl(url);
-      };
+    mediaRecorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunksRef.current.push(e.data);
+    };
 
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      console.error("Failed to start recording:", err);
-    }
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: 'video/webm' });
+      setAudioUrl(URL.createObjectURL(blob));
+    };
+
+    mediaRecorder.start();
+    setIsRecording(true);
   }, []);
 
   const stopRecording = useCallback(() => {

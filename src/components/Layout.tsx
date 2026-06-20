@@ -62,6 +62,8 @@ export function Layout({ children, currentView, onNavigate, resumeData }: Layout
     { id: 'code-ide', label: 'Code Editor', icon: Code },
     { id: 'dsa-course', label: 'DSA Course', icon: Activity },
     { id: 'aptitude-v5', label: 'Aptitude Mastery', icon: Brain },
+    { id: 'role-quiz', label: 'Role Diagnostics', icon: ClipboardList, isLocked: !hasTargetRole },
+    { id: 'higher-studies', label: 'Higher Studies', icon: GraduationCap },
     { id: 'psychometric-test', label: 'Personality Test', icon: UserIcon },
     { id: 'interviews', label: 'Mock Interview', icon: Mic2 },
     { id: 'job-tracker', label: 'Job Tracker', icon: Briefcase },

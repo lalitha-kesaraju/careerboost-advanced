@@ -22,6 +22,24 @@ export interface QuestionAnswerSuggestion {
   score_impact: string;
 }
 
+export interface BigFiveTraits {
+  openness: number;
+  conscientiousness: number;
+  extraversion: number;
+  agreeableness: number;
+  neuroticism: number;
+  dominant_trait: string;
+  career_fit: string;
+}
+
+export interface BehavioralMetrics {
+  wordsPerMinute: number;
+  fillerWordCount: number;
+  avgResponseLength: number;
+  sentimentScore: number;
+  clarityScore: number;
+}
+
 export interface AnalysisReport {
   overall_summary: string;
   performance_feedback: { area: string; feedback: string; score: number }[];
@@ -30,6 +48,10 @@ export interface AnalysisReport {
   improvement_suggestions: string[];
   nextSteps?: string[];
   overallScore: number;
+  hireProbability?: number;
+  hiringVerdict?: 'Strong Hire' | 'Hire' | 'Maybe' | 'No Hire';
+  bigFiveTraits?: BigFiveTraits;
+  behavioralMetrics?: BehavioralMetrics;
   business_plan?: any;
   skills_gap?: any;
   budget_estimate?: any;

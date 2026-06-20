@@ -2,7 +2,7 @@ import { Type } from "@google/genai";
 import { safeParseJson } from "../lib/aiUtils";
 import { callGemini } from "../lib/geminiApi";
 
-const DEFAULT_MODEL = "gemini-flash-latest";
+const DEFAULT_MODEL = "gemini-2.5-flash";
 
 export interface AptitudeQuestion {
   id: string;
