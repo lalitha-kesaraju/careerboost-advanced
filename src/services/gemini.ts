@@ -1,7 +1,8 @@
 import { safeParseJson } from "../lib/aiUtils";
-import { callGemini } from "../lib/geminiApi";
+import { callGemini, callGeminiDeep } from "../lib/geminiApi";
+import { COURSES_CATALOG } from "../data/coursesCatalog";
 
-const DEFAULT_MODEL = "gemini-flash-latest";
+const DEFAULT_MODEL = "gemini-2.5-flash";
 
 export async function parseResume(rawText: string) {
   const result = await callGemini(
@@ -407,64 +408,72 @@ export async function evaluateCode(problem: any, code: string, language: string)
 }
 
 export async function getSessionAnalysis(setup: any, history: any[], codingResult?: any) {
-  const result = await callGemini(
-    `Provide a comprehensive performance analysis for the following interview session.
-    Setup Data: ${JSON.stringify(setup)}
-    Interview History: ${JSON.stringify(history)}
-    Coding Result (if any): ${JSON.stringify(codingResult || {})}
-    
-    The analysis should be highly professional and calibrated for an interview difficulty level: ${setup.difficultyLevel.toUpperCase()}.
-    
-    CRITICAL EVALUATION GUIDELINES:
-    - EASY: Focus on the basics, confidence, and basic understanding. Scoring should be relatively encouraging.
-    - MEDIUM: Expect professional-grade answers. Look for structured logic (STAR method) and technical competence.
-    - HARD: This is an elite/senior level evaluation. Be critical, look for architectural depth, optimization, edge-case awareness, and leadership qualities.
-    
-    ${setup.roleCategory === 'Home-Based Business' ? 'Since this is a Home-Based Business category, you MUST also include a "business_plan", "skills_gap", "budget_estimate", and "resources" logic in your response.' : ''}
-    
-    Return JSON:
-    {
-      "overall_summary": "Detailed paragraph summary of the performance",
-      "performance_feedback": [
-        { "area": "Technical Accuracy", "feedback": "...", "score": number (1-10) },
-        { "area": "Communication", "feedback": "...", "score": number (1-10) },
-        { "area": "Problem Solving", "feedback": "...", "score": number (1-10) },
-        { "area": "Confidence", "feedback": "...", "score": number (1-10) }
-      ],
-      "emotional_analysis": [
-        { "emotion": "Tone Variance", "justification": "...", "score": number },
-        { "emotion": "Engagement", "justification": "...", "score": number }
-      ],
-      "facial_expression_analysis": [
-        { "expression": "Inferred Presence", "justification": "Confident tone suggests professional posture", "score": number }
-      ],
-      "improvement_suggestions": ["specific actionable advice"],
-      "nextSteps": ["specific topics to study"],
-      "overallScore": number (0-100)${setup.roleCategory === 'Home-Based Business' ? `,
-      "business_plan": {
-        "executive_summary": "...",
-        "market_analysis": "...",
-        "financial_projections": "...",
-        "marketing_strategy": "...",
-        "operational_plan": "..."
-      },
-      "skills_gap": {
-        "skills_possessed": ["..."],
-        "skills_needed": ["..."],
-        "training_recommendations": ["..."],
-        "timeline_to_readiness": "..."
-      },
-      "budget_estimate": {
-        "startup_costs": [{ "item": "...", "cost": number }],
-        "monthly_expenses": [{ "item": "...", "cost": number }],
-        "break_even_months": number,
-        "pricing_recommendation": "..."
-      },
-      "resources": [
-        { "title": "...", "description": "...", "url": "...", "category": "registration" }
-      ]` : ''}
-    }`,
-    { responseMimeType: "application/json" }
+  const FILLER_WORDS = /\b(um|uh|like|you know|basically|actually|literally|sort of|kind of|I mean)\b/gi;
+  const userTurns = history.filter((h: any) => h.role === 'user' || (typeof h === 'string' && h.startsWith('User:')));
+  const allUserText = userTurns.map((h: any) => typeof h === 'string' ? h.replace('User:', '') : (h.parts?.[0]?.text || '')).join(' ');
+  const totalWords = allUserText.trim().split(/\s+/).filter(Boolean).length;
+  const fillerCount = (allUserText.match(FILLER_WORDS) || []).length;
+  const avgWordsPerTurn = userTurns.length > 0 ? Math.round(totalWords / userTurns.length) : 0;
+
+  const result = await callGeminiDeep(
+    [{ role: 'user', parts: [{ text: `Provide a comprehensive, executive-grade performance analysis for the following interview session.
+
+Setup: ${JSON.stringify(setup)}
+Interview Transcript: ${JSON.stringify(history)}
+Coding Result: ${JSON.stringify(codingResult || {})}
+Pre-computed Behavioral Data: { totalWords: ${totalWords}, fillerWordCount: ${fillerCount}, avgWordsPerTurn: ${avgWordsPerTurn}, turns: ${userTurns.length} }
+
+DIFFICULTY CALIBRATION (${setup.difficultyLevel?.toUpperCase()}):
+- EASY: Encouraging tone, focus on basics and communication clarity.
+- MEDIUM: Professional depth, STAR method usage, technical competence.
+- HARD: Elite evaluation — architecture depth, optimization, edge-case handling.
+
+${setup.roleCategory === 'Home-Based Business' ? 'Include business_plan, skills_gap, budget_estimate, and resources sections.' : ''}
+
+Return ONLY valid JSON:
+{
+  "overall_summary": "string",
+  "performance_feedback": [
+    { "area": "Technical Accuracy", "feedback": "string", "score": number },
+    { "area": "Communication", "feedback": "string", "score": number },
+    { "area": "Problem Solving", "feedback": "string", "score": number },
+    { "area": "Confidence", "feedback": "string", "score": number },
+    { "area": "Adaptability", "feedback": "string", "score": number }
+  ],
+  "emotional_analysis": [
+    { "emotion": "Tone Variance", "justification": "string", "score": number },
+    { "emotion": "Engagement", "justification": "string", "score": number }
+  ],
+  "facial_expression_analysis": [
+    { "expression": "Inferred Presence", "justification": "string", "score": number }
+  ],
+  "improvement_suggestions": ["string"],
+  "nextSteps": ["string"],
+  "overallScore": number,
+  "hireProbability": number,
+  "hiringVerdict": "Strong Hire|Hire|Maybe|No Hire",
+  "bigFiveTraits": {
+    "openness": number,
+    "conscientiousness": number,
+    "extraversion": number,
+    "agreeableness": number,
+    "neuroticism": number,
+    "dominant_trait": "string",
+    "career_fit": "string"
+  },
+  "behavioralMetrics": {
+    "wordsPerMinute": number,
+    "fillerWordCount": ${fillerCount},
+    "avgResponseLength": ${avgWordsPerTurn},
+    "sentimentScore": number,
+    "clarityScore": number
+  }${setup.roleCategory === 'Home-Based Business' ? `,
+  "business_plan": { "executive_summary": "string", "market_analysis": "string", "financial_projections": "string", "marketing_strategy": "string", "operational_plan": "string" },
+  "skills_gap": { "skills_possessed": ["string"], "skills_needed": ["string"], "training_recommendations": ["string"], "timeline_to_readiness": "string" },
+  "budget_estimate": { "startup_costs": [{ "item": "string", "cost": number }], "monthly_expenses": [{ "item": "string", "cost": number }], "break_even_months": number, "pricing_recommendation": "string" },
+  "resources": [{ "title": "string", "description": "string", "url": "string", "category": "string" }]` : ''}
+}` }] },
+    { responseMimeType: "application/json", maxOutputTokens: 4096 }
   );
   return safeParseJson(result.text);
 }
