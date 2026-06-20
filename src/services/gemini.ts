@@ -472,7 +472,7 @@ Return ONLY valid JSON:
   "skills_gap": { "skills_possessed": ["string"], "skills_needed": ["string"], "training_recommendations": ["string"], "timeline_to_readiness": "string" },
   "budget_estimate": { "startup_costs": [{ "item": "string", "cost": number }], "monthly_expenses": [{ "item": "string", "cost": number }], "break_even_months": number, "pricing_recommendation": "string" },
   "resources": [{ "title": "string", "description": "string", "url": "string", "category": "string" }]` : ''}
-}` }] },
+}` }] }],
     { responseMimeType: "application/json", maxOutputTokens: 4096 }
   );
   return safeParseJson(result.text);
