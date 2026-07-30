@@ -54,6 +54,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
   const currentUserTranscriptRef = useRef('');
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const transcriptEndRef = useRef<HTMLDivElement>(null);
   const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   useEffect(() => {
@@ -61,6 +62,20 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
       videoRef.current.srcObject = stream;
     }
   }, [stream]);
+
+  // Auto-enter fullscreen when the live session starts; best-effort since
+  // some browsers require the request to fire within a direct user gesture.
+  useEffect(() => {
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen()
+        .then(() => setIsFullscreen(true))
+        .catch(() => {});
+    }
+  }, []);
+
+  useEffect(() => {
+    transcriptEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [conversation, currentTranscript]);
 
   useEffect(() => {
     const loadVoices = () => {
@@ -412,6 +427,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
                             </motion.div>
                         )}
                     </AnimatePresence>
+                    <div ref={transcriptEndRef} />
                 </div>
 
                 {/* Voice Indicators */}
