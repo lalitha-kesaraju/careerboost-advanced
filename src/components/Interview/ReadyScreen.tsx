@@ -9,6 +9,16 @@ interface ReadyScreenProps {
 }
 
 const ReadyScreen: React.FC<ReadyScreenProps> = ({ onStart, interviewData }) => {
+  const handleStart = () => {
+    // Must be requested synchronously inside the click handler, not from an
+    // effect after the screen transitions — browsers reject fullscreen
+    // requests that aren't tied directly to the triggering user gesture.
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch(() => {});
+    }
+    onStart();
+  };
+
   return (
     <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -49,8 +59,8 @@ const ReadyScreen: React.FC<ReadyScreenProps> = ({ onStart, interviewData }) => 
             </div>
 
             <div className="pt-6 flex flex-col items-center gap-4 border-t border-gray-100 mt-10">
-                <button 
-                onClick={onStart}
+                <button
+                onClick={handleStart}
                 className="px-12 py-5 bg-indigo-600 text-white rounded-2xl font-black shadow-xl hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all flex items-center gap-3"
                 >
                 Start Final Session <ArrowRight className="w-5 h-5" />
