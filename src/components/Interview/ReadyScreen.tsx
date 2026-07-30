@@ -1,14 +1,16 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { InterviewData } from '../../types';
-import { Brain, Mic, Layout, Building2, Sparkles, Loader2, ArrowRight } from 'lucide-react';
+import { Brain, Mic, Layout, Building2, Sparkles, Loader2, ArrowRight, Eye } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface ReadyScreenProps {
-  onStart: () => void;
+  onStart: (allowVisualAnalysis: boolean) => void;
   interviewData: InterviewData;
 }
 
 const ReadyScreen: React.FC<ReadyScreenProps> = ({ onStart, interviewData }) => {
+  const [allowVisualAnalysis, setAllowVisualAnalysis] = useState(true);
+
   const handleStart = () => {
     // Must be requested synchronously inside the click handler, not from an
     // effect after the screen transitions — browsers reject fullscreen
@@ -16,7 +18,7 @@ const ReadyScreen: React.FC<ReadyScreenProps> = ({ onStart, interviewData }) => 
     if (!document.fullscreenElement) {
       document.documentElement.requestFullscreen().catch(() => {});
     }
-    onStart();
+    onStart(allowVisualAnalysis);
   };
 
   return (
@@ -57,6 +59,24 @@ const ReadyScreen: React.FC<ReadyScreenProps> = ({ onStart, interviewData }) => 
                 </div>
                 ))}
             </div>
+
+            <label className="flex items-start gap-4 p-6 bg-indigo-50/50 border border-indigo-100 rounded-3xl cursor-pointer">
+                <input
+                    type="checkbox"
+                    checked={allowVisualAnalysis}
+                    onChange={(e) => setAllowVisualAnalysis(e.target.checked)}
+                    className="mt-1 w-5 h-5 accent-indigo-600 shrink-0"
+                />
+                <div className="flex items-start gap-3">
+                    <Eye className="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" />
+                    <div>
+                        <p className="font-bold text-gray-900 text-sm">Allow periodic webcam analysis (recommended)</p>
+                        <p className="text-xs text-gray-500 leading-relaxed mt-1">
+                            A still frame from your camera is analyzed by AI every 45 seconds for general engagement cues (posture, eye contact) — never recorded or stored, only the resulting feedback text. Uncheck to skip this and get feedback based on your spoken answers only.
+                        </p>
+                    </div>
+                </div>
+            </label>
 
             <div className="pt-6 flex flex-col items-center gap-4 border-t border-gray-100 mt-10">
                 <button

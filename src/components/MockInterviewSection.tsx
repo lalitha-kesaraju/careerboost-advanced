@@ -15,7 +15,7 @@ import SetupScreen from './Interview/SetupScreen';
 import ReadyScreen from './Interview/ReadyScreen';
 import InterviewScreen from './Interview/InterviewScreen';
 import AnalysisScreen from './Interview/AnalysisScreen';
-import { InterviewData, AnalysisReport } from '../types';
+import { InterviewData, AnalysisReport, VisualSnapshotResult } from '../types';
 import { getSessionAnalysis } from '../services/gemini';
 
 type StepType = 'setup' | 'ready' | 'interview' | 'analysis';
@@ -38,11 +38,12 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
     setCurrentStep('ready');
   };
 
-  const handleBeginInterview = () => {
+  const handleBeginInterview = (allowVisualAnalysis: boolean) => {
+    setInterviewData(prev => prev ? { ...prev, allowVisualAnalysis } : prev);
     setCurrentStep('interview');
   };
 
-  const handleFinishInterview = async (transcript: string, recordingUrl: string | null) => {
+  const handleFinishInterview = async (transcript: string, recordingUrl: string | null, visualSnapshots: VisualSnapshotResult[] = []) => {
     if (!interviewData) return;
     
     setInterviewData(prev => prev ? { ...prev, transcript: transcript || '', recordingUrl: recordingUrl || undefined } : null);
@@ -61,7 +62,7 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
     setHistory(mockHistory);
 
     try {
-      const analysis = await getSessionAnalysis(interviewData, mockHistory);
+      const analysis = await getSessionAnalysis(interviewData, mockHistory, undefined, visualSnapshots);
       setAnalysisReport(analysis);
 
       // Persist to Firestore

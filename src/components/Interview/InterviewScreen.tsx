@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { InterviewData } from '../../types';
+import { InterviewData, VisualSnapshotResult } from '../../types';
 import { useAudioRecorder } from './hooks/useAudioRecorder';
+import { analyzeVisualSnapshot } from '../../services/gemini';
 import {
   Mic, MicOff, Terminal, Brain, User as UserIcon, Volume2, Maximize, Minimize,
   Activity, MessageSquare, Zap, AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+
+const MAX_VISUAL_SNAPSHOTS = 8;
+const VISUAL_SNAPSHOT_INTERVAL_MS = 45000;
 
 // Language → BCP-47 voice locale map
 const LANG_LOCALE_MAP: Record<string, string> = {
@@ -24,7 +28,7 @@ const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any
 
 interface InterviewScreenProps {
   interviewData: InterviewData;
-  onFinish: (transcript: string, recordingUrl: string | null) => void;
+  onFinish: (transcript: string, recordingUrl: string | null, visualSnapshots: VisualSnapshotResult[]) => void;
 }
 
 const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFinish }) => {
@@ -62,6 +66,8 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
+  const captureCanvasRef = useRef<HTMLCanvasElement>(null);
+  const visualSnapshotsRef = useRef<VisualSnapshotResult[]>([]);
   const selectedVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
   useEffect(() => {
@@ -69,6 +75,41 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
       videoRef.current.srcObject = stream;
     }
   }, [stream]);
+
+  // Real visual analysis, opt-in: periodically capture one actual webcam
+  // frame and send it for a genuine (conservative) engagement observation.
+  // Frames are never stored — only the resulting short text result is kept.
+  useEffect(() => {
+    if (!interviewData.allowVisualAnalysis || !stream) return;
+
+    const captureAndAnalyze = async () => {
+      if (visualSnapshotsRef.current.length >= MAX_VISUAL_SNAPSHOTS) return;
+      const video = videoRef.current;
+      const canvas = captureCanvasRef.current;
+      if (!video || !canvas || video.videoWidth === 0) return;
+
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+      const base64 = dataUrl.split(',')[1];
+      // Clear the canvas immediately after extracting the base64 payload —
+      // nothing from the frame is kept in the DOM beyond this point.
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      try {
+        const result = await analyzeVisualSnapshot(base64);
+        visualSnapshotsRef.current.push(result);
+      } catch (err) {
+        console.warn('Visual snapshot analysis failed (non-critical):', err);
+      }
+    };
+
+    const interval = setInterval(captureAndAnalyze, VISUAL_SNAPSHOT_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [interviewData.allowVisualAnalysis, stream]);
 
   // Auto-enter fullscreen when the live session starts; best-effort since
   // some browsers require the request to fire within a direct user gesture.
@@ -123,7 +164,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
 
   useEffect(() => {
     if (recordedUrl) {
-      onFinish(finalTranscriptRef.current.join('\n'), recordedUrl);
+      onFinish(finalTranscriptRef.current.join('\n'), recordedUrl, visualSnapshotsRef.current);
     }
   }, [recordedUrl, onFinish]);
 
@@ -371,8 +412,8 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
                     >
                         Try Again
                     </button>
-                    <button 
-                        onClick={() => onFinish('', null)}
+                    <button
+                        onClick={() => onFinish('', null, [])}
                         className="w-full py-4 text-gray-500 hover:text-gray-300 text-xs font-black uppercase tracking-widest"
                     >
                         Exit Interview
@@ -490,6 +531,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
             <div className="w-96 flex flex-col gap-8">
                 <div className="aspect-video bg-gray-800 rounded-[2.5rem] overflow-hidden relative shadow-2xl border border-white/5">
                     <video ref={videoRef} autoPlay muted className="w-full h-full object-cover transform -scale-x-100" />
+                    <canvas ref={captureCanvasRef} className="hidden" />
                     <div className="absolute top-6 left-6 px-3 py-1 bg-black/40 backdrop-blur-md rounded-full border border-white/10 flex items-center gap-2">
                         <div className="w-1.5 h-1.5 bg-rose-500 rounded-full animate-pulse" />
                         <span className="text-[10px] font-black uppercase tracking-widest">Live Feed</span>

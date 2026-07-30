@@ -13,6 +13,13 @@ export interface InterviewData {
   recordingUrl?: string;
   weakTopics?: string[];
   jobPostingText?: string;
+  allowVisualAnalysis?: boolean;
+}
+
+export interface VisualSnapshotResult {
+  engagementLevel: 'Low' | 'Medium' | 'High';
+  observedCue: string;
+  confidence: number;
 }
 
 export interface QuestionAnswerSuggestion {
@@ -46,7 +53,9 @@ export interface AnalysisReport {
   overall_summary: string;
   performance_feedback: { area: string; feedback: string; score: number }[];
   emotional_analysis: { emotion: string; justification: string; score: number }[];
-  facial_expression_analysis: { expression: string; justification: string; score: number }[];
+  // Only ever populated from real webcam snapshots actually captured and
+  // sent for analysis during this session — never fabricated from text alone.
+  visual_engagement_summary?: string | null;
   improvement_suggestions: string[];
   nextSteps?: string[];
   overallScore: number;

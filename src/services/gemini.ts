@@ -1,8 +1,6 @@
 import { safeParseJson } from "../lib/aiUtils";
 import { callGemini, callGeminiDeep } from "../lib/geminiApi";
 
-const DEFAULT_MODEL = "gemini-3.5-flash-lite";
-
 export async function parseResume(rawText: string) {
   const result = await callGemini(
     `You are an expert ATS (Applicant Tracking System) parser. Analyze the input text carefully.
@@ -176,6 +174,38 @@ export async function generateRoleQuiz(targetRole: string, level: string, missin
   );
 
   return safeParseJson(result.text);
+}
+
+// Real visual analysis: sends one actual webcam frame (never persisted) to
+// Gemini's vision input and asks for conservative, observable engagement
+// cues — not a precise "emotion" or "facial expression" classification,
+// which even real vision models can't do reliably. Only called with a
+// frame actually captured live during the session and with explicit user
+// consent (see InterviewData.allowVisualAnalysis).
+export async function analyzeVisualSnapshot(base64Jpeg: string) {
+  const result = await callGemini(
+    [
+      {
+        role: 'user',
+        parts: [
+          {
+            text: `You are observing one still frame from a candidate's webcam during a mock interview. Based ONLY on what is visibly observable in this single image (posture, apparent eye contact with the camera, general demeanor) — do not guess at internal emotional states you cannot actually see.
+
+Return ONLY valid JSON:
+{
+  "engagementLevel": "Low|Medium|High",
+  "observedCue": "string, one short observable fact, e.g. 'Sitting upright, looking toward camera' or 'Looking away from camera'",
+  "confidence": number (0-100, how confident you are in this specific observation, not a guess at emotion)
+}`
+          },
+          { inlineData: { mimeType: 'image/jpeg', data: base64Jpeg } }
+        ]
+      }
+    ],
+    { responseMimeType: "application/json" }
+  );
+
+  return safeParseJson(result.text, { engagementLevel: 'Medium', observedCue: '', confidence: 0 });
 }
 
 export async function analyzeInterviewResponse(question: string, responseText: string) {
@@ -431,13 +461,15 @@ export async function evaluateCode(problem: any, code: string, language: string)
   return safeParseJson(result.text);
 }
 
-export async function getSessionAnalysis(setup: any, history: any[], codingResult?: any) {
+export async function getSessionAnalysis(setup: any, history: any[], codingResult?: any, visualSnapshots?: { engagementLevel: string; observedCue: string; confidence: number }[]) {
   const FILLER_WORDS = /\b(um|uh|like|you know|basically|actually|literally|sort of|kind of|I mean)\b/gi;
   const userTurns = history.filter((h: any) => h.role === 'user' || (typeof h === 'string' && h.startsWith('User:')));
   const allUserText = userTurns.map((h: any) => typeof h === 'string' ? h.replace('User:', '') : (h.parts?.[0]?.text || '')).join(' ');
   const totalWords = allUserText.trim().split(/\s+/).filter(Boolean).length;
   const fillerCount = (allUserText.match(FILLER_WORDS) || []).length;
   const avgWordsPerTurn = userTurns.length > 0 ? Math.round(totalWords / userTurns.length) : 0;
+
+  const hasVisualData = visualSnapshots && visualSnapshots.length > 0;
 
   const result = await callGeminiDeep(
     [{ role: 'user', parts: [{ text: `Provide a comprehensive, executive-grade performance analysis for the following interview session.
@@ -446,6 +478,9 @@ Setup: ${JSON.stringify(setup)}
 Interview Transcript: ${JSON.stringify(history)}
 Coding Result: ${JSON.stringify(codingResult || {})}
 Pre-computed Behavioral Data: { totalWords: ${totalWords}, fillerWordCount: ${fillerCount}, avgWordsPerTurn: ${avgWordsPerTurn}, turns: ${userTurns.length} }
+
+${hasVisualData ? `Real webcam snapshot observations captured during this session (each is a genuine AI observation of one actual frame, not a guess): ${JSON.stringify(visualSnapshots)}
+When writing visual_engagement_summary, summarize ONLY these provided observations in 1-2 sentences. Do not invent anything beyond what's listed here.` : 'No webcam snapshots were captured for this session (visual analysis was disabled or unavailable) — omit visual_engagement_summary or set it to null. Do not invent visual observations.'}
 
 DIFFICULTY CALIBRATION (${setup.difficultyLevel?.toUpperCase()}):
 - EASY: Encouraging tone, focus on basics and communication clarity.
@@ -468,9 +503,7 @@ Return ONLY valid JSON:
     { "emotion": "Tone Variance", "justification": "string", "score": number },
     { "emotion": "Engagement", "justification": "string", "score": number }
   ],
-  "facial_expression_analysis": [
-    { "expression": "Inferred Presence", "justification": "string", "score": number }
-  ],
+  "visual_engagement_summary": ${hasVisualData ? '"string"' : 'null'},
   "improvement_suggestions": ["string"],
   "nextSteps": ["string"],
   "overallScore": number,

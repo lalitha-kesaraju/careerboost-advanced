@@ -176,6 +176,14 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
                         </div>
                     ))}
                 </div>
+                {report.visual_engagement_summary && (
+                    <div className="pt-6 border-t border-gray-100 space-y-2">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                            <Users className="w-3.5 h-3.5" /> Visual Engagement (from real webcam snapshots)
+                        </p>
+                        <p className="text-xs text-gray-600 italic serif leading-relaxed">{report.visual_engagement_summary}</p>
+                    </div>
+                )}
             </div>
         </div>
 
