@@ -5,10 +5,12 @@ import ScoreBreakdown from './ScoreBreakdown';
 import BusinessToolsSection from './BusinessToolsSection';
 import {
   BarChart, Target, Brain, Lightbulb, TrendingUp, ArrowRight, MessageSquare, ShieldCheck, Sparkles,
-  Activity, Zap, Users, CheckCircle, XCircle, AlertCircle
+  Activity, Zap, Users, CheckCircle, XCircle, AlertCircle, UserCheck
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { getDetailedAnswerSuggestions } from '../../services/gemini';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 interface AnalysisScreenProps {
   report: AnalysisReport | null;
@@ -17,6 +19,8 @@ interface AnalysisScreenProps {
   onRestart: () => void;
   interviewData: InterviewData | null;
   history?: any[]; // To match the component logic
+  userId?: string;
+  interviewId?: string | null;
 }
 
 const ScoreBadge: React.FC<{ score: number }> = ({ score }) => {
@@ -32,12 +36,28 @@ const ScoreBadge: React.FC<{ score: number }> = ({ score }) => {
   );
 };
 
-const AnalysisScreen: React.FC<AnalysisScreenProps> = ({ 
-    report, isLoading, error, onRestart, interviewData, history 
+const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
+    report, isLoading, error, onRestart, interviewData, history, userId, interviewId
 }) => {
   const [answerSuggestions, setAnswerSuggestions] = useState<QuestionAnswerSuggestion[]>([]);
   const [isGeneratingSuggestions, setIsGeneratingSuggestions] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [escalationState, setEscalationState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+
+  const handleEscalateToCoach = async () => {
+    if (!userId || !interviewId) return;
+    setEscalationState('sending');
+    try {
+      await updateDoc(doc(db, 'users', userId, 'interviews', interviewId), {
+        escalatedForReview: true,
+        escalatedAt: new Date().toISOString(),
+      });
+      setEscalationState('sent');
+    } catch (err) {
+      console.error('Escalation failed:', err);
+      setEscalationState('error');
+    }
+  };
 
   const generateAnswerSuggestions = async () => {
     if (!interviewData || !history) return;
@@ -429,13 +449,33 @@ const AnalysisScreen: React.FC<AnalysisScreenProps> = ({
         )}
 
         {/* Final Action */}
-        <div className="pt-10 flex justify-center">
-             <button 
-                onClick={onRestart}
-                className="px-12 py-5 bg-gray-900 text-white rounded-2xl font-black shadow-xl hover:bg-black transition-all flex items-center gap-3 hover:scale-105 active:scale-95"
-            >
-                Start New Cycle <ArrowRight className="w-5 h-5" />
-            </button>
+        <div className="pt-10 flex flex-col items-center gap-6">
+            <div className="flex flex-wrap justify-center gap-4">
+                <button
+                    onClick={onRestart}
+                    className="px-12 py-5 bg-gray-900 text-white rounded-2xl font-black shadow-xl hover:bg-black transition-all flex items-center gap-3 hover:scale-105 active:scale-95"
+                >
+                    Start New Cycle <ArrowRight className="w-5 h-5" />
+                </button>
+                {userId && interviewId && (
+                    <button
+                        onClick={handleEscalateToCoach}
+                        disabled={escalationState === 'sending' || escalationState === 'sent'}
+                        className="px-10 py-5 bg-white border-2 border-indigo-100 text-indigo-700 rounded-2xl font-black shadow-sm hover:border-indigo-300 transition-all flex items-center gap-3 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                        <UserCheck className="w-5 h-5" />
+                        {escalationState === 'sent' ? 'Sent to Coach for Review' : escalationState === 'sending' ? 'Sending...' : 'Escalate to Human Coach'}
+                    </button>
+                )}
+            </div>
+            {escalationState === 'error' && (
+                <p className="text-rose-500 text-xs font-black uppercase tracking-widest">Failed to escalate — please try again.</p>
+            )}
+            {escalationState === 'sent' && (
+                <p className="text-xs text-gray-500 max-w-md text-center italic serif">
+                    A human coach will review this session's transcript and feedback. This helps close the trust gap that pure AI scoring can't.
+                </p>
+            )}
         </div>
     </div>
   );

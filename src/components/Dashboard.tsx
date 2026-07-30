@@ -49,6 +49,11 @@ export function Dashboard({ onNavigate }: DashboardProps) {
     return unsub;
   }, [user]);
 
+  const daysSinceLastInterview = userData?.lastInterviewAt
+    ? Math.floor((Date.now() - new Date(userData.lastInterviewAt).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+  const showPracticeNudge = daysSinceLastInterview !== null && daysSinceLastInterview >= 5;
+
   const activityStats = [
     { 
       label: 'TOTAL RESUMES', 
@@ -111,6 +116,32 @@ export function Dashboard({ onNavigate }: DashboardProps) {
           Next Reset: 12 Days
         </div>
       </header>
+
+      {showPracticeNudge && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between gap-6 p-6 bg-amber-50 border border-amber-100 rounded-[2rem]"
+        >
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 bg-amber-500 rounded-2xl flex items-center justify-center text-white shrink-0">
+              <Flame className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="font-bold text-amber-900">
+                It's been {daysSinceLastInterview} days since your last mock interview
+              </p>
+              <p className="text-sm text-amber-700 font-medium">A short practice session keeps your interview skills sharp.</p>
+            </div>
+          </div>
+          <button
+            onClick={() => onNavigate('mock-interview')}
+            className="px-6 py-3 bg-amber-600 text-white rounded-xl font-black text-xs uppercase tracking-widest hover:bg-amber-700 transition-all shrink-0"
+          >
+            Practice Now
+          </button>
+        </motion.div>
+      )}
 
       {/* Grid Stats */}
       <section className="grid grid-cols-2 lg:grid-cols-5 gap-6">

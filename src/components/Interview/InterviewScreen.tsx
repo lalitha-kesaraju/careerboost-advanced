@@ -37,12 +37,18 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
   const [currentTranscript, setCurrentTranscript] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  // Real-time behavioral metrics
+  // Real-time behavioral metrics — derived from the live transcript, not simulated.
   const [fillerCount, setFillerCount] = useState(0);
   const [totalWords, setTotalWords] = useState(0);
-  const [sentimentScore] = useState(75);
-  const [clarityScore] = useState(80);
-  const sessionStartRef = useRef<number>(Date.now());
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
+  // Words per minute the candidate is actually speaking at.
+  const paceWpm = elapsedSeconds > 5 ? Math.round((totalWords / elapsedSeconds) * 60) : 0;
+  // Filler-word ratio pulled down from 100 — the only clarity signal we can
+  // honestly compute client-side without another model call.
+  const clarityScore = totalWords > 0
+    ? Math.max(0, Math.round(100 - (fillerCount / totalWords) * 400))
+    : 100;
 
   const { isRecording, startRecording, stopRecording, audioUrl: recordedUrl, stream } = useAudioRecorder();
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -52,6 +58,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
   const utteranceQueueRef = useRef<string[]>([]);
   const finalTranscriptRef = useRef<string[]>([]);
   const currentUserTranscriptRef = useRef('');
+  const recognitionRetriesRef = useRef(0);
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const transcriptEndRef = useRef<HTMLDivElement>(null);
@@ -182,12 +189,18 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
         
         ${interviewData.resumeText ? `CANDIDATE BACKGROUND (Extracted from Resume):
         ${interviewData.resumeText.substring(0, 2000)} ... [End of Snippet]` : ''}
-        
+
+        ${interviewData.jobPostingText ? `TARGET JOB POSTING (candidate is interviewing for this specific role):
+        ${interviewData.jobPostingText.substring(0, 2000)} ... [End of Snippet]` : ''}
+
+        ${interviewData.weakTopics && interviewData.weakTopics.length > 0 ? `CANDIDATE HISTORY — RECURRING WEAK AREAS FROM PAST SESSIONS:
+        ${interviewData.weakTopics.join(', ')}. Proactively work at least one question that probes these specific areas again this session to check whether the candidate has improved. Do not mention that this comes from a past session — just weave it in naturally.` : ''}
+
         INTERVIEWER PROTOCOL (ADAPTIVE FLOW):
         1. DYNAMIC BRANCHING: Do not stick to a rigid list of questions. If the candidate mentions a project, Technology (especially those from their resume), or challenge, ask relevant follow-up questions to probe their depth.
         2. RESUME FIRST: If a resume is provided, prioritize asking about specific technologies, roles, or achievements mentioned there. Do not give generic feedback; be specific about the data in the resume.
         3. REFERENCE BACKGROUND: Use the candidate's resume content provided above to ask specific questions about their past experiences, projects, or achievements.
-        4. SENSE DEPTH: If the candidate gives a shallow answer, probe for details using the STAR method (Situation, Task, Action, Result). 
+        4. SENSE DEPTH: If the candidate gives a shallow answer, probe for details using the STAR method (Situation, Task, Action, Result).
         5. CHALLENGE ADAPTATION (Level: ${interviewData.difficultyLevel.toUpperCase()}): 
            - EASY: Focus on core concepts, clear definitions, and enthusiastic behavioral responses. Be encouraging.
            - MEDIUM: Standard professional depth. Mix architectural questions with implementation details. Expected high-quality rationale.
@@ -250,6 +263,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
                         const fillers = (text.match(FILLER_WORDS) || []).length;
                         setTotalWords(prev => prev + words);
                         setFillerCount(prev => prev + fillers);
+                        recognitionRetriesRef.current = 0;
                         handleUserResponseComplete(text);
                         setCurrentTranscript('');
                     } else {
@@ -266,6 +280,16 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
             recognitionRef.current.onerror = (event: any) => {
                 console.error("Speech recognition error:", event.error);
                 setIsListening(false);
+
+                const RETRYABLE = ['network', 'aborted', 'audio-capture', 'no-speech'];
+                if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                    setError('Microphone access was blocked. Please allow microphone permissions and refresh to continue.');
+                    return;
+                }
+                if (RETRYABLE.includes(event.error) && recognitionRetriesRef.current < 5 && !window.speechSynthesis.speaking) {
+                    recognitionRetriesRef.current += 1;
+                    setTimeout(() => startListening(), 1200);
+                }
             };
         }
 
@@ -317,6 +341,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
   useEffect(() => {
     const timer = setInterval(() => {
       if (!isPaused) {
+        setElapsedSeconds(prev => prev + 1);
         setTimeLeft(prev => {
           if (prev <= 1) {
             clearInterval(timer);
@@ -499,14 +524,14 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
                       </div>
                     </div>
 
-                    {/* Sentiment */}
+                    {/* Pace */}
                     <div className="space-y-1.5">
                       <div className="flex justify-between items-center">
-                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><MessageSquare className="w-3 h-3" />Sentiment</span>
-                        <span className="text-[10px] font-black text-emerald-400">{sentimentScore}%</span>
+                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5"><MessageSquare className="w-3 h-3" />Pace (WPM)</span>
+                        <span className={`text-[10px] font-black ${paceWpm >= 100 && paceWpm <= 160 ? 'text-emerald-400' : 'text-amber-400'}`}>{paceWpm}</span>
                       </div>
                       <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${sentimentScore}%` }} />
+                        <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${Math.min((paceWpm / 200) * 100, 100)}%` }} />
                       </div>
                     </div>
 
@@ -523,7 +548,7 @@ const InterviewScreen: React.FC<InterviewScreenProps> = ({ interviewData, onFini
 
                     <div className="pt-2 border-t border-white/5 space-y-2">
                       {[
-                        { label: 'AI Engine', value: 'Gemini 2.5 Flash', color: 'text-emerald-400' },
+                        { label: 'AI Engine', value: 'Gemini 3.5 Flash-Lite', color: 'text-emerald-400' },
                         { label: 'STT', value: SpeechRecognitionAPI ? 'Active' : 'Unavailable', color: SpeechRecognitionAPI ? 'text-emerald-400' : 'text-rose-400' },
                         { label: 'State', value: status, color: 'text-indigo-400' },
                       ].map((item, i) => (

@@ -49,12 +49,19 @@ try {
   console.error("Firebase config not found. Backend features might be limited.");
 }
 
+// Vercel (production) has no Application Default Credentials — it needs a
+// real service account key. Support the same env var locally so dev/prod
+// behave the same way instead of silently relying on gcloud ADC that only
+// happens to be configured on some developers' machines.
 let appAdmin: admin.app.App | null = null;
 if (firebaseConfig) {
   try {
-    appAdmin = admin.initializeApp({
-      projectId: firebaseConfig.projectId,
-    });
+    const rawKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY?.trim();
+    appAdmin = admin.initializeApp(
+      rawKey
+        ? { credential: admin.credential.cert(JSON.parse(rawKey)), projectId: firebaseConfig.projectId }
+        : { projectId: firebaseConfig.projectId }
+    );
   } catch (e) {
     console.error("Failed to initialize Firebase Admin:", e);
   }
@@ -62,8 +69,40 @@ if (firebaseConfig) {
 
 const db = (appAdmin && firebaseConfig) ? getFirestore(appAdmin, firebaseConfig.firestoreDatabaseId) : null;
 
-const DEFAULT_MODEL = "gemini-3.5-flash-lite";
-const DEEP_MODEL = "gemini-3.5-flash-lite";
+const DEFAULT_MODEL_CHAIN = ["gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
+const DEEP_MODEL_CHAIN = ["gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
+
+function isRetryableGeminiError(err: any): boolean {
+  let code: number | string | undefined;
+  let status: string | undefined;
+  try {
+    const parsed = JSON.parse(err?.message ?? "");
+    code = parsed?.error?.code;
+    status = parsed?.error?.status;
+  } catch {
+    // message wasn't JSON — fall through to substring sniffing below
+  }
+  if (code === 404 || code === 429 || code === 503) return true;
+  if (status === "NOT_FOUND" || status === "RESOURCE_EXHAUSTED" || status === "UNAVAILABLE") return true;
+  const msg = String(err?.message ?? "").toLowerCase();
+  return /quota|no longer available|high demand|unavailable|resource_exhausted/.test(msg);
+}
+
+async function generateWithFallback(models: string[], contents: any, config: any) {
+  const genAIClient = getGenAI();
+  let lastError: any;
+  for (const model of models) {
+    try {
+      const response = await genAIClient.models.generateContent({ model, contents, config });
+      return { response, modelUsed: model };
+    } catch (err: any) {
+      lastError = err;
+      if (!isRetryableGeminiError(err)) throw err;
+      console.warn(`[gemini-fallback] ${model} failed (${err?.message}), trying next model in chain`);
+    }
+  }
+  throw lastError;
+}
 
 // gemini-2.5-flash/pro are thinking models — response.text can be empty when
 // the model outputs thought parts first. Extract the real text from candidates.
@@ -170,20 +209,14 @@ async function startServer() {
         return res.status(400).json({ error: "Missing 'contents' in request body" });
       }
 
-      const genAIClient = getGenAI();
-      const modelName = config?.model || DEFAULT_MODEL;
-      console.log(`[Gemini Proxy] Using model: ${modelName}`);
+      const models = config?.model ? [config.model, ...DEFAULT_MODEL_CHAIN] : DEFAULT_MODEL_CHAIN;
+      const { response, modelUsed } = await generateWithFallback(
+        models,
+        Array.isArray(contents) ? contents : [{ role: 'user', parts: [{ text: String(contents) }] }],
+        { ...config, systemInstruction }
+      );
+      console.log(`[Gemini Proxy] Used model: ${modelUsed}`);
 
-      // Newest @google/genai (1.x+) style
-      const response = await genAIClient.models.generateContent({
-        model: modelName,
-        contents: Array.isArray(contents) ? contents : [{ role: 'user', parts: [{ text: String(contents) }] }],
-        config: {
-          ...config,
-          systemInstruction
-        }
-      });
-      
       res.json({ text: extractText(response) });
     } catch (error: any) {
       console.error("[Gemini Proxy Error]", error);
@@ -204,25 +237,21 @@ async function startServer() {
       }
 
       const { message, history = [], systemInstruction, config = {} } = payload;
-      const genAIClient = getGenAI();
-      const modelName = config.model || DEFAULT_MODEL;
-      console.log(`[Gemini Chat] Model: ${modelName}, history length: ${history.length}`);
+      const models = config.model ? [config.model, ...DEFAULT_MODEL_CHAIN] : DEFAULT_MODEL_CHAIN;
+      console.log(`[Gemini Chat] history length: ${history.length}`);
 
       const contents = [
         ...history,
         { role: "user", parts: [{ text: message }] }
       ];
 
-      const response = await genAIClient.models.generateContent({
-        model: modelName,
+      const { response, modelUsed } = await generateWithFallback(
+        models,
         contents,
-        config: {
-          maxOutputTokens: config.maxOutputTokens || 512,
-          systemInstruction
-        }
-      });
+        { maxOutputTokens: config.maxOutputTokens || 512, systemInstruction }
+      );
 
-      console.log("[Gemini Chat] Success");
+      console.log(`[Gemini Chat] Success using ${modelUsed}`);
       res.json({ text: extractText(response) });
     } catch (error: any) {
       console.error("[Gemini Chat Error]", error);
@@ -242,17 +271,14 @@ async function startServer() {
         return res.status(400).json({ error: "Missing 'contents'" });
       }
 
-      const genAIClient = getGenAI();
-      const modelName = config?.model || DEEP_MODEL;
-      console.log(`[Gemini Deep] Using model: ${modelName}`);
+      const models = config?.model ? [config.model, ...DEEP_MODEL_CHAIN] : DEEP_MODEL_CHAIN;
+      const { response, modelUsed } = await generateWithFallback(
+        models,
+        Array.isArray(contents) ? contents : [{ role: "user", parts: [{ text: String(contents) }] }],
+        { ...config, systemInstruction }
+      );
 
-      const response = await genAIClient.models.generateContent({
-        model: modelName,
-        contents: Array.isArray(contents) ? contents : [{ role: "user", parts: [{ text: String(contents) }] }],
-        config: { ...config, systemInstruction }
-      });
-
-      console.log("[Gemini Deep] Success");
+      console.log(`[Gemini Deep] Success using ${modelUsed}`);
       res.json({ text: extractText(response) });
     } catch (error: any) {
       console.error("[Gemini Deep Error]", error);
@@ -260,6 +286,74 @@ async function startServer() {
         error: error.message || "Deep analysis failed",
         stack: process.env.NODE_ENV !== "production" ? error.stack : undefined
       });
+    }
+  });
+
+  // Job-posting fetch tool (used by SetupScreen to ground the interview in a real JD)
+  const BLOCKED_HOSTNAMES = new Set(["localhost", "127.0.0.1", "0.0.0.0", "169.254.169.254", "::1"]);
+  const isPrivateIp = (hostname: string): boolean => {
+    const v4 = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+    if (!v4) return false;
+    const a = parseInt(v4[1]);
+    const b = parseInt(v4[2]);
+    return a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || a === 127;
+  };
+  const stripHtmlToText = (html: string): string =>
+    html
+      .replace(/<script[\s\S]*?<\/script>/gi, " ")
+      .replace(/<style[\s\S]*?<\/style>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  app.post("/api/fetch-job-posting", async (req, res) => {
+    try {
+      const { url } = req.body;
+      if (!url || typeof url !== "string") return res.status(400).json({ error: "Missing 'url'" });
+
+      let parsed: URL;
+      try {
+        parsed = new URL(url);
+      } catch {
+        return res.status(400).json({ error: "Invalid URL" });
+      }
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return res.status(400).json({ error: "Only http/https URLs are allowed" });
+      }
+      if (BLOCKED_HOSTNAMES.has(parsed.hostname) || isPrivateIp(parsed.hostname)) {
+        return res.status(400).json({ error: "This URL is not allowed" });
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+      const response = await fetch(parsed.toString(), {
+        signal: controller.signal,
+        redirect: "follow",
+        headers: { "User-Agent": "Mozilla/5.0 (compatible; CareerBoostBot/1.0)" },
+      }).finally(() => clearTimeout(timeout));
+
+      if (!response.ok) {
+        return res.status(502).json({ error: `Failed to fetch job posting (HTTP ${response.status})` });
+      }
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("text/html") && !contentType.includes("text/plain")) {
+        return res.status(400).json({ error: "URL did not return a readable page" });
+      }
+
+      const raw = await response.text();
+      const text = stripHtmlToText(raw).slice(0, 6000);
+      if (text.length < 50) {
+        return res.status(422).json({ error: "Could not extract meaningful content from this page" });
+      }
+      res.json({ text });
+    } catch (error: any) {
+      console.error("[fetch-job-posting]", error);
+      const message = error.name === "AbortError" ? "Request timed out" : error.message || "Failed to fetch job posting";
+      res.status(500).json({ error: message });
     }
   });
 

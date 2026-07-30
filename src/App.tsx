@@ -3,39 +3,43 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, Suspense, lazy } from 'react';
 import { onAuthStateChanged, User, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, onSnapshot } from 'firebase/firestore';
 import firebaseConfig from '../firebase-applet-config.json';
 import { Layout } from './components/Layout';
 import { handleFirestoreError, OperationType } from './services/firestoreService';
 import { Dashboard } from './components/Dashboard';
-import { ResumeUploadSection } from './components/ResumeUploadSection';
-import { ResumeReviewSection } from './components/ResumeReviewSection';
-import { ResumeAnalysisSection } from './components/ResumeAnalysisSection';
-import { SkillGapSection } from './components/SkillGapSection';
-import { LearningPlanSection } from './components/LearningPlanSection';
-import { CareerAdviceSection } from './components/CareerAdviceSection';
-import { RoleQuizSection } from './components/RoleQuizSection';
-import { HigherStudiesSection } from './components/HigherStudiesSection';
-import { CoursesSection } from './components/CoursesSection';
-import { BootcampMasterCourse } from './components/BootcampMasterCourse';
-import { MithraChat } from './components/MithraChat';
-import { MeRIDPsychometricTest } from './components/MeRIDPsychometricTest';
-import { AptitudeMasterySection } from './components/AptitudeMasterySection';
-import { MockInterviewSection } from './components/MockInterviewSection';
-import { JobTrackerSection } from './components/JobTrackerSection';
-import { PortfolioSection } from './components/PortfolioSection';
-import { SettingsSection } from './components/SettingsSection';
-import { BigFiveTest } from './components/BigFiveTest';
 import { AuthPage } from './components/AuthPage';
 import { AdminDashboard } from './components/Admin/AdminDashboard';
-import { ProgressSection } from './components/ProgressSection';
-import { IdeSection } from './components/IdeSection';
-import { CoachSection } from './components/CoachSection';
+
+// Lazy-loaded: everything below is behind a nav click, not the first paint,
+// so it doesn't need to be in the initial bundle (was one 2.5MB chunk).
+const ResumeUploadSection = lazy(() => import('./components/ResumeUploadSection').then(m => ({ default: m.ResumeUploadSection })));
+const ResumeReviewSection = lazy(() => import('./components/ResumeReviewSection').then(m => ({ default: m.ResumeReviewSection })));
+const ResumeAnalysisSection = lazy(() => import('./components/ResumeAnalysisSection').then(m => ({ default: m.ResumeAnalysisSection })));
+const SkillGapSection = lazy(() => import('./components/SkillGapSection').then(m => ({ default: m.SkillGapSection })));
+const LearningPlanSection = lazy(() => import('./components/LearningPlanSection').then(m => ({ default: m.LearningPlanSection })));
+const CareerAdviceSection = lazy(() => import('./components/CareerAdviceSection').then(m => ({ default: m.CareerAdviceSection })));
+const RoleQuizSection = lazy(() => import('./components/RoleQuizSection').then(m => ({ default: m.RoleQuizSection })));
+const HigherStudiesSection = lazy(() => import('./components/HigherStudiesSection').then(m => ({ default: m.HigherStudiesSection })));
+const CoursesSection = lazy(() => import('./components/CoursesSection').then(m => ({ default: m.CoursesSection })));
+const BootcampMasterCourse = lazy(() => import('./components/BootcampMasterCourse').then(m => ({ default: m.BootcampMasterCourse })));
+const MithraChat = lazy(() => import('./components/MithraChat').then(m => ({ default: m.MithraChat })));
+const MeRIDPsychometricTest = lazy(() => import('./components/MeRIDPsychometricTest').then(m => ({ default: m.MeRIDPsychometricTest })));
+const AptitudeMasterySection = lazy(() => import('./components/AptitudeMasterySection').then(m => ({ default: m.AptitudeMasterySection })));
+const MockInterviewSection = lazy(() => import('./components/MockInterviewSection').then(m => ({ default: m.MockInterviewSection })));
+const JobTrackerSection = lazy(() => import('./components/JobTrackerSection').then(m => ({ default: m.JobTrackerSection })));
+const PortfolioSection = lazy(() => import('./components/PortfolioSection').then(m => ({ default: m.PortfolioSection })));
+const SettingsSection = lazy(() => import('./components/SettingsSection').then(m => ({ default: m.SettingsSection })));
+const BigFiveTest = lazy(() => import('./components/BigFiveTest').then(m => ({ default: m.BigFiveTest })));
+const ProgressSection = lazy(() => import('./components/ProgressSection').then(m => ({ default: m.ProgressSection })));
+const IdeSection = lazy(() => import('./components/IdeSection').then(m => ({ default: m.IdeSection })));
+const CoachSection = lazy(() => import('./components/CoachSection').then(m => ({ default: m.CoachSection })));
+
 import { fetchUserStats, DashboardStats, recordActivity } from './services/statsService';
 import { motion, AnimatePresence } from 'motion/react';
-import { LogIn, Rocket } from 'lucide-react';
+import { LogIn, Rocket, Loader2 } from 'lucide-react';
 
 import { auth, db } from './firebase';
 
@@ -61,6 +65,8 @@ export interface UserData {
   role?: string;
   usage: UserUsage;
   personalityTraits?: Record<string, number>;
+  weakTopics?: string[];
+  lastInterviewAt?: string;
 }
 
 // Contexts
@@ -392,6 +398,11 @@ function AppContent({
           exit={{ opacity: 0, y: -10 }}
           transition={{ duration: 0.2 }}
         >
+        <Suspense fallback={
+          <div className="h-[60vh] flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-indigo-600 animate-spin" />
+          </div>
+        }>
           {currentView === 'dashboard' && <Dashboard onNavigate={setCurrentView} />}
           {currentView === 'progress' && <ProgressSection />}
           {currentView === 'coach' && <CoachSection onNavigate={setCurrentView} />}
@@ -539,6 +550,7 @@ function AppContent({
                 </button>
             </div>
           )}
+        </Suspense>
         </motion.div>
       </AnimatePresence>
     </Layout>

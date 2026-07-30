@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../App';
 import { recordActivity } from '../services/statsService';
-import { doc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { doc, setDoc, updateDoc, increment, arrayUnion } from 'firebase/firestore';
 import { db } from '../firebase';
 import { handleFirestoreError, OperationType } from '../services/firestoreService';
 import { 
@@ -27,11 +27,14 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<{ role: 'ai' | 'user', content: string }[]>([]);
+  const [savedInterviewId, setSavedInterviewId] = useState<string | null>(null);
 
-  const { user, refreshUsage } = useAuth();
+  const { user, userData, refreshUsage } = useAuth();
 
   const handleStartSetup = (data: InterviewData) => {
-    setInterviewData(data);
+    // Long-term memory: carry the candidate's recurring weak areas from past
+    // sessions into this one so the interviewer can proactively re-probe them.
+    setInterviewData({ ...data, weakTopics: userData?.weakTopics || [] });
     setCurrentStep('ready');
   };
 
@@ -64,8 +67,9 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
       // Persist to Firestore
       if (user) {
         const interviewId = `int_${Date.now()}`;
+        setSavedInterviewId(interviewId);
         const interviewRef = doc(db, 'users', user.uid, 'interviews', interviewId);
-        
+
         await setDoc(interviewRef, {
           id: interviewId,
           userId: user.uid,
@@ -80,7 +84,21 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
         await updateDoc(userRef, {
           'usage.mockInterviews': increment(1)
         });
-        
+
+        // Long-term memory: remember recurring weak areas (score < 6) so the
+        // next session can proactively re-probe them instead of starting cold.
+        const weakAreas = (analysis.performance_feedback || [])
+          .filter((f: any) => f.score < 6)
+          .map((f: any) => f.area);
+        if (weakAreas.length > 0) {
+          await updateDoc(userRef, {
+            weakTopics: arrayUnion(...weakAreas),
+            lastInterviewAt: new Date().toISOString()
+          });
+        } else {
+          await updateDoc(userRef, { lastInterviewAt: new Date().toISOString() });
+        }
+
         recordActivity(user.uid, 'interview', 'Interview Calibrated', `Performance analysis generated for: ${interviewData.jobRole}`);
         
         refreshUsage();
@@ -199,9 +217,12 @@ export function MockInterviewSection({ resumeData }: { resumeData?: any }) {
                     setInterviewData(null);
                     setAnalysisReport(null);
                     setHistory([]);
-                }} 
+                    setSavedInterviewId(null);
+                }}
                 interviewData={interviewData}
                 history={history}
+                userId={user?.uid}
+                interviewId={savedInterviewId}
               />
             </motion.div>
           )}

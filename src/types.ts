@@ -11,6 +11,8 @@ export interface InterviewData {
   isPracticeMode: boolean;
   transcript?: string;
   recordingUrl?: string;
+  weakTopics?: string[];
+  jobPostingText?: string;
 }
 
 export interface QuestionAnswerSuggestion {

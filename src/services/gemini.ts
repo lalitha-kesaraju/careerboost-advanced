@@ -1,6 +1,5 @@
 import { safeParseJson } from "../lib/aiUtils";
 import { callGemini, callGeminiDeep } from "../lib/geminiApi";
-import { COURSES_CATALOG } from "../data/coursesCatalog";
 
 const DEFAULT_MODEL = "gemini-3.5-flash-lite";
 

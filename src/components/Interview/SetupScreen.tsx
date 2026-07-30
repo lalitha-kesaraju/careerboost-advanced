@@ -2,9 +2,9 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { InterviewData } from '../../types';
 import SpinnerIcon from './icons/SpinnerIcon';
-import { 
-    Layout, Mic, Sparkles, Target, Users, Building2, Briefcase, ChevronDown, List, Lightbulb, Upload, Plus, Brain, HelpCircle, ChevronRight, CheckCircle2, 
-    Search, User, Loader2
+import {
+    Layout, Mic, Sparkles, Target, Users, Building2, Briefcase, ChevronDown, List, Lightbulb, Upload, Plus, Brain, HelpCircle, ChevronRight, CheckCircle2,
+    Search, User, Loader2, Link2
 } from 'lucide-react';
 import { parseResume } from '../../services/gemini';
 import * as pdfjs from 'pdfjs-dist';
@@ -137,6 +137,32 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
 
   const [isParsing, setIsParsing] = useState(false);
   const [error, setError] = useState('');
+
+  // Tool-using: fetch a real job posting so the interview is grounded in the
+  // actual role requirements instead of a free-text company/role guess.
+  const [jobPostingUrl, setJobPostingUrl] = useState('');
+  const [isFetchingPosting, setIsFetchingPosting] = useState(false);
+  const [postingFetchError, setPostingFetchError] = useState('');
+
+  const handleFetchJobPosting = async () => {
+    if (!jobPostingUrl.trim()) return;
+    setIsFetchingPosting(true);
+    setPostingFetchError('');
+    try {
+      const resp = await fetch('/api/fetch-job-posting', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: jobPostingUrl.trim() })
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Failed to fetch job posting');
+      setSetupData(prev => ({ ...prev, jobPostingText: data.text }));
+    } catch (err: any) {
+      setPostingFetchError(err.message || 'Failed to fetch job posting');
+    } finally {
+      setIsFetchingPosting(false);
+    }
+  };
 
   const [isTipsModalOpen, setIsTipsModalOpen] = useState(false);
   const [isQuestionsModalOpen, setIsQuestionsModalOpen] = useState(false);
@@ -749,6 +775,39 @@ const SetupScreen: React.FC<SetupScreenProps> = ({ onStart, resumeData }) => {
                     <p className="text-[10px] text-gray-400">PDF, DOCX, or TXT</p>
                   </div>
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-black text-gray-500 uppercase tracking-widest ml-1">Job Posting URL (Optional)</label>
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <input
+                      type="text"
+                      placeholder="Paste a job posting link..."
+                      value={jobPostingUrl}
+                      onChange={(e) => setJobPostingUrl(e.target.value)}
+                      className="w-full px-6 py-4 bg-gray-50 border border-gray-100 rounded-2xl font-bold focus:ring-2 focus:ring-cyan-500/20 outline-none transition-all pl-12"
+                    />
+                    <Link2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-cyan-500" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleFetchJobPosting}
+                    disabled={isFetchingPosting || !jobPostingUrl.trim()}
+                    className="px-6 py-4 bg-gray-900 text-white rounded-2xl font-bold hover:bg-black transition-all disabled:opacity-40 disabled:pointer-events-none shrink-0"
+                  >
+                    {isFetchingPosting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Fetch'}
+                  </button>
+                </div>
+                {postingFetchError && (
+                  <p className="text-rose-500 text-xs font-bold">{postingFetchError}</p>
+                )}
+                {setupData.jobPostingText && (
+                  <div className="p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                    <p className="text-xs font-bold text-emerald-800">Job posting loaded — questions will be tailored to this specific role.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
