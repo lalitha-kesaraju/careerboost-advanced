@@ -3,11 +3,20 @@ import { BootcampOverview } from './BootcampOverview';
 import { DSA4PhaseLearning } from './DSA4PhaseLearning';
 
 interface BootcampProps {
-  type: 'dsa' | 'prompt-engineering' | 'system-design' | 'full-stack' | 'mobile' | 'languages';
+  type: 'dsa' | 'prompt-engineering' | 'system-design' | 'full-stack' | 'mobile' | 'languages' | 'ai-agents';
   onBack: () => void;
 }
 
 const BOOTCAMP_DATA = {
+  'ai-agents': {
+    title: 'AI Agents & Microsoft Foundry',
+    steps: [
+      'Generative AI & Microsoft Foundry Foundations',
+      'Building a GenAI Chat App with Microsoft Foundry',
+      'Enterprise AI Agents & Workflow Patterns',
+      'Microsoft Agent Framework: Memory, Planning & Tools'
+    ]
+  },
   'languages': {
     title: 'Modern Language Mastery',
     steps: [

@@ -22,12 +22,26 @@ import {
 } from 'lucide-react';
 
 interface BootcampOverviewProps {
-  type: 'dsa' | 'prompt-engineering' | 'system-design' | 'full-stack' | 'mobile' | 'languages';
+  type: 'dsa' | 'prompt-engineering' | 'system-design' | 'full-stack' | 'mobile' | 'languages' | 'ai-agents';
   onStart: (stepIndex: number) => void;
   progress?: any;
 }
 
 const BOOTCAMP_METADATA = {
+  'ai-agents': {
+    title: "AI Agents & Microsoft Foundry",
+    description: "Build real GenAI chat apps and enterprise AI agents on Microsoft Foundry — from LLM fundamentals through agent memory, planning, and workflow automation.",
+    hours: "20+",
+    problems: "38 Q&A + 6 Applied Exercises",
+    level: "AI-103: AGENTIC AI DEVELOPMENT",
+    badge: "Foundry Track",
+    steps: [
+      { id: 1, title: 'Generative AI & Microsoft Foundry Foundations', duration: '4h', difficulty: 'Easy', topics: ['AI Agent Components', 'Foundry Resource & Projects', 'Responsible AI'], icon: <BrainCircuit className="w-5 h-5" /> },
+      { id: 2, title: 'Building a GenAI Chat App with Microsoft Foundry', duration: '6h', difficulty: 'Medium', topics: ['Model Playground', 'Responses API', 'ChatCompletions API'], icon: <Code2 className="w-5 h-5" /> },
+      { id: 3, title: 'Enterprise AI Agents & Workflow Patterns', duration: '5h', difficulty: 'Medium', topics: ['M365 & Teams Integration', 'Work IQ', 'HITL & Event-Driven Patterns'], icon: <Settings2 className="w-5 h-5" /> },
+      { id: 4, title: 'Microsoft Agent Framework: Memory, Planning & Tools', duration: '5h', difficulty: 'Hard', topics: ['Short/Long-Term Memory', 'Goal Decomposition', 'Security & Governance'], icon: <Target className="w-5 h-5" /> }
+    ]
+  },
   'languages': {
     title: "Modern Language Mastery",
     description: "Master the syntax and paradigms of the industry's most powerful languages. From Python automation to Rust performance.",

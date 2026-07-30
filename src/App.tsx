@@ -366,7 +366,7 @@ function AppContent({
   setResumeStep: any
 }) {
   const { user, userData, loading, login, authError } = useAuth();
-  const [selectedBootcamp, setSelectedBootcamp] = useState<'dsa' | 'prompt-engineering' | 'system-design'>('dsa');
+  const [selectedBootcamp, setSelectedBootcamp] = useState<'dsa' | 'prompt-engineering' | 'system-design' | 'full-stack' | 'mobile' | 'languages' | 'ai-agents'>('dsa');
 
   if (loading) {
     return (

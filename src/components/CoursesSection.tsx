@@ -183,6 +183,36 @@ export function CoursesSection({ data, onDataUpdate, onNavigate }: CoursesSectio
                </div>
             </div>
 
+            <div className="bg-white border border-gray-100 p-10 rounded-[3.5rem] relative overflow-hidden group cursor-pointer hover:border-emerald-200 transition-all" onClick={() => onNavigate('bootcamp', 'ai-agents')}>
+               <div className="relative z-10 flex flex-col h-full">
+                  <div className="flex justify-between items-start mb-6">
+                     <div className="p-4 bg-emerald-50 rounded-2xl">
+                        <BrainCircuit className="w-8 h-8 text-emerald-600" />
+                     </div>
+                     <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-widest">Foundry Track</span>
+                  </div>
+                  <h4 className="text-3xl font-black text-gray-900 mb-2 leading-tight">AI Agents & Microsoft Foundry</h4>
+                  <p className="text-gray-600 text-sm italic serif mb-8 opacity-80 line-clamp-2">
+                     Build real GenAI chat apps and enterprise AI agents — from LLM fundamentals through agent memory, planning, and workflow automation.
+                  </p>
+                  <div className="mt-auto flex items-center justify-between pt-6 border-t border-gray-50">
+                     <div className="flex items-center gap-4">
+                        <div className="text-center">
+                           <p className="text-[10px] font-black text-gray-400 uppercase">Modules</p>
+                           <p className="text-sm font-black">4</p>
+                        </div>
+                        <div className="text-center">
+                           <p className="text-[10px] font-black text-gray-400 uppercase">Hours</p>
+                           <p className="text-sm font-black">20+</p>
+                        </div>
+                     </div>
+                     <button className="flex items-center gap-2 font-black text-emerald-600 group-hover:scale-110 transition-transform">
+                        Launch <ArrowRight className="w-5 h-5" />
+                     </button>
+                  </div>
+               </div>
+            </div>
+
             <div className="bg-white border border-gray-100 p-10 rounded-[3.5rem] relative overflow-hidden group cursor-pointer hover:border-indigo-200 transition-all" onClick={() => onNavigate('bootcamp', 'dsa')}>
                <div className="relative z-10 flex flex-col h-full">
                   <div className="flex justify-between items-start mb-6">
