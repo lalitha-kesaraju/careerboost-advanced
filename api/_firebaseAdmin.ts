@@ -1,6 +1,14 @@
 import admin from "firebase-admin";
 import { getFirestore, Firestore } from "firebase-admin/firestore";
-import firebaseConfig from "../firebase-applet-config.json";
+import fs from "fs";
+import path from "path";
+
+// Read as plain JSON rather than a static ESM import — Node's ESM loader on
+// Vercel requires an explicit `type: "json"` import attribute for JSON
+// modules, which varies by TS/bundler config and broke this at runtime.
+const firebaseConfig = JSON.parse(
+  fs.readFileSync(path.join(process.cwd(), "firebase-applet-config.json"), "utf8")
+);
 
 let _db: Firestore | null = null;
 
