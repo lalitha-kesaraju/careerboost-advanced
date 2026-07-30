@@ -13,3 +13,4 @@ careerboost-basic-main/
 careerboost.zip
 *.pptx
 ~$*.pptx
+.vercel

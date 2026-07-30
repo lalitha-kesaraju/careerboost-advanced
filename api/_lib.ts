@@ -20,5 +20,5 @@ export function extractText(response: any): string {
   return textPart?.text ?? parts.find((p: any) => p.text)?.text ?? "";
 }
 
-export const DEFAULT_MODEL = "gemini-2.5-flash";
-export const DEEP_MODEL = "gemini-2.5-pro";
+export const DEFAULT_MODEL = "gemini-3.5-flash-lite";
+export const DEEP_MODEL = "gemini-3.5-flash-lite";
