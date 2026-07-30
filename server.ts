@@ -62,8 +62,8 @@ if (firebaseConfig) {
 
 const db = (appAdmin && firebaseConfig) ? getFirestore(appAdmin, firebaseConfig.firestoreDatabaseId) : null;
 
-const DEFAULT_MODEL = "gemini-2.5-flash";
-const DEEP_MODEL = "gemini-2.5-pro";
+const DEFAULT_MODEL = "gemini-3.5-flash-lite";
+const DEEP_MODEL = "gemini-3.5-flash-lite";
 
 // gemini-2.5-flash/pro are thinking models — response.text can be empty when
 // the model outputs thought parts first. Extract the real text from candidates.

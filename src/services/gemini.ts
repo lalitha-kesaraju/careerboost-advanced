@@ -2,7 +2,7 @@ import { safeParseJson } from "../lib/aiUtils";
 import { callGemini, callGeminiDeep } from "../lib/geminiApi";
 import { COURSES_CATALOG } from "../data/coursesCatalog";
 
-const DEFAULT_MODEL = "gemini-2.5-flash";
+const DEFAULT_MODEL = "gemini-3.5-flash-lite";
 
 export async function parseResume(rawText: string) {
   const result = await callGemini(
@@ -146,6 +146,31 @@ export async function generateInterviewQuestions(role: string, level: string, re
     {
       "questions": [
         { "id": "number", "text": "string", "category": "Technical|Behavioral", "hint": "string" }
+      ]
+    }`,
+    { responseMimeType: "application/json" }
+  );
+
+  return safeParseJson(result.text);
+}
+
+export async function generateRoleQuiz(targetRole: string, level: string, missingSkills: string[]) {
+  const result = await callGemini(
+    `Generate a 10-question multiple-choice diagnostic quiz for a ${level} ${targetRole} position.
+    Focus the questions on real-world scenario reasoning, framework methodologies, and system architectural patterns.
+    ${missingSkills.length > 0 ? `Prioritize coverage of these specific skill gaps: ${missingSkills.join(', ')}.` : ''}
+
+    Return JSON:
+    {
+      "title": "string",
+      "questions": [
+        {
+          "question": "string",
+          "topic": "string",
+          "options": ["string", "string", "string", "string"],
+          "correctIndex": number,
+          "explanation": "string"
+        }
       ]
     }`,
     { responseMimeType: "application/json" }
