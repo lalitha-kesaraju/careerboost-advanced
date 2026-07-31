@@ -718,10 +718,34 @@ export function DSA4PhaseLearning({ courseTitle, stepTitle, stepIndex, onBack, o
                 >
                    {activePhase === 'understand' && (
                      <div className="space-y-10">
-                        <section className="prose prose-indigo max-w-none">
-                           <Markdown>{content?.theory || ''}</Markdown>
-                        </section>
-                        
+                        <div className="bg-white border border-gray-100 rounded-[2.5rem] shadow-sm overflow-hidden">
+                           <div className="px-10 py-6 border-b border-gray-50 flex items-center gap-3 bg-gray-50/60">
+                              <div className="w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0">
+                                 <BookOpen className="w-4.5 h-4.5" />
+                              </div>
+                              <span className="text-xs font-black text-gray-500 uppercase tracking-widest">Core Concepts</span>
+                           </div>
+                           <section className="prose prose-indigo max-w-none px-10 py-8
+                              prose-headings:font-black prose-headings:tracking-tight prose-headings:text-gray-900
+                              prose-h1:text-2xl prose-h1:mb-4 prose-h1:mt-0
+                              prose-h2:text-lg prose-h2:mt-8 prose-h2:mb-3 prose-h2:pb-2 prose-h2:border-b prose-h2:border-gray-100
+                              prose-h3:text-base prose-h3:mt-6
+                              prose-p:text-gray-600 prose-p:leading-relaxed
+                              prose-strong:text-gray-900 prose-strong:font-extrabold
+                              prose-li:text-gray-600 prose-li:marker:text-indigo-400
+                              prose-ul:my-4 prose-ol:my-4">
+                              <Markdown>{content?.theory || ''}</Markdown>
+                           </section>
+                        </div>
+
+                        {content?.examples && content.examples.length > 0 && (
+                           <div className="flex items-center gap-3 px-1">
+                              <div className="w-9 h-9 rounded-xl bg-gray-900 text-white flex items-center justify-center shrink-0">
+                                 <Code2 className="w-4.5 h-4.5" />
+                              </div>
+                              <span className="text-xs font-black text-gray-500 uppercase tracking-widest">Worked Examples</span>
+                           </div>
+                        )}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                            {content?.examples?.map((ex: any, idx: number) => (
                              <div key={idx} className="bg-gray-900 rounded-3xl overflow-hidden shadow-xl">

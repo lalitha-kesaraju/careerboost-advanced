@@ -30,16 +30,25 @@ interface BootcampOverviewProps {
 const BOOTCAMP_METADATA = {
   'ai-agents': {
     title: "AI Agents & Microsoft Foundry",
-    description: "Build real GenAI chat apps and enterprise AI agents on Microsoft Foundry — from LLM fundamentals through agent memory, planning, and workflow automation.",
-    hours: "20+",
-    problems: "38 Q&A + 6 Applied Exercises",
+    description: "Build real GenAI chat apps and enterprise AI agents on Microsoft Foundry — from LLM fundamentals and model selection through prompting, RAG, fine-tuning, AI safety, MCP tools, and multi-agent orchestration.",
+    hours: "55+",
+    problems: "104 Q&A + 26 Applied Exercises",
     level: "AI-103: AGENTIC AI DEVELOPMENT",
     badge: "Foundry Track",
     steps: [
       { id: 1, title: 'Generative AI & Microsoft Foundry Foundations', duration: '4h', difficulty: 'Easy', topics: ['AI Agent Components', 'Foundry Resource & Projects', 'Responsible AI'], icon: <BrainCircuit className="w-5 h-5" /> },
       { id: 2, title: 'Building a GenAI Chat App with Microsoft Foundry', duration: '6h', difficulty: 'Medium', topics: ['Model Playground', 'Responses API', 'ChatCompletions API'], icon: <Code2 className="w-5 h-5" /> },
       { id: 3, title: 'Enterprise AI Agents & Workflow Patterns', duration: '5h', difficulty: 'Medium', topics: ['M365 & Teams Integration', 'Work IQ', 'HITL & Event-Driven Patterns'], icon: <Settings2 className="w-5 h-5" /> },
-      { id: 4, title: 'Microsoft Agent Framework: Memory, Planning & Tools', duration: '5h', difficulty: 'Hard', topics: ['Short/Long-Term Memory', 'Goal Decomposition', 'Security & Governance'], icon: <Target className="w-5 h-5" /> }
+      { id: 4, title: 'Microsoft Agent Framework: Memory, Planning & Tools', duration: '5h', difficulty: 'Hard', topics: ['Short/Long-Term Memory', 'Goal Decomposition', 'Security & Governance'], icon: <Target className="w-5 h-5" /> },
+      { id: 5, title: 'Model Catalog, Benchmarks & Deployment', duration: '4h', difficulty: 'Medium', topics: ['Quality/Safety Benchmarks', 'Leaderboards', 'Deployment Types'], icon: <BarChart3 className="w-5 h-5" /> },
+      { id: 6, title: 'Model Evaluation & Performance Metrics', duration: '4h', difficulty: 'Medium', topics: ['Groundedness & Relevance', 'Defect Rate', 'NLP Metrics'], icon: <CheckCircle2 className="w-5 h-5" /> },
+      { id: 7, title: 'Prompt Engineering Techniques', duration: '4h', difficulty: 'Easy', topics: ['Zero/Few-Shot', 'Context Engineering', 'Prompt Chaining'], icon: <Zap className="w-5 h-5" /> },
+      { id: 8, title: 'Embeddings, RAG & Knowledge Retrieval', duration: '5h', difficulty: 'Medium', topics: ['Embeddings & Vector DBs', 'RAG Architecture', 'RAG Workflow'], icon: <BookOpen className="w-5 h-5" /> },
+      { id: 9, title: 'Fine-Tuning, Optimization & Combining RAG', duration: '5h', difficulty: 'Hard', topics: ['Fine-Tuning Workflow', 'Optimization Strategies', 'PE + RAG Architecture'], icon: <Award className="w-5 h-5" /> },
+      { id: 10, title: 'AI Safety, Responsible AI & Governance', duration: '4h', difficulty: 'Medium', topics: ['Safety Controls', 'Content Filtering', 'Governance & Compliance'], icon: <Star className="w-5 h-5" /> },
+      { id: 11, title: 'Custom Tools, MCP & Foundry IQ', duration: '5h', difficulty: 'Hard', topics: ['Tool Design Principles', 'MCP Architecture', 'Hybrid Search & Reranking'], icon: <Settings2 className="w-5 h-5" /> },
+      { id: 12, title: 'Multi-Agent Orchestration & Communication', duration: '5h', difficulty: 'Hard', topics: ['Orchestration Patterns', 'A2A Protocol', 'Agent Discovery'], icon: <Users className="w-5 h-5" /> },
+      { id: 13, title: 'Multimodal AI Services on Azure', duration: '4h', difficulty: 'Medium', topics: ['Speech & Vision', 'Image/Video Generation', 'Azure AI Search'], icon: <Play className="w-5 h-5" /> }
     ]
   },
   'languages': {

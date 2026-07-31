@@ -14,7 +14,16 @@ const BOOTCAMP_DATA = {
       'Generative AI & Microsoft Foundry Foundations',
       'Building a GenAI Chat App with Microsoft Foundry',
       'Enterprise AI Agents & Workflow Patterns',
-      'Microsoft Agent Framework: Memory, Planning & Tools'
+      'Microsoft Agent Framework: Memory, Planning & Tools',
+      'Model Catalog, Benchmarks & Deployment',
+      'Model Evaluation & Performance Metrics',
+      'Prompt Engineering Techniques',
+      'Embeddings, RAG & Knowledge Retrieval',
+      'Fine-Tuning, Optimization & Combining RAG',
+      'AI Safety, Responsible AI & Governance',
+      'Custom Tools, MCP & Foundry IQ',
+      'Multi-Agent Orchestration & Communication',
+      'Multimodal AI Services on Azure'
     ]
   },
   'languages': {
